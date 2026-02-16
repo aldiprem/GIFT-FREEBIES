@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GiftFreebies - Giveaway Platform</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="logo">🎁 GiftFreebies</div>
+            <div class="nav-links">
+                <a href="index.html" class="active">GIVEAWAYS</a>
+                <a href="profile.html">PROFIL</a>
+            </div>
+            <div class="user-info" id="userInfo">
+                <img src="https://via.placeholder.com/40" alt="User" class="user-avatar" id="userAvatar">
+                <span id="userName">Loading...</span>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container">
+        <h1>🎉 Giveaway Aktif</h1>
+        
+        <!-- Search Bar -->
+        <div style="margin: 2rem 0;">
+            <input type="text" id="searchGiveaway" placeholder="Cari giveaway atau masukkan link giveaway..." 
+                   style="width: 100%; padding: 1rem; background: rgba(255,255,255,0.05); border: 1px solid var(--primary-blue); border-radius: 8px; color: white;">
+        </div>
+
+        <!-- Giveaway List -->
+        <div id="giveawayList" class="giveaway-list">
+            <div class="loading">
+                <div class="spinner"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/main.js"></script>
+    <script src="js/giveaway.js"></script>
+</body>
+</html>
