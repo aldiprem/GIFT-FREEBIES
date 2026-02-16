@@ -58,33 +58,12 @@ function getUrlParameter(name) {
 async function loadUserSession() {
   console.log('🔄 Loading user session...');
 
-  // PRIORITAS 1: Cek apakah ada user dari event telegramUserReady
-  // (Event listener sudah dipasang di bawah)
-
-  // PRIORITAS 2: Cek localStorage dulu
-  const savedUser = localStorage.getItem('giftfreebies_user');
-  if (savedUser) {
-    try {
-      currentUser = JSON.parse(savedUser);
-      console.log('✅ Loaded user from localStorage:', currentUser);
-      updateUserUI();
-
-      // Cek apakah ini user Telegram (punya user_id asli bukan dummy)
-      if (currentUser.user_id && currentUser.user_id !== 7998861975) {
-        console.log('✅ Telegram user loaded from storage');
-      }
-      return;
-    } catch (e) {
-      console.error('Error parsing saved user:', e);
-    }
-  }
-
-  // PRIORITAS 3: Cek window.telegramUser (dari telegram.js)
+  // PRIORITAS 1: Cek window.telegramUser (dari telegram.js) - INI YANG PALING CEPAT
   if (window.telegramUser) {
     console.log('✅ Telegram user detected from window:', window.telegramUser);
     const tgUser = {
       user_id: window.telegramUser.id,
-      fullname: window.telegramUser.first_name + ' ' + (window.telegramUser.last_name || ''),
+      fullname: (window.telegramUser.first_name + ' ' + (window.telegramUser.last_name || '')).trim(),
       username: window.telegramUser.username || '',
       avatar: window.telegramUser.photo_url || `https://ui-avatars.com/api/?name=${window.telegramUser.first_name}&size=120&background=1e88e5&color=fff`,
       is_premium: window.telegramUser.is_premium || false,
@@ -97,7 +76,21 @@ async function loadUserSession() {
     return;
   }
 
-  // PRIORITAS 4: Cek parameter URL (untuk testing)
+  // PRIORITAS 2: Cek localStorage
+  const savedUser = localStorage.getItem('giftfreebies_user');
+  if (savedUser) {
+    try {
+      currentUser = JSON.parse(savedUser);
+      console.log('✅ Loaded user from localStorage:', currentUser);
+      updateUserUI();
+      return;
+    } catch (e) {
+      console.error('Error parsing saved user:', e);
+      localStorage.removeItem('giftfreebies_user'); // Hapus yang corrupt
+    }
+  }
+
+  // PRIORITAS 3: Cek parameter URL (untuk testing)
   const userId = getUrlParameter('user_id');
   if (userId) {
     try {
@@ -114,7 +107,7 @@ async function loadUserSession() {
     }
   }
 
-  // PRIORITAS 5: Fallback ke dummy
+  // PRIORITAS 4: Fallback ke dummy
   console.log('ℹ️ No user found, using dummy');
   currentUser = {
     user_id: 7998861975,
@@ -130,19 +123,19 @@ async function loadUserSession() {
 // Listen for Telegram user ready event (DARI TELEGRAM.JS)
 window.addEventListener('telegramUserReady', (event) => {
   console.log('📡 TELEGRAM USER READY EVENT RECEIVED:', event.detail);
-  currentUser = event.detail;
-  updateUserUI();
 
-  // Reload profile if on profile page
-  if (window.location.pathname.includes('profile.html')) {
-    console.log('🔄 Reloading profile page with Telegram data...');
-    setTimeout(() => {
+  if (event.detail) {
+    currentUser = event.detail;
+    localStorage.setItem('giftfreebies_user', JSON.stringify(currentUser));
+    updateUserUI();
+
+    // Reload profile if on profile page
+    if (window.location.pathname.includes('profile.html')) {
+      console.log('🔄 Reloading profile page with Telegram data...');
       if (typeof loadUserProfile === 'function') {
         loadUserProfile();
-      } else {
-        location.reload();
       }
-    }, 100);
+    }
   }
 });
 
@@ -171,8 +164,9 @@ function updateUserUI() {
     img.src = currentUser.avatar || 'https://via.placeholder.com/40';
     img.alt = currentUser.fullname || 'User';
     img.className = 'avatar-image';
-    img.onload = () => {
-      console.log('Avatar loaded:', img.src);
+    img.onerror = () => {
+      // Fallback kalau gambar gagal load
+      img.src = 'https://via.placeholder.com/40';
     };
     userAvatarEl.appendChild(img);
   }
