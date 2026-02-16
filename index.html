@@ -13,15 +13,18 @@
         
         <div class="top-container">
             
-            <!-- BORDER 1 : LOGO -->
+            <!-- BORDER 1 : LOGO (Tanpa Settings Button) -->
             <div class="logo-box">
                 <img src="img/logo.png" class="logo-img" alt="logo" onerror="this.style.display='none'">
                 <span class="logo-text">GIFT FREEBIES</span>
-                <div class="settings-btn" id="settingsBtn">⚙️</div>
+                <!-- SETTINGS BUTTON DIHAPUS DARI SINI -->
             </div>
             
             <!-- BORDER 2 : PROFILE (SATU BOX UNTUK SEMUA INFO) -->
             <div class="profile-box">
+                <!-- Settings Button - HANYA DI SINI -->
+                <div class="settings-btn" id="settingsBtn">⚙️</div>
+                
                 <!-- Loading State -->
                 <div id="loading" class="loading-state">
                     <div class="spinner"></div>
@@ -30,20 +33,29 @@
                 
                 <!-- Error State -->
                 <div id="error" class="error-state" style="display: none;">
-                    <div style="color: #ff6b6b;">❌ Gagal memuat data</div>
+                    <div>❌ Gagal memuat data</div>
                     <button onclick="location.reload()" class="retry-btn">Coba Lagi</button>
                 </div>
                 
                 <!-- Profile Content (akan ditampilkan setelah data dimuat) -->
                 <div id="profileContent" class="profile-content" style="display: none;">
-                    <!-- Baris 1: Foto + Nama + Username + Settings -->
+                    <!-- Baris 1: Foto + Nama + Username -->
                     <div class="profile-row">
-                        <img src="img/default-avatar.png" class="profile-photo" id="profilePhoto" alt="profile">
-                        <div class="profile-data-box">
-                            <div class="profile-name" id="profileNameDisplay">-</div>
-                            <div class="profile-username" id="profileUsernameDisplay">@-</div>
+                        <div class="profile-photo-wrapper" id="profilePhotoWrapper">
+                            <img src="img/default-avatar.png" class="profile-photo" id="profilePhoto" alt="profile">
+                            <!-- Premium/Free Indicator akan ditambahkan via JS -->
                         </div>
-                        <div class="settings-btn" id="profileSettingsBtn">⚙️</div>
+                        <div class="profile-data-box">
+                            <div class="marquee-container">
+                                <span class="profile-name marquee-text" id="profileNameDisplay">-</span>
+                            </div>
+                            <div class="marquee-container">
+                                <span class="profile-username marquee-text" id="profileUsernameDisplay">@-</span>
+                            </div>
+                            <div class="marquee-container">
+                                <span class="profile-id marquee-text" id="profileIdDisplay">ID: -</span>
+                            </div>
+                        </div>
                     </div>
                     
                     <!-- Baris 2: ID + Bahasa + Statistik -->
