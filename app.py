@@ -2,21 +2,21 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 import socket
+import json
+import os
 from config import Config
 from database import Database
 from utils import log_info, log_error, get_jakarta_time
 import pytz
+import random
+import string
 
-# Inisialisasi Flask
 app = Flask(__name__)
 
-# Konfigurasi CORS
 CORS(app, origins=Config.ALLOWED_ORIGINS, supports_credentials=True)
 
-# Inisialisasi Database
 db = Database()
 
-# ==================== MIDDLEWARE ====================
 @app.after_request
 def after_request(response):
     """Middleware untuk menambahkan headers CORS"""
@@ -30,7 +30,6 @@ def after_request(response):
         response.headers.add('Access-Control-Allow-Credentials', 'true')
     return response
 
-# ==================== HELPER FUNCTIONS ====================
 def generate_avatar_url(name):
     """Generate avatar URL dari ui-avatars.com"""
     first_char = name[0] if name and len(name) > 0 else 'U'
@@ -48,6 +47,32 @@ def get_client_ip():
     
     return request.remote_addr
 
+def generate_giveaway_id():
+    """Generate giveaway ID 25 karakter random"""
+    characters = string.ascii_letters + string.digits
+    return ''.join(random.choice(characters) for _ in range(25))
+
+def calculate_end_time(duration_value, duration_unit):
+    """Menghitung waktu akhir berdasarkan durasi"""
+    from datetime import datetime, timedelta
+    jakarta_tz = pytz.timezone('Asia/Jakarta')
+    now = datetime.now(jakarta_tz)
+    
+    if duration_unit == 'minutes':
+        end_time = now + timedelta(minutes=duration_value)
+    elif duration_unit == 'hours':
+        end_time = now + timedelta(hours=duration_value)
+    elif duration_unit == 'days':
+        end_time = now + timedelta(days=duration_value)
+    elif duration_unit == 'weeks':
+        end_time = now + timedelta(weeks=duration_value)
+    elif duration_unit == 'months':
+        end_time = now + timedelta(days=duration_value * 30)
+    else:
+        end_time = now + timedelta(hours=24)  # Default 24 jam
+    
+    return end_time.strftime('%Y-%m-%d %H:%M:%S')
+
 # ==================== ROOT ENDPOINT ====================
 @app.route('/', methods=['GET'])
 def index():
@@ -55,7 +80,7 @@ def index():
     return jsonify({
         'name': 'GiftFreebies API',
         'version': '1.0.0',
-        'description': 'API untuk menyimpan data users',
+        'description': 'API untuk menyimpan data users dan giveaways',
         'status': 'running',
         'endpoints': {
             'users': {
@@ -68,6 +93,15 @@ def index():
                 'PUT /api/users/<user_id>/stats': 'Update user stats',
                 'GET /api/users/search?q=<query>': 'Search users',
                 'GET /api/users/top': 'Get top users'
+            },
+            'giveaways': {
+                'POST /api/giveaways': 'Create new giveaway',
+                'GET /api/giveaways': 'Get all giveaways',
+                'GET /api/giveaways/<giveaway_id>': 'Get giveaway by ID',
+                'GET /api/giveaways/user/<user_id>': 'Get giveaways by user',
+                'PUT /api/giveaways/<giveaway_id>': 'Update giveaway',
+                'DELETE /api/giveaways/<giveaway_id>': 'Delete giveaway',
+                'GET /api/giveaways/search?q=<query>': 'Search giveaways'
             },
             'health': {
                 'GET /api/health': 'Health check'
@@ -331,6 +365,272 @@ def get_top_users():
         log_error(f"Error in get_top_users: {e}")
         return jsonify({'error': str(e)}), 500
 
+# ==================== GIVEAWAY ENDPOINTS ====================
+
+# Create new giveaway
+@app.route('/api/giveaways', methods=['POST'])
+def create_giveaway():
+    """Create new giveaway"""
+    try:
+        data = request.json
+        log_info(f"Received giveaway data: {data}")
+        
+        # Required fields
+        required_fields = ['creator_user_id', 'prizes', 'giveaway_text']
+        for field in required_fields:
+            if field not in data:
+                return jsonify({
+                    'success': False,
+                    'error': f'Field {field} is required'
+                }), 400
+        
+        # Generate giveaway ID
+        giveaway_id = generate_giveaway_id()
+        
+        # Calculate end time
+        end_time = None
+        if data.get('duration_type') == 'duration':
+            duration_value = data.get('duration_value', 24)
+            duration_unit = data.get('duration_unit', 'hours')
+            end_time = calculate_end_time(duration_value, duration_unit)
+        elif data.get('duration_type') == 'date' and data.get('end_date'):
+            # Convert from datetime-local format
+            end_date_str = data.get('end_date').replace('T', ' ')
+            if ':' in end_date_str and end_date_str.count(':') == 1:
+                end_date_str += ':00'
+            end_time = end_date_str
+        
+        # Add creator user if not exists
+        db.add_user(
+            user_id=data['creator_user_id'],
+            fullname=data.get('fullname', 'Unknown'),
+            username=data.get('username')
+        )
+        
+        # Create giveaway in database
+        success = db.create_giveaway(
+            giveaway_id=giveaway_id,
+            creator_user_id=data['creator_user_id'],
+            prizes=data['prizes'],  # List of prizes
+            requirements=data.get('requirements', []),  # List of requirements
+            giveaway_text=data['giveaway_text'],
+            duration_type=data.get('duration_type', 'duration'),
+            duration_value=data.get('duration_value'),
+            duration_unit=data.get('duration_unit'),
+            end_date=end_time,
+            media_path=data.get('media_path'),
+            captcha_enabled=data.get('captcha_enabled', 1)
+        )
+        
+        if success:
+            # Generate direct link
+            direct_link = f"https://aldiprem.github.io/giveaway/?id={giveaway_id}"
+            
+            return jsonify({
+                'success': True,
+                'message': 'Giveaway created successfully',
+                'giveaway_id': giveaway_id,
+                'direct_link': direct_link,
+                'end_time': end_time
+            }), 201
+        else:
+            return jsonify({
+                'success': False,
+                'error': 'Failed to create giveaway'
+            }), 500
+            
+    except Exception as e:
+        log_error(f"Error in create_giveaway: {e}")
+        return jsonify({'error': str(e)}), 500
+
+# Get all giveaways
+@app.route('/api/giveaways', methods=['GET'])
+def get_all_giveaways():
+    """Get all giveaways with optional filters"""
+    try:
+        status = request.args.get('status', 'active')
+        limit = request.args.get('limit', 50, type=int)
+        offset = request.args.get('offset', 0, type=int)
+        
+        giveaways = db.get_all_giveaways(status=status, limit=limit, offset=offset)
+        
+        return jsonify({
+            'success': True,
+            'count': len(giveaways),
+            'status': status,
+            'limit': limit,
+            'offset': offset,
+            'giveaways': giveaways
+        })
+        
+    except Exception as e:
+        log_error(f"Error in get_all_giveaways: {e}")
+        return jsonify({'error': str(e)}), 500
+
+# Get giveaway by ID
+@app.route('/api/giveaways/<giveaway_id>', methods=['GET'])
+def get_giveaway(giveaway_id):
+    """Get giveaway by ID"""
+    try:
+        giveaway = db.get_giveaway(giveaway_id)
+        
+        if giveaway:
+            # Get creator info
+            creator = db.get_user(giveaway['creator_user_id'])
+            if creator:
+                giveaway['creator'] = {
+                    'fullname': creator['fullname'],
+                    'username': creator['username'],
+                    'avatar': generate_avatar_url(creator['fullname'])
+                }
+            
+            return jsonify({
+                'success': True,
+                'giveaway': giveaway
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'error': 'Giveaway not found'
+            }), 404
+            
+    except Exception as e:
+        log_error(f"Error in get_giveaway: {e}")
+        return jsonify({'error': str(e)}), 500
+
+# Get giveaways by user
+@app.route('/api/giveaways/user/<int:user_id>', methods=['GET'])
+def get_user_giveaways(user_id):
+    """Get all giveaways created by a specific user"""
+    try:
+        status = request.args.get('status', 'all')
+        limit = request.args.get('limit', 50, type=int)
+        offset = request.args.get('offset', 0, type=int)
+        
+        giveaways = db.get_user_giveaways(user_id, status=status, limit=limit, offset=offset)
+        
+        return jsonify({
+            'success': True,
+            'user_id': user_id,
+            'count': len(giveaways),
+            'status': status,
+            'giveaways': giveaways
+        })
+        
+    except Exception as e:
+        log_error(f"Error in get_user_giveaways: {e}")
+        return jsonify({'error': str(e)}), 500
+
+# Update giveaway
+@app.route('/api/giveaways/<giveaway_id>', methods=['PUT'])
+def update_giveaway(giveaway_id):
+    """Update giveaway details"""
+    try:
+        data = request.json
+        
+        # Check if giveaway exists
+        existing = db.get_giveaway(giveaway_id)
+        if not existing:
+            return jsonify({
+                'success': False,
+                'error': 'Giveaway not found'
+            }), 404
+        
+        # Update giveaway
+        success = db.update_giveaway(giveaway_id, data)
+        
+        if success:
+            updated = db.get_giveaway(giveaway_id)
+            return jsonify({
+                'success': True,
+                'message': 'Giveaway updated successfully',
+                'giveaway': updated
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'error': 'Failed to update giveaway'
+            }), 500
+            
+    except Exception as e:
+        log_error(f"Error in update_giveaway: {e}")
+        return jsonify({'error': str(e)}), 500
+
+# Delete giveaway
+@app.route('/api/giveaways/<giveaway_id>', methods=['DELETE'])
+def delete_giveaway(giveaway_id):
+    """Delete giveaway (soft delete)"""
+    try:
+        # Check if giveaway exists
+        existing = db.get_giveaway(giveaway_id)
+        if not existing:
+            return jsonify({
+                'success': False,
+                'error': 'Giveaway not found'
+            }), 404
+        
+        # Delete giveaway
+        success = db.delete_giveaway(giveaway_id)
+        
+        if success:
+            return jsonify({
+                'success': True,
+                'message': 'Giveaway deleted successfully'
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'error': 'Failed to delete giveaway'
+            }), 500
+            
+    except Exception as e:
+        log_error(f"Error in delete_giveaway: {e}")
+        return jsonify({'error': str(e)}), 500
+
+# Search giveaways
+@app.route('/api/giveaways/search', methods=['GET'])
+def search_giveaways():
+    """Search giveaways by prize or text"""
+    try:
+        query = request.args.get('q', '')
+        if len(query) < 2:
+            return jsonify({
+                'success': False,
+                'error': 'Search query must be at least 2 characters'
+            }), 400
+        
+        limit = request.args.get('limit', 20, type=int)
+        
+        giveaways = db.search_giveaways(query, limit=limit)
+        
+        return jsonify({
+            'success': True,
+            'count': len(giveaways),
+            'query': query,
+            'giveaways': giveaways
+        })
+        
+    except Exception as e:
+        log_error(f"Error in search_giveaways: {e}")
+        return jsonify({'error': str(e)}), 500
+
+# Get giveaway statistics
+@app.route('/api/giveaways/stats', methods=['GET'])
+def get_giveaway_stats():
+    """Get giveaway statistics"""
+    try:
+        stats = db.get_giveaway_stats()
+        
+        return jsonify({
+            'success': True,
+            'stats': stats,
+            'timestamp': get_jakarta_time()
+        })
+        
+    except Exception as e:
+        log_error(f"Error in get_giveaway_stats: {e}")
+        return jsonify({'error': str(e)}), 500
+
 # ==================== HEALTH CHECK ====================
 @app.route('/api/health', methods=['GET'])
 def health_check():
@@ -338,6 +638,7 @@ def health_check():
     try:
         # Test database connection
         user_count = db.get_user_count()
+        giveaway_count = db.get_giveaway_count()
         
         return jsonify({
             'status': 'healthy',
@@ -346,7 +647,8 @@ def health_check():
             'version': '1.0.0',
             'database': {
                 'connected': True,
-                'users_count': user_count
+                'users_count': user_count,
+                'giveaways_count': giveaway_count
             },
             'client': {
                 'ip': get_client_ip(),
@@ -370,7 +672,7 @@ if __name__ == "__main__":
     ╠══════════════════════════════════════════╣
     ║  📦 Version: 1.0.0                       ║
     ║  🗄️  Database: SQLite3                    ║
-    ║  👥 Feature: Users only                   ║
+    ║  👥 Feature: Users & Giveaways            ║
     ╚══════════════════════════════════════════╝
     """)
     
@@ -389,6 +691,7 @@ if __name__ == "__main__":
     print(f"📝 API Documentation: http://{Config.HOST}:{port}/")
     print(f"🔍 Health Check: http://{Config.HOST}:{port}/api/health")
     print(f"👥 Users endpoint: http://{Config.HOST}:{port}/api/users")
+    print(f"🎁 Giveaways endpoint: http://{Config.HOST}:{port}/api/giveaways")
     print(f"\n📌 Press CTRL+C to stop\n")
     
     app.run(host=Config.HOST, port=port, debug=Config.DEBUG, threaded=True)
