@@ -1,5 +1,5 @@
 // ==================== KONFIGURASI API ====================
-const API_URL = 'https://processed-clicking-pressed-alike.trycloudflare.com';
+const API_URL = 'https://individually-threaded-jokes-letting.trycloudflare.com';
 
 // ==================== FUNGSI UTILITY ====================
 function formatNumber(num) {
