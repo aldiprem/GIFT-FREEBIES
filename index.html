@@ -129,6 +129,8 @@
             to { transform: rotate(360deg); }
         }
     </style>
+    <!-- Telegram Web App SDK - WAJIB ADA DI HEAD -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
 </head>
 <body>
     <div class="card">
@@ -168,95 +170,79 @@
     </div>
 
     <script>
-        // State
-        let tg = null;
-        let telegramUser = null;
-        
-        // DOM Elements
-        const loadingEl = document.getElementById('loading');
-        const userDataEl = document.getElementById('userData');
-        const errorEl = document.getElementById('error');
-        const avatarInitialEl = document.getElementById('avatarInitial');
-        const avatarContainer = document.getElementById('avatarContainer');
-        const fullNameEl = document.getElementById('fullName');
-        const usernameEl = document.getElementById('username');
-        const userIdEl = document.getElementById('userId');
-        const premiumBadgeEl = document.getElementById('premiumBadge');
-        
-        // Initialize Telegram
-        function initTelegram() {
-            console.log('Initializing Telegram...');
+        // JALANKAN LANGSUNG, TUNGGU LOAD EVENT
+        (function() {
+            console.log('Script dimulai...');
             
+            // DOM Elements
+            const loadingEl = document.getElementById('loading');
+            const userDataEl = document.getElementById('userData');
+            const errorEl = document.getElementById('error');
+            const avatarInitialEl = document.getElementById('avatarInitial');
+            const avatarContainer = document.getElementById('avatarContainer');
+            const fullNameEl = document.getElementById('fullName');
+            const usernameEl = document.getElementById('username');
+            const userIdEl = document.getElementById('userId');
+            const premiumBadgeEl = document.getElementById('premiumBadge');
+            
+            // Cek Telegram
             if (window.Telegram && window.Telegram.WebApp) {
-                tg = window.Telegram.WebApp;
+                console.log('✅ Telegram WebApp detected');
+                
+                const tg = window.Telegram.WebApp;
                 tg.expand();
                 tg.ready();
                 
                 console.log('Telegram WebApp version:', tg.version);
+                console.log('initDataUnsafe:', tg.initDataUnsafe);
                 
                 if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
-                    telegramUser = tg.initDataUnsafe.user;
-                    console.log('Telegram user detected:', telegramUser);
+                    const user = tg.initDataUnsafe.user;
+                    console.log('✅ User detected:', user);
                     
-                    displayUserData(telegramUser);
+                    // Hide loading, show user data
+                    loadingEl.style.display = 'none';
+                    userDataEl.style.display = 'block';
+                    
+                    // Full name
+                    const fullName = [user.first_name, user.last_name].filter(Boolean).join(' ') || 'No Name';
+                    fullNameEl.textContent = fullName;
+                    
+                    // Username
+                    usernameEl.textContent = user.username ? `@${user.username}` : '(no username)';
+                    
+                    // User ID
+                    userIdEl.textContent = user.id;
+                    
+                    // Avatar
+                    if (user.photo_url) {
+                        const img = document.createElement('img');
+                        img.src = user.photo_url;
+                        img.alt = 'Avatar';
+                        avatarContainer.innerHTML = '';
+                        avatarContainer.appendChild(img);
+                    } else {
+                        const initial = (user.first_name || 'U').charAt(0).toUpperCase();
+                        avatarInitialEl.textContent = initial;
+                    }
+                    
+                    // Premium badge
+                    if (user.is_premium) {
+                        premiumBadgeEl.textContent = '⭐ Premium User';
+                        premiumBadgeEl.className = 'badge premium';
+                    }
+                    
                 } else {
-                    console.log('No user data available');
-                    showError();
+                    console.log('❌ No user data');
+                    loadingEl.style.display = 'none';
+                    errorEl.style.display = 'block';
                 }
             } else {
-                console.log('Not in Telegram environment');
-                showError();
+                console.log('❌ Not in Telegram');
+                loadingEl.style.display = 'none';
+                errorEl.style.display = 'block';
             }
-        }
-        
-        // Display user data
-        function displayUserData(user) {
-            // Hide loading, show user data
-            loadingEl.style.display = 'none';
-            userDataEl.style.display = 'block';
-            
-            // Full name
-            const fullName = [user.first_name, user.last_name].filter(Boolean).join(' ') || 'No Name';
-            fullNameEl.textContent = fullName;
-            
-            // Username
-            usernameEl.textContent = user.username ? `@${user.username}` : '(no username)';
-            
-            // User ID
-            userIdEl.textContent = user.id;
-            
-            // Avatar
-            if (user.photo_url) {
-                // Use real photo if available
-                const img = document.createElement('img');
-                img.src = user.photo_url;
-                img.alt = 'Avatar';
-                avatarContainer.innerHTML = '';
-                avatarContainer.appendChild(img);
-            } else {
-                // Fallback to initial
-                const initial = (user.first_name || 'U').charAt(0).toUpperCase();
-                avatarInitialEl.textContent = initial;
-            }
-            
-            // Premium badge
-            if (user.is_premium) {
-                premiumBadgeEl.textContent = '⭐ Premium User';
-                premiumBadgeEl.className = 'badge premium';
-            } else {
-                premiumBadgeEl.textContent = '🔹 Free User';
-                premiumBadgeEl.className = 'badge free';
-            }
-        }
-        
-        // Show error
-        function showError() {
-            loadingEl.style.display = 'none';
-            errorEl.style.display = 'block';
-        }
-        
-        // Auto-initialize on load
-        window.addEventListener('load', initTelegram);
+        })();
     </script>
 </body>
 </html>
