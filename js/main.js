@@ -1,5 +1,5 @@
 // ==================== KONFIGURASI API ====================
-const API_URL = 'https://expect-checkout-cologne-dozens.trycloudflare.com';
+const API_URL = 'https://tactics-arthritis-pace-accept.trycloudflare.com';
 
 // ==================== FUNGSI UTILITY ====================
 function formatNumber(num) {
