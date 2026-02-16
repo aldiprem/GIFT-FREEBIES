@@ -4,7 +4,7 @@ from datetime import datetime
 import pytz
 import random
 import string
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, g
 from flask_cors import CORS
 import logging
 import socket
@@ -31,15 +31,19 @@ def generate_giveaway_id():
 class GiveawayDatabase:
     def __init__(self):
         self.conn = sqlite3.connect(DB_PATH, check_same_thread=False)
-        self.cur = self.conn.cursor()
-        self.create_tables()
-        logger.info("✅ Database initialized")
+        self.conn.row_factory = sqlite3.Row
+        logger.info("✅ Database connected")
+    
+    def get_cursor(self):
+        """Mendapatkan cursor baru untuk setiap operasi"""
+        return self.conn.cursor()
     
     def create_tables(self):
         """Membuat semua tabel yang diperlukan"""
+        cur = self.get_cursor()
         
         # Tabel users
-        self.cur.execute("""
+        cur.execute("""
         CREATE TABLE IF NOT EXISTS users (
             user_id INTEGER PRIMARY KEY,
             fullname TEXT,
@@ -58,7 +62,7 @@ class GiveawayDatabase:
         """)
 
         # Tabel giveaways
-        self.cur.execute("""
+        cur.execute("""
         CREATE TABLE IF NOT EXISTS giveaways (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             giveaway_id TEXT UNIQUE NOT NULL,
@@ -98,7 +102,7 @@ class GiveawayDatabase:
         """)
 
         # Tabel participants
-        self.cur.execute("""
+        cur.execute("""
         CREATE TABLE IF NOT EXISTS participants (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             giveaway_id TEXT NOT NULL,
@@ -119,7 +123,7 @@ class GiveawayDatabase:
         """)
 
         # Tabel winners
-        self.cur.execute("""
+        cur.execute("""
         CREATE TABLE IF NOT EXISTS winners (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             giveaway_id TEXT NOT NULL,
@@ -137,7 +141,7 @@ class GiveawayDatabase:
         """)
 
         # Tabel giveaway_logs
-        self.cur.execute("""
+        cur.execute("""
         CREATE TABLE IF NOT EXISTS giveaway_logs (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             giveaway_id TEXT NOT NULL,
@@ -152,14 +156,16 @@ class GiveawayDatabase:
         """)
 
         self.conn.commit()
+        cur.close()
         logger.info("✅ All tables created/verified")
 
     def add_user(self, user_id, fullname, username=None, phone_number=None, 
                  language_code=None, is_bot=0, is_premium=0):
         """Menambah atau mengupdate user"""
         now = get_jakarta_time()
+        cur = self.get_cursor()
         try:
-            self.cur.execute("""
+            cur.execute("""
             INSERT OR REPLACE INTO users 
             (user_id, fullname, username, phone_number, language_code, is_bot, 
              is_premium, first_seen, last_seen, created_at, updated_at)
@@ -172,11 +178,14 @@ class GiveawayDatabase:
         except Exception as e:
             logger.error(f"Error adding user: {e}")
             return False
+        finally:
+            cur.close()
 
     def create_giveaway(self, creator_user_id, prize, giveaway_text, chat_id, **kwargs):
         """Membuat giveaway baru"""
         giveaway_id = generate_giveaway_id()
         now = get_jakarta_time()
+        cur = self.get_cursor()
         
         # Hitung end_time jika duration diberikan
         end_time = None
@@ -190,7 +199,7 @@ class GiveawayDatabase:
             end_time = end.strftime('%Y-%m-%d %H:%M:%S')
         
         try:
-            self.cur.execute("""
+            cur.execute("""
             INSERT INTO giveaways (
                 giveaway_id, creator_user_id, title, prize, prize_description,
                 prize_value, prize_currency, total_winners, max_tickets_per_user,
@@ -224,19 +233,22 @@ class GiveawayDatabase:
         except Exception as e:
             logger.error(f"Error creating giveaway: {e}")
             return None
+        finally:
+            cur.close()
 
     def add_participant(self, giveaway_id, user_id, fullname, username=None, tickets=1):
         """Menambah partisipan ke giveaway"""
         now = get_jakarta_time()
+        cur = self.get_cursor()
         try:
             # Cek apakah user sudah pernah join
-            self.cur.execute("""
+            cur.execute("""
             SELECT id FROM participants WHERE giveaway_id = ? AND user_id = ?
             """, (giveaway_id, user_id))
             
-            if self.cur.fetchone():
+            if cur.fetchone():
                 # Update tickets jika sudah pernah join
-                self.cur.execute("""
+                cur.execute("""
                 UPDATE participants 
                 SET tickets = tickets + ?, joined_at = ?
                 WHERE giveaway_id = ? AND user_id = ?
@@ -244,14 +256,14 @@ class GiveawayDatabase:
                 logger.info(f"✅ Updated tickets for user {user_id} in {giveaway_id}")
             else:
                 # Insert baru
-                self.cur.execute("""
+                cur.execute("""
                 INSERT INTO participants (giveaway_id, user_id, tickets, fullname, 
                                          username, joined_at)
                 VALUES (?, ?, ?, ?, ?, ?)
                 """, (giveaway_id, user_id, tickets, fullname, username, now))
                 
                 # Update participants count di giveaways
-                self.cur.execute("""
+                cur.execute("""
                 UPDATE giveaways 
                 SET participants_count = participants_count + 1,
                     total_tickets = total_tickets + ?
@@ -260,7 +272,7 @@ class GiveawayDatabase:
                 logger.info(f"✅ New participant {user_id} in {giveaway_id}")
             
             # Update user total participations
-            self.cur.execute("""
+            cur.execute("""
             UPDATE users 
             SET total_participations = total_participations + 1,
                 last_seen = ?
@@ -276,12 +288,15 @@ class GiveawayDatabase:
         except Exception as e:
             logger.error(f"Error adding participant: {e}")
             return False
+        finally:
+            cur.close()
 
     def add_log(self, giveaway_id, action, performed_by=None, details=None):
         """Menambah log aktivitas"""
         now = get_jakarta_time()
+        cur = self.get_cursor()
         try:
-            self.cur.execute("""
+            cur.execute("""
             INSERT INTO giveaway_logs (giveaway_id, action, performed_by, details, created_at)
             VALUES (?, ?, ?, ?, ?)
             """, (giveaway_id, action, performed_by, details, now))
@@ -290,6 +305,8 @@ class GiveawayDatabase:
         except Exception as e:
             logger.error(f"Error adding log: {e}")
             return False
+        finally:
+            cur.close()
 
     def close(self):
         """Menutup koneksi database"""
@@ -298,6 +315,7 @@ class GiveawayDatabase:
 
 # ==================== INISIALISASI DATABASE ====================
 db = GiveawayDatabase()
+db.create_tables()
 
 # ==================== FLASK API ====================
 app = Flask(__name__)
@@ -323,6 +341,20 @@ def after_request(response):
     response.headers.add('Access-Control-Allow-Credentials', 'true')
     return response
 
+# Helper function untuk execute query
+def execute_query(query, params=(), one=False):
+    """Helper untuk execute query dengan cursor baru"""
+    cur = db.get_cursor()
+    try:
+        cur.execute(query, params)
+        if one:
+            result = cur.fetchone()
+        else:
+            result = cur.fetchall()
+        return result
+    finally:
+        cur.close()
+
 # Root endpoint
 @app.route('/', methods=['GET'])
 def index():
@@ -347,12 +379,11 @@ def index():
 @app.route('/api/user/<int:user_id>', methods=['GET'])
 def get_user(user_id):
     try:
-        db.cur.execute("""
+        user = execute_query("""
         SELECT user_id, fullname, username, phone_number, language_code, 
                is_premium, first_seen, last_seen, total_participations, total_wins
         FROM users WHERE user_id = ?
-        """, (user_id,))
-        user = db.cur.fetchone()
+        """, (user_id,), one=True)
         
         if user:
             # Generate avatar from first letter
@@ -382,27 +413,35 @@ def get_user(user_id):
 def get_user_stats(user_id):
     try:
         # Total giveaways created
-        db.cur.execute("SELECT COUNT(*) FROM giveaways WHERE creator_user_id = ?", (user_id,))
-        total_giveaways = db.cur.fetchone()[0]
+        total_giveaways = execute_query(
+            "SELECT COUNT(*) FROM giveaways WHERE creator_user_id = ?", 
+            (user_id,), one=True
+        )[0]
         
         # Total participations
-        db.cur.execute("SELECT COUNT(*) FROM participants WHERE user_id = ?", (user_id,))
-        total_participations = db.cur.fetchone()[0]
+        total_participations = execute_query(
+            "SELECT COUNT(*) FROM participants WHERE user_id = ?", 
+            (user_id,), one=True
+        )[0]
         
         # Total wins
-        db.cur.execute("SELECT COUNT(*) FROM winners WHERE user_id = ?", (user_id,))
-        total_wins = db.cur.fetchone()[0]
+        total_wins = execute_query(
+            "SELECT COUNT(*) FROM winners WHERE user_id = ?", 
+            (user_id,), one=True
+        )[0]
         
         # Total tickets
-        db.cur.execute("SELECT SUM(tickets) FROM participants WHERE user_id = ?", (user_id,))
-        total_tickets = db.cur.fetchone()[0] or 0
+        result = execute_query(
+            "SELECT SUM(tickets) FROM participants WHERE user_id = ?", 
+            (user_id,), one=True
+        )
+        total_tickets = result[0] or 0
         
         # Active giveaways created
-        db.cur.execute("""
+        active_giveaways = execute_query("""
         SELECT COUNT(*) FROM giveaways 
         WHERE creator_user_id = ? AND status = 'active'
-        """, (user_id,))
-        active_giveaways = db.cur.fetchone()[0]
+        """, (user_id,), one=True)[0]
         
         return jsonify({
             'total_giveaways': total_giveaways,
@@ -419,14 +458,13 @@ def get_user_stats(user_id):
 @app.route('/api/user/<int:user_id>/giveaways', methods=['GET'])
 def get_user_giveaways(user_id):
     try:
-        db.cur.execute("""
+        giveaways = execute_query("""
         SELECT giveaway_id, prize, prize_description, giveaway_text, 
                participants_count, total_tickets, status, created_at, end_time
         FROM giveaways 
         WHERE creator_user_id = ?
         ORDER BY created_at DESC
         """, (user_id,))
-        giveaways = db.cur.fetchall()
         
         result = []
         for g in giveaways:
@@ -509,27 +547,32 @@ def create_giveaway():
 @app.route('/api/giveaways/<giveaway_id>', methods=['GET'])
 def get_giveaway(giveaway_id):
     try:
-        db.cur.execute("SELECT * FROM giveaways WHERE giveaway_id = ?", (giveaway_id,))
-        giveaway = db.cur.fetchone()
+        cur = db.get_cursor()
+        cur.execute("SELECT * FROM giveaways WHERE giveaway_id = ?", (giveaway_id,))
+        giveaway = cur.fetchone()
         
-        if giveaway:
-            # Get column names
-            columns = [description[0] for description in db.cur.description]
-            result = dict(zip(columns, giveaway))
-            
-            # Get participants count
-            db.cur.execute("""
-            SELECT COUNT(DISTINCT user_id), COALESCE(SUM(tickets), 0)
-            FROM participants WHERE giveaway_id = ?
-            """, (giveaway_id,))
-            participants, total_tickets = db.cur.fetchone()
-            
-            result['participants_count'] = participants or 0
-            result['total_tickets'] = total_tickets or 0
-            
-            return jsonify(result)
-        else:
+        if not giveaway:
+            cur.close()
             return jsonify({'error': 'Giveaway not found'}), 404
+        
+        # Get column names
+        columns = [description[0] for description in cur.description]
+        result = dict(zip(columns, giveaway))
+        cur.close()
+        
+        # Get participants count (pakai cursor baru)
+        cur2 = db.get_cursor()
+        cur2.execute("""
+        SELECT COUNT(DISTINCT user_id), COALESCE(SUM(tickets), 0)
+        FROM participants WHERE giveaway_id = ?
+        """, (giveaway_id,))
+        participants, total_tickets = cur2.fetchone()
+        cur2.close()
+        
+        result['participants_count'] = participants or 0
+        result['total_tickets'] = total_tickets or 0
+        
+        return jsonify(result)
     except Exception as e:
         logger.error(f"Error in get_giveaway: {e}")
         return jsonify({'error': str(e)}), 500
@@ -539,7 +582,7 @@ def get_giveaway(giveaway_id):
 def get_all_giveaways():
     try:
         now = get_jakarta_time()
-        db.cur.execute("""
+        giveaways = execute_query("""
         SELECT giveaway_id, prize, giveaway_text, participants_count, 
                total_tickets, status, end_time
         FROM giveaways 
@@ -547,7 +590,6 @@ def get_all_giveaways():
         ORDER BY created_at DESC
         LIMIT 50
         """, (now,))
-        giveaways = db.cur.fetchall()
         
         result = []
         for g in giveaways:
@@ -575,7 +617,7 @@ def search_giveaways():
             return jsonify([])
         
         search_term = f'%{query}%'
-        db.cur.execute("""
+        giveaways = execute_query("""
         SELECT giveaway_id, prize, giveaway_text, participants_count, 
                status, end_time
         FROM giveaways 
@@ -583,7 +625,6 @@ def search_giveaways():
         ORDER BY created_at DESC
         LIMIT 20
         """, (search_term, search_term))
-        giveaways = db.cur.fetchall()
         
         result = []
         for g in giveaways:
@@ -613,12 +654,14 @@ def join_giveaway(giveaway_id):
         if not user_id:
             return jsonify({'error': 'user_id is required'}), 400
         
-        # Check if giveaway exists and is active
-        db.cur.execute("""
+        # Check if giveaway exists and is active (pakai cursor terpisah)
+        cur = db.get_cursor()
+        cur.execute("""
         SELECT status, end_time, max_tickets_per_user, prize 
         FROM giveaways WHERE giveaway_id = ?
         """, (giveaway_id,))
-        giveaway = db.cur.fetchone()
+        giveaway = cur.fetchone()
+        cur.close()
         
         if not giveaway:
             return jsonify({'error': 'Giveaway not found'}), 404
@@ -631,12 +674,14 @@ def join_giveaway(giveaway_id):
         if end_time and end_time < get_jakarta_time():
             return jsonify({'error': 'Giveaway has ended'}), 400
         
-        # Check if user already joined
-        db.cur.execute("""
+        # Check if user already joined (pakai cursor baru)
+        cur2 = db.get_cursor()
+        cur2.execute("""
         SELECT tickets FROM participants 
         WHERE giveaway_id = ? AND user_id = ?
         """, (giveaway_id, user_id))
-        existing = db.cur.fetchone()
+        existing = cur2.fetchone()
+        cur2.close()
         
         if existing and existing[0] >= max_tickets:
             return jsonify({
@@ -652,12 +697,14 @@ def join_giveaway(giveaway_id):
             # Add user if not exists
             db.add_user(user_id, fullname, username)
             
-            # Get updated ticket count
-            db.cur.execute("""
+            # Get updated ticket count (pakai cursor baru)
+            cur3 = db.get_cursor()
+            cur3.execute("""
             SELECT tickets FROM participants 
             WHERE giveaway_id = ? AND user_id = ?
             """, (giveaway_id, user_id))
-            new_tickets = db.cur.fetchone()[0]
+            new_tickets = cur3.fetchone()[0]
+            cur3.close()
             
             return jsonify({
                 'success': True,
@@ -677,12 +724,10 @@ def join_giveaway(giveaway_id):
 @app.route('/api/giveaways/<giveaway_id>/participants/<int:user_id>', methods=['GET'])
 def check_participation(giveaway_id, user_id):
     try:
-        db.cur.execute("""
+        result = execute_query("""
         SELECT tickets, joined_at FROM participants 
         WHERE giveaway_id = ? AND user_id = ?
-        """, (giveaway_id, user_id))
-        
-        result = db.cur.fetchone()
+        """, (giveaway_id, user_id), one=True)
         
         if result:
             return jsonify({
@@ -709,14 +754,14 @@ def health_check():
     # Get database stats
     db_stats = {}
     try:
-        db.cur.execute("SELECT COUNT(*) FROM users")
-        db_stats['users'] = db.cur.fetchone()[0]
+        users = execute_query("SELECT COUNT(*) FROM users", one=True)
+        db_stats['users'] = users[0] if users else 0
         
-        db.cur.execute("SELECT COUNT(*) FROM giveaways")
-        db_stats['giveaways'] = db.cur.fetchone()[0]
+        giveaways = execute_query("SELECT COUNT(*) FROM giveaways", one=True)
+        db_stats['giveaways'] = giveaways[0] if giveaways else 0
         
-        db.cur.execute("SELECT COUNT(*) FROM participants")
-        db_stats['participants'] = db.cur.fetchone()[0]
+        participants = execute_query("SELECT COUNT(*) FROM participants", one=True)
+        db_stats['participants'] = participants[0] if participants else 0
     except Exception as e:
         logger.error(f"Error getting db stats: {e}")
         db_stats = {'error': 'Could not fetch stats'}
