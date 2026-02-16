@@ -1,248 +1,46 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Telegram Auth Test</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-        }
-        
-        body {
-            background: linear-gradient(135deg, #1a1a2e, #16213e);
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-        }
-        
-        .card {
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            border-radius: 20px;
-            padding: 30px;
-            width: 100%;
-            max-width: 400px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
-        }
-        
-        h2 {
-            color: white;
-            margin-bottom: 20px;
-            text-align: center;
-            font-weight: 600;
-            font-size: 24px;
-        }
-        
-        .avatar {
-            width: 100px;
-            height: 100px;
-            border-radius: 50%;
-            margin: 0 auto 20px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            border: 3px solid white;
-            overflow: hidden;
-        }
-        
-        .avatar img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-        
-        .avatar span {
-            font-size: 48px;
-            font-weight: bold;
-            color: white;
-            text-transform: uppercase;
-        }
-        
-        .info-item {
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 12px;
-            padding: 15px;
-            margin-bottom: 15px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-        
-        .info-label {
-            color: rgba(255, 255, 255, 0.5);
-            font-size: 12px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin-bottom: 5px;
-        }
-        
-        .info-value {
-            color: white;
-            font-size: 18px;
-            font-weight: 600;
-            word-break: break-word;
-        }
-        
-        .badge {
-            display: inline-block;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: 600;
-            margin-top: 10px;
-        }
-        
-        .badge.premium {
-            background: linear-gradient(135deg, #f5b042, #f5a042);
-            color: #000;
-        }
-        
-        .badge.free {
-            background: rgba(255, 255, 255, 0.1);
-            color: rgba(255, 255, 255, 0.8);
-        }
-        
-        .loading {
-            text-align: center;
-            color: white;
-            padding: 40px 0;
-        }
-        
-        .spinner {
-            width: 40px;
-            height: 40px;
-            border: 3px solid rgba(255, 255, 255, 0.3);
-            border-top-color: white;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin: 0 auto 15px;
-        }
-        
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-    </style>
-    <!-- Telegram Web App SDK - WAJIB ADA DI HEAD -->
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Giveaway - GiftFreebies</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
-    <div class="card">
-        <h2>📱 Telegram Auth</h2>
-        
-        <div id="loading" class="loading">
-            <div class="spinner"></div>
-            <p>Mengambil data user...</p>
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="logo">🎁 GiftFreebies</div>
+            <div class="nav-links">
+                <a href="index.html" class="active">GIVEAWAYS</a>
+                <a href="profile.html">PROFIL</a>
+            </div>
+            <div class="user-info" id="userInfo">
+                <div class="user-avatar" id="userAvatar">
+                    <span class="avatar-initial">?</span>
+                </div>
+                <span id="userName">Loading...</span>
+            </div>
         </div>
+    </nav>
+
+    <div class="container">
+        <h1>🎉 Giveaway Aktif</h1>
         
-        <div id="userData" style="display: none;">
-            <div class="avatar" id="avatarContainer">
-                <span id="avatarInitial">?</span>
-            </div>
-            
-            <div class="info-item">
-                <div class="info-label">Nama Lengkap</div>
-                <div class="info-value" id="fullName">-</div>
-            </div>
-            
-            <div class="info-item">
-                <div class="info-label">Username</div>
-                <div class="info-value" id="username">-</div>
-            </div>
-            
-            <div class="info-item">
-                <div class="info-label">User ID</div>
-                <div class="info-value" id="userId">-</div>
-            </div>
-            
-            <div id="premiumBadge" class="badge free">Free User</div>
+        <div style="margin: 2rem 0;">
+            <input type="text" id="searchGiveaway" placeholder="Cari giveaway atau masukkan link giveaway..." 
+                   style="width: 100%; padding: 1rem; background: rgba(255,255,255,0.05); border: 1px solid var(--primary-blue); border-radius: 8px; color: white;">
         </div>
-        
-        <div id="error" style="display: none; color: #ff6b6b; text-align: center; padding: 20px;">
-            ❌ Gagal mengambil data user. Pastikan dibuka dari Telegram.
+
+        <div id="giveawayList" class="giveaway-list">
+            <div class="loading">
+                <div class="spinner"></div>
+            </div>
         </div>
     </div>
 
-    <script>
-        // JALANKAN LANGSUNG, TUNGGU LOAD EVENT
-        (function() {
-            console.log('Script dimulai...');
-            
-            // DOM Elements
-            const loadingEl = document.getElementById('loading');
-            const userDataEl = document.getElementById('userData');
-            const errorEl = document.getElementById('error');
-            const avatarInitialEl = document.getElementById('avatarInitial');
-            const avatarContainer = document.getElementById('avatarContainer');
-            const fullNameEl = document.getElementById('fullName');
-            const usernameEl = document.getElementById('username');
-            const userIdEl = document.getElementById('userId');
-            const premiumBadgeEl = document.getElementById('premiumBadge');
-            
-            // Cek Telegram
-            if (window.Telegram && window.Telegram.WebApp) {
-                console.log('✅ Telegram WebApp detected');
-                
-                const tg = window.Telegram.WebApp;
-                tg.expand();
-                tg.ready();
-                
-                console.log('Telegram WebApp version:', tg.version);
-                console.log('initDataUnsafe:', tg.initDataUnsafe);
-                
-                if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
-                    const user = tg.initDataUnsafe.user;
-                    console.log('✅ User detected:', user);
-                    
-                    // Hide loading, show user data
-                    loadingEl.style.display = 'none';
-                    userDataEl.style.display = 'block';
-                    
-                    // Full name
-                    const fullName = [user.first_name, user.last_name].filter(Boolean).join(' ') || 'No Name';
-                    fullNameEl.textContent = fullName;
-                    
-                    // Username
-                    usernameEl.textContent = user.username ? `@${user.username}` : '(no username)';
-                    
-                    // User ID
-                    userIdEl.textContent = user.id;
-                    
-                    // Avatar
-                    if (user.photo_url) {
-                        const img = document.createElement('img');
-                        img.src = user.photo_url;
-                        img.alt = 'Avatar';
-                        avatarContainer.innerHTML = '';
-                        avatarContainer.appendChild(img);
-                    } else {
-                        const initial = (user.first_name || 'U').charAt(0).toUpperCase();
-                        avatarInitialEl.textContent = initial;
-                    }
-                    
-                    // Premium badge
-                    if (user.is_premium) {
-                        premiumBadgeEl.textContent = '⭐ Premium User';
-                        premiumBadgeEl.className = 'badge premium';
-                    }
-                    
-                } else {
-                    console.log('❌ No user data');
-                    loadingEl.style.display = 'none';
-                    errorEl.style.display = 'block';
-                }
-            } else {
-                console.log('❌ Not in Telegram');
-                loadingEl.style.display = 'none';
-                errorEl.style.display = 'block';
-            }
-        })();
-    </script>
+    <script src="js/telegram.js"></script>
+    <script src="js/main.js"></script>
+    <script src="js/giveaway.js"></script>
 </body>
 </html>
