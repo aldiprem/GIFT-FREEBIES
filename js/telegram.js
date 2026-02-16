@@ -1,5 +1,5 @@
 // js/telegram.js
-// Telegram Web App Integration - PRIORITAS UTAMA
+// Telegram Web App Integration - VERSI FINAL
 
 (function() {
   'use strict';
@@ -10,7 +10,7 @@
   window.tg = null;
   window.telegramUser = null;
 
-  // Initialize Telegram Web App - JALANKAN SEGERA
+  // Initialize Telegram Web App
   function initTelegram() {
     console.log('🔍 Initializing Telegram Web App...');
 
@@ -38,18 +38,19 @@
         // Save to localStorage as currentUser
         const tgUser = {
           user_id: window.telegramUser.id,
+          first_name: window.telegramUser.first_name,
+          last_name: window.telegramUser.last_name || '',
           fullname: window.telegramUser.first_name + ' ' + (window.telegramUser.last_name || ''),
           username: window.telegramUser.username || '',
           avatar: window.telegramUser.photo_url || `https://ui-avatars.com/api/?name=${window.telegramUser.first_name}&size=120&background=1e88e5&color=fff`,
           is_premium: window.telegramUser.is_premium || false,
-          language_code: window.telegramUser.language_code || 'id',
-          first_seen: new Date().toISOString()
+          language_code: window.telegramUser.language_code || 'id'
         };
 
         // Simpan ke localStorage
         localStorage.setItem('giftfreebies_user', JSON.stringify(tgUser));
 
-        // Trigger event untuk main.js
+        // Trigger event untuk main.js/profile.js
         const event = new CustomEvent('telegramUserReady', {
           detail: tgUser
         });
@@ -57,54 +58,28 @@
 
         console.log('✅ Telegram user saved to localStorage:', tgUser);
 
-        // Update UI langsung jika elemen sudah ada
-        updateTelegramUI(tgUser);
-
         return tgUser;
       } else {
         console.warn('⚠️ No user data in Telegram WebApp');
         console.log('initDataUnsafe:', window.tg.initDataUnsafe);
+
+        // Trigger event untuk guest user
+        window.dispatchEvent(new CustomEvent('telegramUserReady', {
+          detail: null
+        }));
+
         return null;
       }
     } else {
       console.warn('❌ Telegram Web App not detected - not in Telegram environment');
+
+      // Trigger event untuk guest user
+      window.dispatchEvent(new CustomEvent('telegramUserReady', {
+        detail: null
+      }));
+
       return null;
     }
-  }
-
-  // Update UI langsung dengan data Telegram
-  function updateTelegramUI(user) {
-    // Update navbar avatar dan nama
-    const userNameEl = document.getElementById('userName');
-    const userAvatarEl = document.getElementById('userAvatar');
-
-    if (userNameEl) {
-      userNameEl.textContent = user.fullname || user.username || 'User';
-    }
-
-    if (userAvatarEl) {
-      // Cari avatar image atau initial
-      const avatarImg = userAvatarEl.querySelector('img');
-      const avatarInitial = userAvatarEl.querySelector('.avatar-initial');
-
-      if (avatarImg) {
-        avatarImg.src = user.avatar;
-        avatarImg.alt = user.fullname;
-        if (avatarInitial) avatarInitial.style.display = 'none';
-      } else if (avatarInitial) {
-        // Fallback ke initial
-        avatarInitial.textContent = user.fullname.charAt(0).toUpperCase();
-      }
-    }
-
-    // Update profile page jika ada
-    const profileFullname = document.getElementById('profileFullname');
-    const profileUsername = document.getElementById('profileUsername');
-    const profileAvatar = document.getElementById('profileAvatar');
-
-    if (profileFullname) profileFullname.textContent = user.fullname;
-    if (profileUsername) profileUsername.textContent = user.username ? `@${user.username}` : '-';
-    if (profileAvatar) profileAvatar.src = user.avatar;
   }
 
   // Apply Telegram theme colors
@@ -116,7 +91,6 @@
 
     const root = document.documentElement;
 
-    // Map Telegram theme to CSS variables
     if (theme.bg_color) {
       root.style.setProperty('--tg-bg-color', theme.bg_color);
       root.style.setProperty('--tg-theme-bg-color', theme.bg_color);
