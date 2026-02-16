@@ -1,0 +1,488 @@
+:root {
+    --primary-blue: #1e88e5;
+    --glossy-blue: rgba(30, 136, 229, 0.2);
+    --dark-bg: rgba(10, 25, 47, 0.95);
+    --glass-effect: rgba(255, 255, 255, 0.1);
+    --border-glow: 0 0 10px rgba(30, 136, 229, 0.5);
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Poppins', sans-serif;
+}
+
+body {
+    background: linear-gradient(135deg, #0a1929 0%, #1a3a5f 100%);
+    min-height: 100vh;
+    color: white;
+    position: relative;
+    overflow-x: hidden;
+}
+
+/* Glossy Effect */
+body::before {
+    content: '';
+    position: fixed;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+    animation: glossy 15s infinite linear;
+    z-index: -1;
+}
+
+@keyframes glossy {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Navbar */
+.navbar {
+    background: rgba(10, 25, 47, 0.8);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-bottom: 2px solid var(--primary-blue);
+    box-shadow: var(--border-glow);
+    padding: 1rem 2rem;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+}
+
+.nav-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.logo {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: var(--primary-blue);
+    text-shadow: 0 0 10px rgba(30, 136, 229, 0.7);
+}
+
+.nav-links {
+    display: flex;
+    gap: 2rem;
+}
+
+.nav-links a {
+    color: white;
+    text-decoration: none;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    transition: all 0.3s;
+    position: relative;
+}
+
+/* Border kiri untuk GIVEAWAYS */
+.nav-links a[href="index.html"] {
+    border-left: 3px solid var(--primary-blue);
+    padding-left: 1.3rem;
+    box-shadow: -3px 0 10px rgba(30, 136, 229, 0.3);
+}
+
+.nav-links a:hover {
+    background: var(--glossy-blue);
+    transform: translateY(-2px);
+}
+
+.user-info {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.user-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 2px solid var(--primary-blue);
+    box-shadow: var(--border-glow);
+}
+
+/* Main Container */
+.container {
+    max-width: 1200px;
+    margin: 2rem auto;
+    padding: 0 2rem;
+}
+
+/* Profile Page */
+.profile-container {
+    background: rgba(10, 25, 47, 0.7);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-radius: 20px;
+    border: 1px solid var(--primary-blue);
+    box-shadow: var(--border-glow);
+    padding: 2rem;
+    position: relative;
+    overflow: hidden;
+}
+
+/* Border bawah untuk PROFIL */
+.profile-container::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, transparent, var(--primary-blue), transparent);
+    box-shadow: 0 0 20px var(--primary-blue);
+}
+
+.profile-header {
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+    margin-bottom: 2rem;
+    flex-wrap: wrap;
+}
+
+.profile-avatar {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    border: 3px solid var(--primary-blue);
+    box-shadow: var(--border-glow);
+}
+
+.profile-title h1 {
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+}
+
+.profile-title p {
+    color: rgba(255, 255, 255, 0.7);
+}
+
+/* Create Giveaway Button */
+.create-giveaway-btn {
+    background: linear-gradient(135deg, var(--primary-blue), #1565c0);
+    border: none;
+    color: white;
+    padding: 1rem 2rem;
+    border-radius: 12px;
+    font-size: 1.1rem;
+    font-weight: bold;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.3s;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: var(--border-glow);
+    margin: 2rem 0;
+}
+
+.create-giveaway-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 0 25px var(--primary-blue);
+}
+
+.create-giveaway-btn svg {
+    width: 24px;
+    height: 24px;
+    fill: white;
+}
+
+/* Stats Cards */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+    margin: 2rem 0;
+}
+
+.stat-card {
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(5px);
+    border-radius: 15px;
+    padding: 1.5rem;
+    border: 1px solid var(--primary-blue);
+    transition: all 0.3s;
+}
+
+.stat-card:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--border-glow);
+}
+
+.stat-value {
+    font-size: 2rem;
+    font-weight: bold;
+    color: var(--primary-blue);
+    margin-bottom: 0.5rem;
+}
+
+.stat-label {
+    color: rgba(255, 255, 255, 0.8);
+}
+
+/* Giveaway List */
+.giveaway-list {
+    display: grid;
+    gap: 1rem;
+    margin-top: 2rem;
+}
+
+.giveaway-item {
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(5px);
+    border-radius: 12px;
+    padding: 1.5rem;
+    border: 1px solid rgba(30, 136, 229, 0.3);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    transition: all 0.3s;
+}
+
+.giveaway-item:hover {
+    border-color: var(--primary-blue);
+    box-shadow: var(--border-glow);
+}
+
+.giveaway-status {
+    padding: 0.3rem 1rem;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    background: rgba(30, 136, 229, 0.2);
+    border: 1px solid var(--primary-blue);
+}
+
+/* Create Giveaway Form */
+.form-container {
+    background: rgba(10, 25, 47, 0.7);
+    backdrop-filter: blur(10px);
+    border-radius: 20px;
+    padding: 2rem;
+    border: 1px solid var(--primary-blue);
+    box-shadow: var(--border-glow);
+    max-width: 800px;
+    margin: 2rem auto;
+}
+
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    color: var(--primary-blue);
+    font-weight: 500;
+}
+
+.form-group input,
+.form-group textarea,
+.form-group select {
+    width: 100%;
+    padding: 0.8rem 1rem;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(30, 136, 229, 0.3);
+    border-radius: 8px;
+    color: white;
+    font-size: 1rem;
+    transition: all 0.3s;
+}
+
+.form-group input:focus,
+.form-group textarea:focus,
+.form-group select:focus {
+    outline: none;
+    border-color: var(--primary-blue);
+    box-shadow: var(--border-glow);
+}
+
+.form-group textarea {
+    min-height: 120px;
+    resize: vertical;
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+/* Duration Picker */
+.duration-picker {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.duration-picker input {
+    width: 80px;
+    text-align: center;
+}
+
+/* Start Giveaway Button */
+.start-giveaway-btn {
+    width: 100%;
+    background: linear-gradient(135deg, var(--primary-blue), #1565c0);
+    border: none;
+    color: white;
+    padding: 1.2rem;
+    border-radius: 12px;
+    font-size: 1.2rem;
+    font-weight: bold;
+    cursor: pointer;
+    margin-top: 2rem;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: var(--border-glow);
+    transition: all 0.3s;
+}
+
+.start-giveaway-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 0 30px var(--primary-blue);
+}
+
+/* Giveaway Page */
+.giveaway-detail {
+    background: rgba(10, 25, 47, 0.7);
+    backdrop-filter: blur(10px);
+    border-radius: 20px;
+    padding: 2rem;
+    border: 1px solid var(--primary-blue);
+    box-shadow: var(--border-glow);
+}
+
+.giveaway-prize {
+    font-size: 2.5rem;
+    color: var(--primary-blue);
+    margin-bottom: 1rem;
+    text-shadow: 0 0 10px rgba(30, 136, 229, 0.5);
+}
+
+.giveaway-meta {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin: 2rem 0;
+    padding: 1.5rem;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 12px;
+}
+
+.meta-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+}
+
+.meta-label {
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 0.9rem;
+}
+
+.meta-value {
+    font-size: 1.2rem;
+    font-weight: bold;
+}
+
+.join-btn {
+    background: linear-gradient(135deg, #00c853, #00a86b);
+    border: none;
+    color: white;
+    padding: 1rem 2rem;
+    border-radius: 12px;
+    font-size: 1.2rem;
+    font-weight: bold;
+    cursor: pointer;
+    width: 100%;
+    margin-top: 1rem;
+    transition: all 0.3s;
+}
+
+.join-btn:hover {
+    transform: scale(1.02);
+    box-shadow: 0 0 20px #00c853;
+}
+
+.join-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Loading Spinner */
+.loading {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 300px;
+}
+
+.spinner {
+    width: 50px;
+    height: 50px;
+    border: 3px solid rgba(30, 136, 229, 0.3);
+    border-top-color: var(--primary-blue);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Alert Messages */
+.alert {
+    padding: 1rem;
+    border-radius: 8px;
+    margin: 1rem 0;
+    border-left: 4px solid;
+}
+
+.alert-success {
+    background: rgba(0, 200, 83, 0.1);
+    border-left-color: #00c853;
+}
+
+.alert-error {
+    background: rgba(244, 67, 54, 0.1);
+    border-left-color: #f44336;
+}
+
+.alert-warning {
+    background: rgba(255, 152, 0, 0.1);
+    border-left-color: #ff9800;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .nav-container {
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .nav-links {
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+    
+    .profile-header {
+        justify-content: center;
+        text-align: center;
+    }
+    
+    .form-row {
+        grid-template-columns: 1fr;
+    }
+    
+    .duration-picker {
+        justify-content: center;
+    }
+}
