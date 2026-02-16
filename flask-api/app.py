@@ -16,12 +16,13 @@ from b import GiveawayDatabase, get_jakarta_time, generate_giveaway_id
 
 app = Flask(__name__)
 
-# CORS configuration
+# CORS configuration - Allow GitHub Pages
 CORS(app,
      origins=[
          "https://aldiprem.github.io",
-         "http://localhost",
-         "http://127.0.0.1"
+         "http://localhost:5500",
+         "http://127.0.0.1:5500",
+         "http://localhost:3000"
      ],
      methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
      allow_headers=["Content-Type", "Accept", "Authorization"],
