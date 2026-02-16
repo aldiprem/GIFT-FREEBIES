@@ -1,1410 +1,257 @@
-/* ==================== ROOT VARIABLES ==================== */
-:root {
-    --primary-blue: #1e88e5;
-    --primary-blue-dark: #1565c0;
-    --primary-blue-light: #64b5f6;
-    --glossy-blue: rgba(30, 136, 229, 0.2);
-    --dark-bg: rgba(10, 25, 47, 0.95);
-    --glass-effect: rgba(255, 255, 255, 0.1);
-    --border-glow: 0 0 10px rgba(30, 136, 229, 0.5);
-    
-    /* Telegram theme variables (fallback) */
-    --tg-theme-bg-color: #0a1929;
-    --tg-theme-text-color: #ffffff;
-    --tg-theme-hint-color: rgba(255, 255, 255, 0.6);
-    --tg-theme-link-color: #1e88e5;
-    --tg-theme-button-color: #1e88e5;
-    --tg-theme-button-text-color: #ffffff;
-    --tg-theme-secondary-bg-color: rgba(255, 255, 255, 0.05);
-    
-    /* Spacing */
-    --spacing-xs: 4px;
-    --spacing-sm: 8px;
-    --spacing-md: 16px;
-    --spacing-lg: 24px;
-    --spacing-xl: 32px;
-    
-    /* Border radius */
-    --radius-sm: 8px;
-    --radius-md: 12px;
-    --radius-lg: 20px;
-    --radius-xl: 28px;
-    --radius-full: 9999px;
-    
-    /* Transitions */
-    --transition-fast: 0.2s ease;
-    --transition-normal: 0.3s ease;
-    --transition-slow: 0.5s ease;
-    
-    /* Shadows */
-    --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.1);
-    --shadow-md: 0 4px 8px rgba(0, 0, 0, 0.15);
-    --shadow-lg: 0 8px 16px rgba(0, 0, 0, 0.2);
-    --shadow-glow: 0 0 20px rgba(30, 136, 229, 0.3);
-}
-
-/* ==================== RESET & BASE STYLES ==================== */
 * {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
-    -webkit-tap-highlight-color: transparent;
-    -webkit-touch-callout: none;
-}
-
-/* ==================== ANTI-ZOOM LENGKAP ==================== */
-/* Disable semua bentuk zoom */
-* {
-    touch-action: pan-y !important; /* Hanya izinkan scroll vertikal, tidak ada zoom */
-    -webkit-touch-callout: none !important;
-    -webkit-user-select: none !important;
-    -khtml-user-select: none !important;
-    -moz-user-select: none !important;
-    -ms-user-select: none !important;
-    user-select: none !important;
-    -webkit-tap-highlight-color: transparent !important;
-}
-
-/* Izinkan user select hanya pada input dan textarea */
-input, textarea, [contenteditable="true"] {
-    -webkit-user-select: text !important;
-    -khtml-user-select: text !important;
-    -moz-user-select: text !important;
-    -ms-user-select: text !important;
-    user-select: text !important;
-    touch-action: auto !important; /* Kembalikan touch action normal untuk input */
-}
-
-/* Fix untuk input di iOS */
-@supports (-webkit-touch-callout: none) {
-    input, textarea, select, button {
-        font-size: 16px !important; /* Cegah auto-zoom saat focus */
-    }
-}
-
-/* Body fix untuk anti-zoom total */
-body {
-    -webkit-text-size-adjust: 100% !important;
-    -ms-text-size-adjust: 100% !important;
-    text-size-adjust: 100% !important;
-    touch-action: pan-y !important;
-    overflow-x: hidden !important;
-    position: relative !important;
-    width: 100% !important;
-}
-
-/* Mencegah zoom pada semua container */
-.container,
-.profile-container,
-.form-container,
-.giveaway-detail,
-.giveaway-list,
-.stats-grid,
-.navbar,
-.nav-container {
-    touch-action: pan-y !important;
-}
-
-/* Fix untuk gambar dan media */
-img, svg, video, iframe {
-    max-width: 100% !important;
-    height: auto !important;
-    -webkit-user-drag: none !important;
-    -khtml-user-drag: none !important;
-    -moz-user-drag: none !important;
-    -o-user-drag: none !important;
-    user-drag: none !important;
-    pointer-events: auto !important;
-}
-
-/* Mencegah zoom saat popup/modal aktif */
-.popup-overlay.active,
-.modal.active,
-.bottom-sheet.active {
-    touch-action: none !important; /* Matikan semua gesture saat popup */
-}
-
-.popup-content,
-.modal-content,
-.sheet-content {
-    touch-action: pan-y !important; /* Izinkan scroll di dalam popup */
-    overflow-y: auto !important;
-    -webkit-overflow-scrolling: touch !important;
-}
-
-/* Untuk Telegram Web App */
-body.telegram-webapp {
-    height: 100vh !important;
-    height: -webkit-fill-available !important;
-    overflow: hidden !important;
-    position: fixed !important;
-    width: 100% !important;
-}
-
-.telegram-webapp .container {
-    height: calc(100vh - 80px) !important;
-    height: calc(100vh - env(safe-area-inset-top) - env(safe-area-inset-bottom)) !important;
-    overflow-y: auto !important;
-    -webkit-overflow-scrolling: touch !important;
-}
-
-/* Safe area insets */
-@supports (padding: max(0px)) {
-    body {
-        padding-top: env(safe-area-inset-top) !important;
-        padding-bottom: env(safe-area-inset-bottom) !important;
-        padding-left: env(safe-area-inset-left) !important;
-        padding-right: env(safe-area-inset-right) !important;
-    }
-}
-
-html {
-    height: -webkit-fill-available;
-    overflow-x: hidden;
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
-    scroll-behavior: smooth;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
 }
 
 body {
-    font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    background: linear-gradient(135deg, var(--dark-bg) 0%, #1a3a5f 100%);
+    background: linear-gradient(135deg, #0f0f1a, #1a1a2f);
     min-height: 100vh;
-    min-height: -webkit-fill-available;
-    color: white;
-    position: relative;
-    overflow-x: hidden;
-    overflow-y: auto;
-    line-height: 1.5;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-    text-rendering: optimizeLegibility;
-}
-
-/* ==================== FULLSCREEN & ANTI-ZOOM ==================== */
-/* Prevent zoom on input focus for iOS */
-@supports (-webkit-touch-callout: none) {
-    input, textarea, select, button {
-        font-size: 16px !important;
-    }
-}
-
-/* Disable user zoom */
-body {
-    touch-action: pan-y pinch-zoom; /* Allow vertical pan but restrict pinch-zoom */
-    -webkit-text-size-adjust: 100%;
-}
-
-/* Prevent zoom on double tap */
-* {
-    touch-action: manipulation;
-}
-
-/* Fullscreen for Telegram Mini App */
-body.telegram-webapp {
-    height: 100vh;
-    height: -webkit-fill-available;
-    overflow: hidden;
-}
-
-.telegram-webapp .container {
-    height: calc(100vh - 80px);
-    height: calc(100vh - env(safe-area-inset-top) - env(safe-area-inset-bottom));
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
-    padding-bottom: env(safe-area-inset-bottom);
-}
-
-/* Safe area insets for notched phones */
-@supports (padding: max(0px)) {
-    body {
-        padding-top: env(safe-area-inset-top);
-        padding-bottom: env(safe-area-inset-bottom);
-        padding-left: env(safe-area-inset-left);
-        padding-right: env(safe-area-inset-right);
-    }
-    
-    .navbar {
-        padding-top: max(1rem, env(safe-area-inset-top));
-    }
-    
-    .container {
-        padding-bottom: max(2rem, env(safe-area-inset-bottom));
-    }
-}
-
-/* ==================== GLOSSY BACKGROUND EFFECT ==================== */
-body::before {
-    content: '';
-    position: fixed;
-    top: -50%;
-    left: -50%;
-    width: 200%;
-    height: 200%;
-    background: radial-gradient(circle, rgba(255,255,255,0.08) 0%, transparent 60%);
-    animation: glossy 20s infinite linear;
-    z-index: -1;
-    pointer-events: none;
-    will-change: transform;
-}
-
-@keyframes glossy {
-    0% { transform: rotate(0deg) scale(1); }
-    50% { transform: rotate(180deg) scale(1.1); }
-    100% { transform: rotate(360deg) scale(1); }
-}
-
-/* Subtle gradient overlay */
-body::after {
-    content: '';
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: radial-gradient(circle at 50% 50%, rgba(30, 136, 229, 0.1) 0%, transparent 70%);
-    pointer-events: none;
-    z-index: -1;
-}
-
-/* ==================== SCROLLBAR STYLING ==================== */
-::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
-    background: transparent;
-}
-
-::-webkit-scrollbar-track {
-    background: rgba(255, 255, 255, 0.05);
-    border-radius: var(--radius-full);
-}
-
-::-webkit-scrollbar-thumb {
-    background: var(--primary-blue);
-    border-radius: var(--radius-full);
-    opacity: 0.5;
-    transition: all var(--transition-fast);
-}
-
-::-webkit-scrollbar-thumb:hover {
-    background: var(--primary-blue-light);
-}
-
-/* For Firefox */
-* {
-    scrollbar-width: thin;
-    scrollbar-color: var(--primary-blue) rgba(255, 255, 255, 0.05);
-}
-
-/* ==================== NAVBAR ==================== */
-.navbar {
-    background: rgba(10, 25, 47, 0.95);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    border-bottom: 2px solid var(--primary-blue);
-    box-shadow: var(--border-glow);
-    padding: 1rem 2rem;
-    position: sticky;
-    top: 0;
-    z-index: 1000;
-    width: 100%;
-    transition: all var(--transition-normal);
-}
-
-.navbar.scrolled {
-    padding: 0.75rem 2rem;
-    background: rgba(10, 25, 47, 0.98);
-}
-
-.nav-container {
-    max-width: 1200px;
-    margin: 0 auto;
     display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 1rem;
-}
-
-.logo {
-    font-size: 1.5rem;
-    font-weight: 700;
-    color: var(--primary-blue);
-    text-shadow: 0 0 10px rgba(30, 136, 229, 0.5);
-    letter-spacing: -0.5px;
-    white-space: nowrap;
-}
-
-.logo span {
-    background: linear-gradient(135deg, var(--primary-blue), var(--primary-blue-light));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-}
-
-.nav-links {
-    display: flex;
-    gap: 1.5rem;
-}
-
-.nav-links a {
-    color: white;
-    text-decoration: none;
-    padding: 0.5rem 1rem;
-    border-radius: var(--radius-md);
-    transition: all var(--transition-fast);
-    position: relative;
-    font-weight: 500;
-    font-size: 0.95rem;
-    letter-spacing: 0.3px;
-}
-
-/* Border kiri untuk GIVEAWAYS (active state) */
-.nav-links a.active {
-    border-left: 3px solid var(--primary-blue);
-    padding-left: calc(1rem + 3px);
-    background: var(--glossy-blue);
-    box-shadow: -3px 0 15px rgba(30, 136, 229, 0.3);
-}
-
-.nav-links a:not(.active):hover {
-    background: var(--glossy-blue);
-    transform: translateY(-2px);
-}
-
-/* Active indicator */
-.nav-links a.active::after {
-    content: '';
-    position: absolute;
-    bottom: -1rem;
-    left: 0;
-    right: 0;
-    height: 3px;
-    background: var(--primary-blue);
-    border-radius: var(--radius-full) var(--radius-full) 0 0;
-    box-shadow: 0 -3px 10px var(--primary-blue);
-}
-
-.user-info {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    padding: 0.25rem;
-    border-radius: var(--radius-full);
-    background: rgba(255, 255, 255, 0.05);
-    transition: all var(--transition-fast);
-}
-
-.user-info:hover {
-    background: rgba(255, 255, 255, 0.1);
-}
-
-.user-avatar {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    border: 2px solid var(--primary-blue);
-    box-shadow: var(--border-glow);
-    object-fit: cover;
-    transition: all var(--transition-fast);
-}
-
-.user-avatar:hover {
-    transform: scale(1.05);
-}
-
-.user-avatar .avatar-image {
-    width: 100%;
-    height: 100%;
-    border-radius: 50%;
-    object-fit: cover;
-}
-
-.avatar-initial {
-    width: 100%;
-    height: 100%;
-    display: flex;
-    align-items: center;
+    align-items: flex-start;
     justify-content: center;
-    background: linear-gradient(135deg, var(--primary-blue), var(--primary-blue-dark));
-    color: white;
-    font-weight: 600;
-    font-size: 1.2rem;
-    border-radius: 50%;
+    padding: 20px;
 }
 
-/* ==================== MAIN CONTAINER ==================== */
 .container {
-    max-width: 1200px;
-    margin: 2rem auto;
-    padding: 0 2rem;
     width: 100%;
-    position: relative;
-    z-index: 1;
+    max-width: 500px;
 }
 
-/* ==================== PROFILE PAGE ==================== */
-.profile-container {
-    background: rgba(10, 25, 47, 0.7);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    border-radius: var(--radius-lg);
-    border: 1px solid var(--primary-blue);
-    box-shadow: var(--border-glow), var(--shadow-lg);
-    padding: 2rem;
-    position: relative;
-    overflow: hidden;
-}
-
-/* Border bawah untuk PROFIL */
-.profile-container::after {
-    content: '';
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    height: 3px;
-    background: linear-gradient(90deg, transparent, var(--primary-blue), transparent);
-    box-shadow: 0 0 20px var(--primary-blue);
+/* Profile Border Section */
+.profile-border {
+    background: rgba(20, 20, 30, 0.4);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 24px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
 }
 
 .profile-header {
     display: flex;
+    justify-content: space-between;
     align-items: center;
-    gap: 2rem;
-    margin-bottom: 2rem;
-    flex-wrap: wrap;
-    position: relative;
+    margin-bottom: 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    padding-bottom: 15px;
 }
 
-.profile-avatar {
-    width: 120px;
-    height: 120px;
+.profile-title {
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 20px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.settings-btn {
+    width: 40px;
+    height: 40px;
     border-radius: 50%;
-    border: 3px solid var(--primary-blue);
-    box-shadow: var(--border-glow), var(--shadow-md);
-    object-fit: cover;
-    transition: all var(--transition-normal);
-}
-
-.profile-avatar:hover {
-    transform: scale(1.02);
-    border-color: var(--primary-blue-light);
-}
-
-.profile-title h1 {
-    font-size: 2rem;
-    margin-bottom: 0.5rem;
-    font-weight: 600;
-    letter-spacing: -0.5px;
-}
-
-.profile-title p {
-    color: var(--tg-theme-hint-color, rgba(255, 255, 255, 0.7));
-    font-size: 1rem;
-}
-
-/* Create Giveaway Button */
-.create-giveaway-btn {
-    background: linear-gradient(135deg, var(--primary-blue), var(--primary-blue-dark));
-    border: none;
-    color: white;
-    padding: 1rem 2rem;
-    border-radius: var(--radius-md);
-    font-size: 1.1rem;
-    font-weight: 600;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.7);
     cursor: pointer;
-    display: inline-flex;
+    display: flex;
     align-items: center;
     justify-content: center;
-    gap: 0.75rem;
-    transition: all var(--transition-normal);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    box-shadow: var(--border-glow), var(--shadow-md);
-    margin: 2rem 0;
-    width: 100%;
-    position: relative;
-    overflow: hidden;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
 }
 
-.create-giveaway-btn::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-    transition: left 0.5s ease;
-}
-
-.create-giveaway-btn:hover::before {
-    left: 100%;
-}
-
-.create-giveaway-btn:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 0 30px var(--primary-blue), var(--shadow-lg);
-}
-
-.create-giveaway-btn:active {
-    transform: translateY(-1px);
-}
-
-.create-giveaway-btn svg {
-    width: 24px;
-    height: 24px;
-    fill: white;
-    transition: transform var(--transition-fast);
-}
-
-.create-giveaway-btn:hover svg {
+.settings-btn:hover {
+    background: rgba(255, 255, 255, 0.15);
+    color: rgba(255, 255, 255, 0.9);
     transform: rotate(90deg);
 }
 
-/* Stats Cards */
-.stats-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-    gap: 1.5rem;
-    margin: 2rem 0;
+/* Avatar Styles */
+.avatar {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    margin: 0 auto 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.6), rgba(118, 75, 162, 0.6));
+    border: 3px solid rgba(255, 255, 255, 0.3);
+    overflow: hidden;
+    backdrop-filter: blur(5px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
 }
 
-.stat-card {
-    background: rgba(255, 255, 255, 0.05);
+.avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.avatar span {
+    font-size: 48px;
+    font-weight: bold;
+    color: rgba(255, 255, 255, 0.9);
+    text-transform: uppercase;
+    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+}
+
+/* Info Items */
+.info-item {
+    background: rgba(15, 15, 25, 0.5);
     backdrop-filter: blur(5px);
     -webkit-backdrop-filter: blur(5px);
-    border-radius: var(--radius-md);
-    padding: 1.5rem;
-    border: 1px solid rgba(30, 136, 229, 0.3);
-    transition: all var(--transition-normal);
-    position: relative;
-    overflow: hidden;
+    border-radius: 16px;
+    padding: 15px;
+    margin-bottom: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
-.stat-card::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 3px;
-    background: linear-gradient(90deg, var(--primary-blue), transparent);
-    opacity: 0;
-    transition: opacity var(--transition-normal);
-}
-
-.stat-card:hover {
-    transform: translateY(-5px);
-    border-color: var(--primary-blue);
-    box-shadow: var(--border-glow), var(--shadow-md);
-}
-
-.stat-card:hover::before {
-    opacity: 1;
-}
-
-.stat-value {
-    font-size: 2.2rem;
-    font-weight: 700;
-    color: var(--primary-blue);
-    margin-bottom: 0.5rem;
-    line-height: 1.2;
-}
-
-.stat-label {
-    color: var(--tg-theme-hint-color, rgba(255, 255, 255, 0.8));
-    font-size: 0.95rem;
+.info-label {
+    color: rgba(255, 255, 255, 0.4);
+    font-size: 12px;
     text-transform: uppercase;
     letter-spacing: 0.5px;
+    margin-bottom: 5px;
 }
 
-/* Giveaway List */
-.giveaway-list {
-    display: grid;
-    gap: 1rem;
-    margin-top: 2rem;
+.info-value {
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 18px;
+    font-weight: 600;
+    word-break: break-word;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+/* Badge */
+.badge {
+    display: inline-block;
+    padding: 6px 16px;
+    border-radius: 30px;
+    font-size: 13px;
+    font-weight: 600;
+    margin-top: 10px;
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.badge.premium {
+    background: linear-gradient(135deg, rgba(245, 176, 66, 0.3), rgba(245, 160, 66, 0.3));
+    color: rgba(255, 215, 120, 0.9);
+    border-color: rgba(245, 176, 66, 0.3);
+}
+
+.badge.free {
+    background: rgba(255, 255, 255, 0.05);
+    color: rgba(255, 255, 255, 0.6);
+}
+
+/* Giveaway Buttons */
+.giveaway-buttons {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.giveaway-btn {
+    flex: 1;
+    padding: 14px 10px;
+    background: rgba(20, 20, 30, 0.4);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 16px;
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.giveaway-btn.active {
+    background: rgba(70, 130, 200, 0.25);
+    color: rgba(255, 255, 255, 0.9);
+    border-color: rgba(70, 130, 200, 0.4);
+    box-shadow: 0 4px 15px rgba(70, 130, 200, 0.2);
+}
+
+.giveaway-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.9);
+}
+
+/* Giveaway Content */
+.giveaway-content {
+    background: rgba(20, 20, 30, 0.3);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 24px;
+    padding: 20px;
+    min-height: 200px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
 }
 
 .giveaway-item {
-    background: rgba(255, 255, 255, 0.05);
+    background: rgba(15, 15, 25, 0.5);
     backdrop-filter: blur(5px);
     -webkit-backdrop-filter: blur(5px);
-    border-radius: var(--radius-md);
-    padding: 1.5rem;
-    border: 1px solid rgba(30, 136, 229, 0.2);
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 1rem;
-    transition: all var(--transition-normal);
-    cursor: pointer;
-    position: relative;
-    overflow: hidden;
+    border-radius: 16px;
+    padding: 15px;
+    margin-bottom: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    color: rgba(255, 255, 255, 0.8);
 }
 
-.giveaway-item::before {
-    content: '';
-    position: absolute;
-    left: 0;
-    top: 0;
-    bottom: 0;
-    width: 3px;
-    background: linear-gradient(180deg, var(--primary-blue), transparent);
-    opacity: 0;
-    transition: opacity var(--transition-normal);
+.giveaway-item:last-child {
+    margin-bottom: 0;
 }
 
-.giveaway-item:hover {
-    border-color: var(--primary-blue);
-    box-shadow: var(--border-glow), var(--shadow-md);
-    transform: translateX(5px);
-}
-
-.giveaway-item:hover::before {
-    opacity: 1;
-}
-
-.giveaway-item h3, 
-.giveaway-item h4 {
-    margin-bottom: 0.5rem;
-    color: white;
-    font-weight: 600;
+.giveaway-item h3 {
+    font-size: 16px;
+    margin-bottom: 8px;
+    color: rgba(255, 255, 255, 0.9);
 }
 
 .giveaway-item p {
-    color: var(--tg-theme-hint-color, rgba(255, 255, 255, 0.7));
-    font-size: 0.9rem;
-    margin-bottom: 0.5rem;
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.5);
 }
 
-.giveaway-status {
-    padding: 0.4rem 1rem;
-    border-radius: var(--radius-full);
-    font-size: 0.85rem;
-    font-weight: 600;
-    letter-spacing: 0.3px;
-    text-transform: uppercase;
-    display: inline-block;
-}
-
-.giveaway-status.success {
-    background: rgba(0, 200, 83, 0.15);
-    color: #00c853;
-    border: 1px solid rgba(0, 200, 83, 0.3);
-}
-
-.giveaway-status.warning {
-    background: rgba(255, 152, 0, 0.15);
-    color: #ff9800;
-    border: 1px solid rgba(255, 152, 0, 0.3);
-}
-
-.giveaway-status.secondary {
-    background: rgba(255, 255, 255, 0.1);
-    color: rgba(255, 255, 255, 0.8);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-}
-
-/* ==================== CREATE GIVEAWAY FORM ==================== */
-.form-container {
-    background: rgba(10, 25, 47, 0.7);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    border-radius: var(--radius-lg);
-    padding: 2rem;
-    border: 1px solid var(--primary-blue);
-    box-shadow: var(--border-glow), var(--shadow-lg);
-    max-width: 800px;
-    margin: 2rem auto;
-}
-
-.form-group {
-    margin-bottom: 1.5rem;
-}
-
-.form-group label {
-    display: block;
-    margin-bottom: 0.5rem;
-    color: var(--primary-blue);
-    font-weight: 500;
-    font-size: 0.95rem;
-    letter-spacing: 0.3px;
-}
-
-.form-group input,
-.form-group textarea,
-.form-group select {
-    width: 100%;
-    padding: 0.8rem 1rem;
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(30, 136, 229, 0.3);
-    border-radius: var(--radius-sm);
-    color: white;
-    font-size: 1rem;
-    transition: all var(--transition-fast);
-    font-family: inherit;
-}
-
-.form-group input:focus,
-.form-group textarea:focus,
-.form-group select:focus {
-    outline: none;
-    border-color: var(--primary-blue);
-    box-shadow: var(--border-glow), 0 0 0 3px rgba(30, 136, 229, 0.1);
-    background: rgba(255, 255, 255, 0.08);
-}
-
-.form-group input::placeholder,
-.form-group textarea::placeholder {
-    color: rgba(255, 255, 255, 0.3);
-}
-
-.form-group textarea {
-    min-height: 120px;
-    resize: vertical;
-    line-height: 1.6;
-}
-
-.form-group small {
-    display: block;
-    margin-top: 0.5rem;
-    color: var(--tg-theme-hint-color, rgba(255, 255, 255, 0.5));
-    font-size: 0.8rem;
-}
-
-.form-row {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 1rem;
-}
-
-/* Duration Picker */
-.duration-picker {
-    display: flex;
-    gap: 1rem;
-    align-items: center;
-    flex-wrap: wrap;
-    background: rgba(0, 0, 0, 0.2);
-    padding: 1rem;
-    border-radius: var(--radius-sm);
-}
-
-.duration-picker input {
-    width: 80px;
+.empty-message {
     text-align: center;
+    color: rgba(255, 255, 255, 0.3);
+    padding: 40px 20px;
+    font-size: 14px;
 }
 
-.duration-picker span {
-    color: white;
-    font-weight: 500;
-}
-
-/* Requirements checkbox */
-.form-group input[type="checkbox"] {
-    width: auto;
-    margin-right: 0.5rem;
-    accent-color: var(--primary-blue);
-}
-
-/* Start Giveaway Button */
-.start-giveaway-btn {
-    width: 100%;
-    background: linear-gradient(135deg, var(--primary-blue), var(--primary-blue-dark));
-    border: none;
-    color: white;
-    padding: 1.2rem;
-    border-radius: var(--radius-md);
-    font-size: 1.2rem;
-    font-weight: 600;
-    cursor: pointer;
-    margin-top: 2rem;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    box-shadow: var(--border-glow), var(--shadow-md);
-    transition: all var(--transition-normal);
-    position: relative;
-    overflow: hidden;
-}
-
-.start-giveaway-btn::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-    transition: left 0.5s ease;
-}
-
-.start-giveaway-btn:hover::before {
-    left: 100%;
-}
-
-.start-giveaway-btn:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 0 40px var(--primary-blue), var(--shadow-lg);
-}
-
-.start-giveaway-btn:active {
-    transform: translateY(-1px);
-}
-
-.start-giveaway-btn:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-    transform: none;
-}
-
-/* ==================== GIVEAWAY DETAIL PAGE ==================== */
-.giveaway-detail {
-    background: rgba(10, 25, 47, 0.7);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    border-radius: var(--radius-lg);
-    padding: 2rem;
-    border: 1px solid var(--primary-blue);
-    box-shadow: var(--border-glow), var(--shadow-lg);
-}
-
-.giveaway-prize {
-    font-size: 2.5rem;
-    color: var(--primary-blue);
-    margin-bottom: 1rem;
-    text-shadow: 0 0 15px rgba(30, 136, 229, 0.4);
-    font-weight: 700;
-    line-height: 1.2;
-    word-break: break-word;
-}
-
-.giveaway-meta {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-    gap: 1rem;
-    margin: 2rem 0;
-    padding: 1.5rem;
-    background: rgba(0, 0, 0, 0.2);
-    border-radius: var(--radius-md);
-    border: 1px solid rgba(30, 136, 229, 0.2);
-}
-
-.meta-item {
-    display: flex;
-    flex-direction: column;
-    gap: 0.3rem;
-}
-
-.meta-label {
-    color: var(--tg-theme-hint-color, rgba(255, 255, 255, 0.6));
-    font-size: 0.85rem;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
-
-.meta-value {
-    font-size: 1.2rem;
-    font-weight: 600;
-    color: white;
-}
-
-/* Join Button */
-.join-btn {
-    background: linear-gradient(135deg, #00c853, #00a86b);
-    border: none;
-    color: white;
-    padding: 1rem 2rem;
-    border-radius: var(--radius-md);
-    font-size: 1.2rem;
-    font-weight: 600;
-    cursor: pointer;
-    width: 100%;
-    margin-top: 1.5rem;
-    transition: all var(--transition-normal);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    box-shadow: var(--shadow-md);
-    position: relative;
-    overflow: hidden;
-}
-
-.join-btn::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
-    transition: left 0.5s ease;
-}
-
-.join-btn:hover::before {
-    left: 100%;
-}
-
-.join-btn:hover {
-    transform: scale(1.02);
-    box-shadow: 0 0 30px #00c853, var(--shadow-lg);
-}
-
-.join-btn:active {
-    transform: scale(0.98);
-}
-
-.join-btn:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-    transform: none;
-}
-
-.join-btn:disabled::before {
-    display: none;
-}
-
-/* ==================== LOADING SPINNER ==================== */
+/* Loading */
 .loading {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    min-height: 300px;
-    width: 100%;
+    text-align: center;
+    color: rgba(255, 255, 255, 0.7);
+    padding: 40px 0;
 }
 
 .spinner {
-    width: 50px;
-    height: 50px;
-    border: 3px solid rgba(30, 136, 229, 0.2);
-    border-top-color: var(--primary-blue);
-    border-right-color: var(--primary-blue-light);
+    width: 40px;
+    height: 40px;
+    border: 3px solid rgba(255, 255, 255, 0.1);
+    border-top-color: rgba(255, 255, 255, 0.6);
     border-radius: 50%;
-    animation: spin 0.8s linear infinite;
-    box-shadow: 0 0 20px rgba(30, 136, 229, 0.2);
+    animation: spin 1s linear infinite;
+    margin: 0 auto 15px;
 }
 
 @keyframes spin {
     to { transform: rotate(360deg); }
-}
-
-/* ==================== ALERT MESSAGES ==================== */
-.alert {
-    padding: 1rem 1.2rem;
-    border-radius: var(--radius-sm);
-    margin: 1rem 0;
-    border-left: 4px solid;
-    font-weight: 500;
-    animation: slideIn 0.3s ease;
-}
-
-@keyframes slideIn {
-    from {
-        opacity: 0;
-        transform: translateY(-10px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-.alert-success {
-    background: rgba(0, 200, 83, 0.1);
-    border-left-color: #00c853;
-    color: #00c853;
-}
-
-.alert-error {
-    background: rgba(244, 67, 54, 0.1);
-    border-left-color: #f44336;
-    color: #f44336;
-}
-
-.alert-warning {
-    background: rgba(255, 152, 0, 0.1);
-    border-left-color: #ff9800;
-    color: #ff9800;
-}
-
-.alert-info {
-    background: rgba(30, 136, 229, 0.1);
-    border-left-color: var(--primary-blue);
-    color: var(--primary-blue);
-}
-
-/* ==================== CONNECTION STATUS ==================== */
-.connection-status {
-    padding: 6px 12px;
-    border-radius: var(--radius-full);
-    font-size: 12px;
-    font-weight: 500;
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    transition: all var(--transition-fast);
-}
-
-.connection-status.online {
-    background: rgba(0, 200, 83, 0.15);
-    color: #00c853;
-    border: 1px solid rgba(0, 200, 83, 0.3);
-}
-
-.connection-status.offline {
-    background: rgba(244, 67, 54, 0.15);
-    color: #f44336;
-    border: 1px solid rgba(244, 67, 54, 0.3);
-}
-
-.connection-status.checking {
-    background: rgba(255, 152, 0, 0.15);
-    color: #ff9800;
-    border: 1px solid rgba(255, 152, 0, 0.3);
-}
-
-/* ==================== SCROLL TO TOP BUTTON ==================== */
-.scroll-top-btn {
-    position: fixed;
-    bottom: 80px;
-    right: 20px;
-    width: 48px;
-    height: 48px;
-    border-radius: 50%;
-    background: var(--primary-blue);
-    border: 2px solid white;
-    color: white;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    opacity: 0;
-    visibility: hidden;
-    transition: all var(--transition-normal);
-    box-shadow: var(--border-glow), var(--shadow-lg);
-    z-index: 999;
-    transform: scale(0.8);
-}
-
-.scroll-top-btn.visible {
-    opacity: 1;
-    visibility: visible;
-    transform: scale(1);
-}
-
-.scroll-top-btn:hover {
-    transform: scale(1.1);
-    background: var(--primary-blue-dark);
-}
-
-.scroll-top-btn svg {
-    width: 24px;
-    height: 24px;
-    fill: white;
-}
-
-/* ==================== EMPTY STATE ==================== */
-.empty-state {
-    text-align: center;
-    padding: 3rem 1.5rem;
-    background: rgba(255, 255, 255, 0.03);
-    border-radius: var(--radius-lg);
-    border: 1px dashed rgba(30, 136, 229, 0.3);
-    margin: 2rem 0;
-}
-
-.empty-state svg {
-    width: 64px;
-    height: 64px;
-    stroke: rgba(255, 255, 255, 0.2);
-    margin-bottom: 1rem;
-}
-
-.empty-state h3 {
-    font-size: 1.3rem;
-    margin-bottom: 0.5rem;
-    color: rgba(255, 255, 255, 0.8);
-}
-
-.empty-state p {
-    color: var(--tg-theme-hint-color, rgba(255, 255, 255, 0.5));
-    font-size: 0.95rem;
-}
-
-/* ==================== BUTTON SMALL ==================== */
-.btn-small {
-    padding: 0.4rem 1rem;
-    background: rgba(30, 136, 229, 0.15);
-    border: 1px solid var(--primary-blue);
-    border-radius: var(--radius-full);
-    color: white;
-    font-size: 0.85rem;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all var(--transition-fast);
-    margin-top: 0.5rem;
-}
-
-.btn-small:hover {
-    background: var(--primary-blue);
-    transform: translateY(-2px);
-    box-shadow: var(--border-glow);
-}
-
-/* ==================== TOAST NOTIFICATION ==================== */
-.toast-notification {
-    position: fixed;
-    bottom: 100px;
-    left: 50%;
-    transform: translateX(-50%) translateY(100px);
-    background: rgba(10, 25, 47, 0.95);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    border: 1px solid var(--primary-blue);
-    border-radius: var(--radius-full);
-    padding: 0.8rem 1.5rem;
-    color: white;
-    font-size: 0.95rem;
-    font-weight: 500;
-    box-shadow: var(--border-glow), var(--shadow-lg);
-    z-index: 9999;
-    opacity: 0;
-    transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-    white-space: nowrap;
-    max-width: 90%;
-    pointer-events: none;
-}
-
-.toast-notification.show {
-    opacity: 1;
-    transform: translateX(-50%) translateY(0);
-}
-
-.toast-notification.success {
-    border-color: #00c853;
-    box-shadow: 0 0 20px rgba(0, 200, 83, 0.3);
-}
-
-.toast-notification.error {
-    border-color: #f44336;
-    box-shadow: 0 0 20px rgba(244, 67, 54, 0.3);
-}
-
-input, select, button {
-    font-size: 16px;
-}
-
-/* ==================== RESPONSIVE DESIGN ==================== */
-@media (max-width: 768px) {
-    .navbar {
-        padding: 0.75rem 1rem;
-    }
-    
-    .nav-container {
-        flex-direction: column;
-        gap: 0.75rem;
-    }
-    
-    .nav-links {
-        width: 100%;
-        justify-content: center;
-        gap: 0.5rem;
-    }
-    
-    .nav-links a {
-        padding: 0.4rem 0.8rem;
-        font-size: 0.85rem;
-    }
-    
-    .nav-links a.active {
-        border-left: 2px solid var(--primary-blue);
-        padding-left: calc(0.8rem + 2px);
-    }
-    
-    .nav-links a.active::after {
-        bottom: -0.75rem;
-        height: 2px;
-    }
-    
-    .user-info {
-        width: 100%;
-        justify-content: center;
-    }
-    
-    .container {
-        padding: 0 1rem;
-        margin: 1rem auto;
-    }
-    
-    .profile-header {
-        justify-content: center;
-        text-align: center;
-        gap: 1rem;
-    }
-    
-    .profile-avatar {
-        width: 100px;
-        height: 100px;
-    }
-    
-    .profile-title h1 {
-        font-size: 1.5rem;
-    }
-    
-    .stats-grid {
-        grid-template-columns: repeat(2, 1fr);
-        gap: 1rem;
-    }
-    
-    .stat-card {
-        padding: 1rem;
-    }
-    
-    .stat-value {
-        font-size: 1.5rem;
-    }
-    
-    .stat-label {
-        font-size: 0.8rem;
-    }
-    
-    .form-row {
-        grid-template-columns: 1fr;
-    }
-    
-    .duration-picker {
-        justify-content: center;
-    }
-    
-    .giveaway-prize {
-        font-size: 1.8rem;
-    }
-    
-    .giveaway-meta {
-        grid-template-columns: repeat(2, 1fr);
-        padding: 1rem;
-    }
-    
-    .scroll-top-btn {
-        bottom: 70px;
-        right: 15px;
-        width: 40px;
-        height: 40px;
-    }
-    
-    .scroll-top-btn svg {
-        width: 20px;
-        height: 20px;
-    }
-    
-    .toast-notification {
-        bottom: 80px;
-        font-size: 0.85rem;
-        padding: 0.6rem 1.2rem;
-    }
-}
-
-@media (max-width: 480px) {
-    .profile-avatar {
-        width: 80px;
-        height: 80px;
-    }
-    
-    .profile-title h1 {
-        font-size: 1.2rem;
-    }
-    
-    .stats-grid {
-        grid-template-columns: 1fr;
-    }
-    
-    .giveaway-item {
-        flex-direction: column;
-        align-items: flex-start;
-    }
-    
-    .giveaway-item > div:last-child {
-        width: 100%;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-    }
-    
-    .giveaway-meta {
-        grid-template-columns: 1fr;
-    }
-    
-    .create-giveaway-btn {
-        padding: 0.8rem 1.5rem;
-        font-size: 1rem;
-    }
-    
-    .start-giveaway-btn {
-        padding: 1rem;
-        font-size: 1rem;
-    }
-    
-    .join-btn {
-        padding: 0.8rem 1.5rem;
-        font-size: 1rem;
-    }
-}
-
-/* ==================== LANDSCAPE MODE ==================== */
-@media (orientation: landscape) and (max-height: 500px) {
-    .navbar {
-        padding: 0.5rem 1rem;
-    }
-    
-    .container {
-        margin: 0.5rem auto;
-    }
-    
-    .profile-header {
-        margin-bottom: 1rem;
-    }
-    
-    .profile-avatar {
-        width: 60px;
-        height: 60px;
-    }
-    
-    .stats-grid {
-        grid-template-columns: repeat(4, 1fr);
-        margin: 1rem 0;
-    }
-    
-    .create-giveaway-btn {
-        margin: 1rem 0;
-        padding: 0.6rem 1rem;
-    }
-    
-    .loading {
-        min-height: 150px;
-    }
-}
-
-/* ==================== PRINT STYLES ==================== */
-@media print {
-    .navbar,
-    .create-giveaway-btn,
-    .join-btn,
-    .scroll-top-btn,
-    .toast-notification {
-        display: none !important;
-    }
-    
-    body {
-        background: white;
-        color: black;
-    }
-    
-    .container {
-        margin: 0;
-        padding: 0;
-    }
-    
-    .profile-container,
-    .form-container,
-    .giveaway-detail {
-        background: white;
-        border: 1px solid #ddd;
-        box-shadow: none;
-    }
 }
