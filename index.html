@@ -20,48 +20,49 @@
                 <div class="settings-btn" id="settingsBtn">⚙️</div>
             </div>
             
-            <!-- BORDER 2 : PROFILE (LENGKAP) - SATU BOX SAJA -->
+            <!-- BORDER 2 : PROFILE (SATU BOX UNTUK SEMUA INFO) -->
             <div class="profile-box">
                 <!-- Loading State -->
-                <div id="loading" class="profile-loading">
-                    <div class="spinner-small"></div>
-                    <span>Memuat data...</span>
+                <div id="loading" class="loading-state">
+                    <div class="spinner"></div>
+                    <p>Mengambil data user...</p>
                 </div>
                 
                 <!-- Error State -->
-                <div id="error" class="profile-error" style="display: none;">
-                    <span>❌ Gagal memuat</span>
-                    <button onclick="location.reload()" class="retry-btn">Ulang</button>
+                <div id="error" class="error-state" style="display: none;">
+                    <div style="color: #ff6b6b;">❌ Gagal memuat data</div>
+                    <button onclick="location.reload()" class="retry-btn">Coba Lagi</button>
                 </div>
                 
-                <!-- Profile Content -->
-                <div id="profileContent" style="display: none;">
-                    <!-- Baris 1: Avatar + Nama + Username + Settings (summary) -->
+                <!-- Profile Content (akan ditampilkan setelah data dimuat) -->
+                <div id="profileContent" class="profile-content" style="display: none;">
+                    <!-- Baris 1: Foto + Nama + Username + Settings -->
                     <div class="profile-row">
                         <img src="img/default-avatar.png" class="profile-photo" id="profilePhoto" alt="profile">
                         <div class="profile-data-box">
                             <div class="profile-name" id="profileNameDisplay">-</div>
                             <div class="profile-username" id="profileUsernameDisplay">@-</div>
                         </div>
+                        <div class="settings-btn" id="profileSettingsBtn">⚙️</div>
                     </div>
                     
-                    <!-- Baris 2: Detail Info (User ID, Bahasa, Statistik, Badge) -->
-                    <div class="profile-detail-info">
-                        <div class="detail-item">
-                            <span class="detail-label">User ID</span>
-                            <span class="detail-value" id="userId">-</span>
+                    <!-- Baris 2: ID + Bahasa + Statistik -->
+                    <div class="stats-row">
+                        <div class="stat-item">
+                            <span class="stat-label">User ID</span>
+                            <span class="stat-value" id="userId">-</span>
                         </div>
-                        <div class="detail-item">
-                            <span class="detail-label">Bahasa</span>
-                            <span class="detail-value" id="languageCode">ID</span>
+                        <div class="stat-item">
+                            <span class="stat-label">Bahasa</span>
+                            <span class="stat-value" id="languageCode">ID</span>
                         </div>
-                        <div class="detail-item">
-                            <span class="detail-label">Partisipasi</span>
-                            <span class="detail-value" id="participations">0</span>
+                        <div class="stat-item">
+                            <span class="stat-label">Partisipasi</span>
+                            <span class="stat-value" id="participations">0</span>
                         </div>
-                        <div class="detail-item">
-                            <span class="detail-label">Menang</span>
-                            <span class="detail-value" id="wins">0</span>
+                        <div class="stat-item">
+                            <span class="stat-label">Menang</span>
+                            <span class="stat-value" id="wins">0</span>
                         </div>
                     </div>
                     
