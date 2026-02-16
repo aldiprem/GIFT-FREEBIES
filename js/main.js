@@ -5,6 +5,13 @@
   // ==================== KONFIGURASI ====================
   const API_BASE_URL = 'https://individually-threaded-jokes-letting.trycloudflare.com';
 
+    const createGiveawayBtn = document.getElementById('createGiveawayBtn');
+    if (createGiveawayBtn) {
+      createGiveawayBtn.addEventListener('click', () => {
+        window.location.href = 'create.html';
+      });
+    }
+
   // ==================== DOM ELEMENTS ====================
   const elements = {
     loading: document.getElementById('loading'),
