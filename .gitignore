@@ -1,0 +1,186 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.env
+.venv
+ENV/
+env.bak/
+venv.bak/
+pythonenv*
+
+# Database
+*.db
+*.db-journal
+*.sqlite
+*.sqlite3
+*.sql
+*.db-wal
+*.db-shm
+
+# Bot credentials
+bot_token.txt
+api_hash.txt
+api_id.txt
+credentials.json
+*.session
+*.session-journal
+
+# Flask
+instance/
+.webassets-cache
+.flaskenv
+
+# Logs
+*.log
+logs/
+*.log.*
+bot.log
+error.log
+access.log
+
+# Backups
+backup/
+*.backup
+*.bak
+*.dump
+
+# Uploads
+uploads/
+photos/
+media/
+images_upload/
+
+# Environment variables
+.env
+.env.local
+.env.production
+.env.development
+.env.example
+.flaskenv
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+.vscode/settings.json
+.vscode/launch.json
+.project
+.pydevproject
+.settings/
+
+# Testing
+.coverage
+coverage.xml
+*.cover
+.pytest_cache/
+tests/.cache
+htmlcov/
+.tox/
+.mypy_cache/
+.dmypy.json
+dmypy.json
+hypothesis/
+
+# Distribution
+dist/
+build/
+*.egg-info/
+*.egg
+MANIFEST
+site/
+
+# System files
+Thumbs.db
+*.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Desktop.ini
+
+# Temporary files
+*.tmp
+*.temp
+*.swp
+*.swo
+*~
+~$*
+*.bak~
+
+# Node (if you add any frontend build tools)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json
+yarn.lock
+.bun
+
+# GitHub Pages specific
+docs/_site/
+docs/.jekyll-cache/
+docs/.sass-cache/
+docs/Gemfile.lock
+
+# Sensitive info
+config.py
+config.json
+*.key
+*.pem
+*.crt
+*.p12
+secrets/
+auth.json
+
+# Virtual environment
+venv/
+env/
+.venv
+virtualenv/
+venv.bak/
+pythonenv/
+
+# Jupyter Notebook
+.ipynb_checkpoints/
+*.ipynb
+
+# PDF and documents (if any)
+*.pdf
+*.doc
+*.docx
+*.xls
+*.xlsx
+
+# Telegram bot specific
+*.session
+*.session-journal
+bot.session
+ubot.session
+user.session
+anon.session
+
+# Docker (if used)
+Dockerfile
+docker-compose.yml
+.dockerignore
+*.pid
+docker/
+.docker/
+
+# Cache files
+.cache/
+.cached/
+*.pyc
+__pycache__/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
