@@ -1,6 +1,8 @@
 // ==================== KONFIGURASI API ====================
 const API_URL = 'https://individually-threaded-jokes-letting.trycloudflare.com';
 
+let currentUser = null;
+
 // ==================== FUNGSI UTILITY ====================
 function formatNumber(num) {
     return new Intl.NumberFormat('id-ID').format(num);
@@ -53,109 +55,139 @@ function getUrlParameter(name) {
     return urlParams.get(name);
 }
 
-// ==================== USER SESSION MANAGEMENT ====================
-let currentUser = null;
-
 async function loadUserSession() {
-    console.log('🔄 Loading user session...');
-    
-    // Cek apakah ada user Telegram yang sudah di-set
-    if (window.telegramUser) {
-        console.log('✅ Telegram user detected:', window.telegramUser);
-        // User dari Telegram akan disimpan oleh telegram.js
-        const savedUser = localStorage.getItem('giftfreebies_user');
-        if (savedUser) {
-            currentUser = JSON.parse(savedUser);
-            console.log('✅ Loaded Telegram user from storage:', currentUser);
-            updateUserUI();
-            return;
-        }
+  console.log('🔄 Loading user session...');
+
+  // PRIORITAS 1: Cek apakah ada user dari event telegramUserReady
+  // (Event listener sudah dipasang di bawah)
+
+  // PRIORITAS 2: Cek localStorage dulu
+  const savedUser = localStorage.getItem('giftfreebies_user');
+  if (savedUser) {
+    try {
+      currentUser = JSON.parse(savedUser);
+      console.log('✅ Loaded user from localStorage:', currentUser);
+      updateUserUI();
+
+      // Cek apakah ini user Telegram (punya user_id asli bukan dummy)
+      if (currentUser.user_id && currentUser.user_id !== 123456789) {
+        console.log('✅ Telegram user loaded from storage');
+      }
+      return;
+    } catch (e) {
+      console.error('Error parsing saved user:', e);
     }
-    
-    // Coba load dari localStorage
-    const savedUser = localStorage.getItem('giftfreebies_user');
-    if (savedUser) {
-        currentUser = JSON.parse(savedUser);
-        console.log('✅ Loaded saved user:', currentUser);
+  }
+
+  // PRIORITAS 3: Cek window.telegramUser (dari telegram.js)
+  if (window.telegramUser) {
+    console.log('✅ Telegram user detected from window:', window.telegramUser);
+    const tgUser = {
+      user_id: window.telegramUser.id,
+      fullname: window.telegramUser.first_name + ' ' + (window.telegramUser.last_name || ''),
+      username: window.telegramUser.username || '',
+      avatar: window.telegramUser.photo_url || `https://ui-avatars.com/api/?name=${window.telegramUser.first_name}&size=120&background=1e88e5&color=fff`,
+      is_premium: window.telegramUser.is_premium || false,
+      language_code: window.telegramUser.language_code || 'id',
+      first_seen: new Date().toISOString()
+    };
+    currentUser = tgUser;
+    localStorage.setItem('giftfreebies_user', JSON.stringify(tgUser));
+    updateUserUI();
+    return;
+  }
+
+  // PRIORITAS 4: Cek parameter URL (untuk testing)
+  const userId = getUrlParameter('user_id');
+  if (userId) {
+    try {
+      console.log('🔍 Fetching user by ID:', userId);
+      const response = await fetch(`${API_URL}/api/user/${userId}`);
+      if (response.ok) {
+        currentUser = await response.json();
+        localStorage.setItem('giftfreebies_user', JSON.stringify(currentUser));
         updateUserUI();
-    } else {
-        // Untuk demo, cek apakah ada parameter user_id di URL
-        const userId = getUrlParameter('user_id');
-        if (userId) {
-            try {
-                console.log('🔍 Fetching user by ID:', userId);
-                const response = await fetch(`${API_URL}/api/user/${userId}`);
-                if (response.ok) {
-                    currentUser = await response.json();
-                    localStorage.setItem('giftfreebies_user', JSON.stringify(currentUser));
-                    updateUserUI();
-                }
-            } catch (error) {
-                console.error('Error loading user:', error);
-            }
-        } else {
-            // Buat user dummy untuk demo
-            console.log('ℹ️ No user found, using dummy');
-            currentUser = {
-                user_id: 123456789,
-                fullname: 'John Doe',
-                username: 'johndoe',
-                avatar: 'https://via.placeholder.com/40'
-            };
-            localStorage.setItem('giftfreebies_user', JSON.stringify(currentUser));
-            updateUserUI();
-        }
+        return;
+      }
+    } catch (error) {
+      console.error('Error loading user:', error);
     }
+  }
+
+  // PRIORITAS 5: Fallback ke dummy
+  console.log('ℹ️ No user found, using dummy');
+  currentUser = {
+    user_id: 123456789,
+    fullname: 'John Doe',
+    username: 'johndoe',
+    avatar: 'https://via.placeholder.com/120',
+    first_seen: new Date().toISOString()
+  };
+  localStorage.setItem('giftfreebies_user', JSON.stringify(currentUser));
+  updateUserUI();
 }
 
-// Listen for Telegram user ready event
+// Listen for Telegram user ready event (DARI TELEGRAM.JS)
 window.addEventListener('telegramUserReady', (event) => {
-    console.log('📡 Telegram user ready event received:', event.detail);
-    currentUser = event.detail;
-    updateUserUI();
-    
-    // Reload profile if on profile page
-    if (window.location.pathname.includes('profile.html')) {
-        console.log('🔄 Reloading profile page...');
-        setTimeout(() => {
-            if (typeof loadUserProfile === 'function') {
-                loadUserProfile();
-            }
-        }, 100);
-    }
+  console.log('📡 TELEGRAM USER READY EVENT RECEIVED:', event.detail);
+  currentUser = event.detail;
+  updateUserUI();
+
+  // Reload profile if on profile page
+  if (window.location.pathname.includes('profile.html')) {
+    console.log('🔄 Reloading profile page with Telegram data...');
+    setTimeout(() => {
+      if (typeof loadUserProfile === 'function') {
+        loadUserProfile();
+      } else {
+        location.reload();
+      }
+    }, 100);
+  }
 });
 
+// Update UI dengan data user
 function updateUserUI() {
-    if (!currentUser) return;
-    
-    console.log('🖼️ Updating UI for user:', currentUser);
-    
-    const userNameEl = document.getElementById('userName');
-    const userAvatarEl = document.getElementById('userAvatar');
-    const profileFullname = document.getElementById('profileFullname');
-    const profileUsername = document.getElementById('profileUsername');
-    const profileAvatar = document.getElementById('profileAvatar');
+  if (!currentUser) return;
 
-    if (userNameEl) {
-        userNameEl.textContent = currentUser.fullname || currentUser.username || 'User';
-    }
-    
-    if (userAvatarEl) {
-        userAvatarEl.src = currentUser.avatar || 'https://via.placeholder.com/40';
-        userAvatarEl.alt = currentUser.fullname || 'User';
-    }
-    
-    if (profileFullname) {
-        profileFullname.textContent = currentUser.fullname || 'No Name';
-    }
-    
-    if (profileUsername) {
-        profileUsername.textContent = currentUser.username ? `@${currentUser.username}` : '-';
-    }
-    
-    if (profileAvatar && currentUser.avatar) {
-        profileAvatar.src = currentUser.avatar;
-    }
+  console.log('🖼️ Updating UI for user:', currentUser);
+
+  const userNameEl = document.getElementById('userName');
+  const userAvatarEl = document.getElementById('userAvatar');
+  const profileFullname = document.getElementById('profileFullname');
+  const profileUsername = document.getElementById('profileUsername');
+  const profileAvatar = document.getElementById('profileAvatar');
+
+  if (userNameEl) {
+    userNameEl.textContent = currentUser.fullname || currentUser.username || 'User';
+  }
+
+  if (userAvatarEl) {
+    // Hapus semua child dulu
+    userAvatarEl.innerHTML = '';
+
+    // Buat elemen img baru
+    const img = document.createElement('img');
+    img.src = currentUser.avatar || 'https://via.placeholder.com/40';
+    img.alt = currentUser.fullname || 'User';
+    img.className = 'avatar-image';
+    img.onload = () => {
+      console.log('Avatar loaded:', img.src);
+    };
+    userAvatarEl.appendChild(img);
+  }
+
+  if (profileFullname) {
+    profileFullname.textContent = currentUser.fullname || 'No Name';
+  }
+
+  if (profileUsername) {
+    profileUsername.textContent = currentUser.username ? `@${currentUser.username}` : '-';
+  }
+
+  if (profileAvatar && currentUser.avatar) {
+    profileAvatar.src = currentUser.avatar;
+  }
 }
 
 // ==================== API CALLS ====================
