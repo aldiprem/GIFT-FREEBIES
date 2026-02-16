@@ -1,7 +1,6 @@
 // Konfigurasi API
-const API_URL = 'http://your-vps-ip:5000'; // Ganti dengan IP VPS Anda
+const API_URL = 'https://expect-checkout-cologne-dozens.trycloudflare.com';
 
-// Utility Functions
 function formatNumber(num) {
   return new Intl.NumberFormat('id-ID').format(num);
 }
@@ -88,6 +87,61 @@ async function loadUserSession() {
     }
   }
 }
+
+// Tambahkan fungsi update connection status
+function updateConnectionStatus(status, message = '') {
+  const statusEl = document.getElementById('connectionStatus');
+  if (!statusEl) return;
+
+  statusEl.className = 'connection-status ' + status;
+
+  switch (status) {
+    case 'online':
+      statusEl.innerHTML = '🟢 Online';
+      break;
+    case 'offline':
+      statusEl.innerHTML = '🔴 Offline';
+      break;
+    case 'checking':
+      statusEl.innerHTML = '🟡 Checking...';
+      break;
+  }
+
+  if (message) {
+    statusEl.title = message;
+  }
+}
+
+// Modifikasi testApiConnection
+async function testApiConnection() {
+  updateConnectionStatus('checking');
+
+  try {
+    const response = await fetch(`${API_URL}/api/health`, {
+      method: 'GET',
+      mode: 'cors',
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      console.log('✅ Connected to API:', data);
+      updateConnectionStatus('online', `Server: ${data.timestamp}`);
+      return true;
+    } else {
+      throw new Error('Response not OK');
+    }
+  } catch (error) {
+    console.error('❌ Cannot connect to API:', error);
+    updateConnectionStatus('offline', error.message);
+    return false;
+  }
+}
+
+// Panggil setiap 30 detik untuk monitoring
+setInterval(testApiConnection, 30000);
 
 function updateUserUI() {
   if (currentUser) {
