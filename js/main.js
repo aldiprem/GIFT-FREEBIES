@@ -7,25 +7,22 @@
     
     // ==================== DOM ELEMENTS ====================
     const elements = {
-        // Loading & Error
         loading: document.getElementById('loading'),
-        profileContent: document.getElementById('profileContent'),
         error: document.getElementById('error'),
+        profileContent: document.getElementById('profileContent'),
         
-        // Profile elements
         profilePhoto: document.getElementById('profilePhoto'),
         profileNameDisplay: document.getElementById('profileNameDisplay'),
         profileUsernameDisplay: document.getElementById('profileUsernameDisplay'),
         
-        // Detail info
         userId: document.getElementById('userId'),
         languageCode: document.getElementById('languageCode'),
         participations: document.getElementById('participations'),
         wins: document.getElementById('wins'),
         premiumBadge: document.getElementById('premiumBadge'),
         
-        // Buttons
         settingsBtn: document.getElementById('settingsBtn'),
+        profileSettingsBtn: document.getElementById('profileSettingsBtn'),
         activeBtn: document.getElementById('activeBtn'),
         endedBtn: document.getElementById('endedBtn'),
         giveawayContent: document.getElementById('giveawayContent')
@@ -46,13 +43,11 @@
     };
 
     // ==================== FUNGSI UTILITY ====================
-    function showError(message) {
-        console.error('❌ Error:', message);
+    function showError(msg) {
         if (elements.loading) elements.loading.style.display = 'none';
-        if (elements.profileContent) elements.profileContent.style.display = 'none';
         if (elements.error) {
             elements.error.style.display = 'flex';
-            document.getElementById('errorMessage').textContent = message;
+            elements.error.querySelector('div').textContent = `❌ ${msg}`;
         }
     }
 
@@ -63,75 +58,38 @@
     }
 
     function generateAvatarUrl(name) {
-        if (!name) return `https://ui-avatars.com/api/?name=U&size=120&background=1e88e5&color=fff`;
-        const firstChar = name.charAt(0).toUpperCase();
-        return `https://ui-avatars.com/api/?name=${firstChar}&size=120&background=1e88e5&color=fff`;
+        if (!name) return 'https://ui-avatars.com/api/?name=U&size=120&background=1e88e5&color=fff';
+        return `https://ui-avatars.com/api/?name=${name.charAt(0).toUpperCase()}&size=120&background=1e88e5&color=fff`;
     }
 
     // ==================== API CALLS ====================
     async function fetchUserFromApi(userId) {
         try {
-            console.log(`📡 Fetching user data for ID: ${userId}...`);
-            
-            const response = await fetch(`${API_BASE_URL}/api/users/${userId}`, {
-                method: 'GET',
+            const res = await fetch(`${API_BASE_URL}/api/users/${userId}`, {
                 headers: { 'Accept': 'application/json' },
                 mode: 'cors'
             });
-
-            if (!response.ok) {
-                if (response.status === 404) return null;
-                throw new Error(`HTTP ${response.status}`);
-            }
-
-            const data = await response.json();
+            if (!res.ok) return null;
+            const data = await res.json();
             return data.success ? data.user : (data.user || null);
-            
-        } catch (error) {
-            console.warn('⚠️ API fetch failed:', error);
+        } catch {
             return null;
-        }
-    }
-
-    async function createUserInApi(telegramUser) {
-        try {
-            const userData = {
-                user_id: telegramUser.id,
-                fullname: [telegramUser.first_name, telegramUser.last_name].filter(Boolean).join(' ') || 'No Name',
-                username: telegramUser.username || null,
-                language_code: telegramUser.language_code || 'id',
-                is_premium: telegramUser.is_premium ? 1 : 0,
-                is_bot: telegramUser.is_bot ? 1 : 0
-            };
-            
-            await fetch(`${API_BASE_URL}/api/users`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                mode: 'cors',
-                body: JSON.stringify(userData)
-            });
-            console.log('✅ User synced with API');
-        } catch (error) {
-            console.warn('⚠️ Failed to sync user');
         }
     }
 
     // ==================== UPDATE UI ====================
     function updateUI(user) {
-        // Data dari user
         const fullName = user.fullname || [user.first_name, user.last_name].filter(Boolean).join(' ') || 'No Name';
         const username = user.username ? (user.username.startsWith('@') ? user.username : `@${user.username}`) : '(no username)';
-        const userId = user.user_id || user.id || '-';
         const isPremium = user.is_premium || false;
-        const language = user.language_code || 'id';
         
-        // Update profile summary
+        // Update profile
         if (elements.profileNameDisplay) elements.profileNameDisplay.textContent = fullName;
         if (elements.profileUsernameDisplay) elements.profileUsernameDisplay.textContent = username;
         
-        // Update detail info
-        if (elements.userId) elements.userId.textContent = userId;
-        if (elements.languageCode) elements.languageCode.textContent = language.toUpperCase();
+        // Update stats
+        if (elements.userId) elements.userId.textContent = user.user_id || user.id || '-';
+        if (elements.languageCode) elements.languageCode.textContent = (user.language_code || 'id').toUpperCase();
         if (elements.participations) elements.participations.textContent = user.total_participations || 0;
         if (elements.wins) elements.wins.textContent = user.total_wins || 0;
         
@@ -147,10 +105,8 @@
         }
         
         // Update avatar
-        if (user.photo_url) {
-            elements.profilePhoto.src = user.photo_url;
-        } else {
-            elements.profilePhoto.src = generateAvatarUrl(fullName);
+        if (elements.profilePhoto) {
+            elements.profilePhoto.src = user.photo_url || generateAvatarUrl(fullName);
         }
         
         showProfile();
@@ -158,9 +114,7 @@
 
     // ==================== INIT ====================
     async function init() {
-        console.log('🚀 Initializing...');
-        
-        // Check Telegram
+        // Cek Telegram
         if (!window.Telegram?.WebApp) {
             return showMockData();
         }
@@ -174,19 +128,13 @@
             return showError('Tidak ada data user');
         }
         
-        console.log('👤 Telegram User:', user);
-        
-        // Try to get from API
+        // Coba ambil dari API
         const apiUser = await fetchUserFromApi(user.id);
         
         if (apiUser) {
-            // Merge data
             updateUI({ ...user, ...apiUser });
         } else {
-            // Use Telegram data only
             updateUI(user);
-            // Create in API (background)
-            createUserInApi(user);
         }
     }
 
@@ -199,9 +147,7 @@
                 last_name: 'wayss',
                 username: 'fTamous',
                 language_code: 'id',
-                is_premium: false,
-                total_participations: 0,
-                total_wins: 0
+                is_premium: false
             });
         }, 800);
     }
@@ -210,35 +156,26 @@
     function displayGiveaways(type) {
         const data = giveaways[type];
         let html = '';
-
         data.forEach(item => {
             if (type === 'active') {
-                html += `
-                    <div class="giveaway-item">
-                        <h3>${item.title}</h3>
-                        <p>👥 ${item.participants} participants • ⏱️ Ends in ${item.ends}</p>
-                    </div>
-                `;
+                html += `<div class="giveaway-item"><h3>${item.title}</h3><p>👥 ${item.participants} participants • ⏱️ Ends in ${item.ends}</p></div>`;
             } else {
-                html += `
-                    <div class="giveaway-item">
-                        <h3>${item.title}</h3>
-                        <p>🏆 Winners: ${item.winners}</p>
-                    </div>
-                `;
+                html += `<div class="giveaway-item"><h3>${item.title}</h3><p>🏆 Winners: ${item.winners}</p></div>`;
             }
         });
-
         elements.giveawayContent.innerHTML = html;
     }
 
     // ==================== EVENT LISTENERS ====================
     elements.settingsBtn?.addEventListener('click', () => alert('Settings'));
+    elements.profileSettingsBtn?.addEventListener('click', () => alert('Settings'));
+    
     elements.activeBtn?.addEventListener('click', () => {
         elements.activeBtn.classList.add('active');
         elements.endedBtn.classList.remove('active');
         displayGiveaways('active');
     });
+    
     elements.endedBtn?.addEventListener('click', () => {
         elements.endedBtn.classList.add('active');
         elements.activeBtn.classList.remove('active');
