@@ -70,7 +70,7 @@ async function loadUserSession() {
       updateUserUI();
 
       // Cek apakah ini user Telegram (punya user_id asli bukan dummy)
-      if (currentUser.user_id && currentUser.user_id !== 123456789) {
+      if (currentUser.user_id && currentUser.user_id !== 7998861975) {
         console.log('✅ Telegram user loaded from storage');
       }
       return;
@@ -117,7 +117,7 @@ async function loadUserSession() {
   // PRIORITAS 5: Fallback ke dummy
   console.log('ℹ️ No user found, using dummy');
   currentUser = {
-    user_id: 123456789,
+    user_id: 7998861975,
     fullname: 'John Doe',
     username: 'johndoe',
     avatar: 'https://via.placeholder.com/120',
