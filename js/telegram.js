@@ -1,171 +1,167 @@
 // js/telegram.js
-// Telegram Web App Integration
+// Telegram Web App Integration - PRIORITAS UTAMA
 
-// Global variables
-window.tg = null;
-window.telegramUser = null;
+(function() {
+  'use strict';
 
-// Initialize Telegram Web App
-function initTelegram() {
-    return new Promise((resolve) => {
-        // Cek apakah dalam environment Telegram
-        if (window.Telegram && window.Telegram.WebApp) {
-            window.tg = window.Telegram.WebApp;
-            
-            // Expand to full height
-            window.tg.expand();
-            
-            // Ready
-            window.tg.ready();
-            
-            // Set color scheme
-            window.tg.setHeaderColor?.(window.tg.themeParams.bg_color || '#0a1929');
-            window.tg.setBackgroundColor?.(window.tg.themeParams.bg_color || '#0a1929');
-            
-            // Get user data
-            if (window.tg.initDataUnsafe && window.tg.initDataUnsafe.user) {
-                window.telegramUser = window.tg.initDataUnsafe.user;
-                console.log('✅ Telegram user detected:', window.telegramUser);
-                
-                // Save to localStorage as currentUser
-                const tgUser = {
-                    user_id: window.telegramUser.id,
-                    fullname: window.telegramUser.first_name + ' ' + (window.telegramUser.last_name || ''),
-                    username: window.telegramUser.username || '',
-                    avatar: window.telegramUser.photo_url || `https://ui-avatars.com/api/?name=${window.telegramUser.first_name}&size=40&background=1e88e5&color=fff`,
-                    is_premium: window.telegramUser.is_premium || false,
-                    language_code: window.telegramUser.language_code || 'id'
-                };
-                
-                localStorage.setItem('giftfreebies_user', JSON.stringify(tgUser));
-                
-                // Trigger event
-                window.dispatchEvent(new CustomEvent('telegramUserReady', { detail: tgUser }));
-                
-                resolve(tgUser);
-            } else {
-                console.log('ℹ️ No Telegram user data');
-                resolve(null);
-            }
-            
-            // Setup back button
-            if (window.tg.BackButton) {
-                window.tg.BackButton.hide();
-                
-                // Show back button when popup is opened
-                document.addEventListener('popupOpened', () => {
-                    window.tg.BackButton.show();
-                    window.tg.BackButton.onClick(() => {
-                        document.dispatchEvent(new Event('popupCloseRequest'));
-                        window.tg.BackButton.hide();
-                    });
-                });
-                
-                document.addEventListener('popupClosed', () => {
-                    window.tg.BackButton.hide();
-                });
-            }
-            
-            // Apply Telegram theme
-            applyTelegramTheme();
-            
-        } else {
-            console.log('ℹ️ Not in Telegram Web App environment');
-            resolve(null);
-        }
-    });
-}
+  console.log('🚀 Telegram.js loading...');
 
-// Apply Telegram theme colors
-function applyTelegramTheme() {
+  // Global variables
+  window.tg = null;
+  window.telegramUser = null;
+
+  // Initialize Telegram Web App - JALANKAN SEGERA
+  function initTelegram() {
+    console.log('🔍 Initializing Telegram Web App...');
+
+    // Cek apakah dalam environment Telegram
+    if (window.Telegram && window.Telegram.WebApp) {
+      console.log('✅ Telegram Web App detected');
+
+      window.tg = window.Telegram.WebApp;
+
+      // Expand to full height
+      window.tg.expand();
+
+      // Ready - penting!
+      window.tg.ready();
+
+      console.log('Telegram WebApp version:', window.tg.version);
+      console.log('Platform:', window.tg.platform);
+      console.log('Theme params:', window.tg.themeParams);
+
+      // Get user data - INI YANG PALING PENTING!
+      if (window.tg.initDataUnsafe && window.tg.initDataUnsafe.user) {
+        window.telegramUser = window.tg.initDataUnsafe.user;
+        console.log('✅✅✅ TELEGRAM USER DETECTED:', window.telegramUser);
+
+        // Save to localStorage as currentUser
+        const tgUser = {
+          user_id: window.telegramUser.id,
+          fullname: window.telegramUser.first_name + ' ' + (window.telegramUser.last_name || ''),
+          username: window.telegramUser.username || '',
+          avatar: window.telegramUser.photo_url || `https://ui-avatars.com/api/?name=${window.telegramUser.first_name}&size=120&background=1e88e5&color=fff`,
+          is_premium: window.telegramUser.is_premium || false,
+          language_code: window.telegramUser.language_code || 'id',
+          first_seen: new Date().toISOString()
+        };
+
+        // Simpan ke localStorage
+        localStorage.setItem('giftfreebies_user', JSON.stringify(tgUser));
+
+        // Trigger event untuk main.js
+        const event = new CustomEvent('telegramUserReady', {
+          detail: tgUser
+        });
+        window.dispatchEvent(event);
+
+        console.log('✅ Telegram user saved to localStorage:', tgUser);
+
+        // Update UI langsung jika elemen sudah ada
+        updateTelegramUI(tgUser);
+
+        return tgUser;
+      } else {
+        console.warn('⚠️ No user data in Telegram WebApp');
+        console.log('initDataUnsafe:', window.tg.initDataUnsafe);
+        return null;
+      }
+    } else {
+      console.warn('❌ Telegram Web App not detected - not in Telegram environment');
+      return null;
+    }
+  }
+
+  // Update UI langsung dengan data Telegram
+  function updateTelegramUI(user) {
+    // Update navbar avatar dan nama
+    const userNameEl = document.getElementById('userName');
+    const userAvatarEl = document.getElementById('userAvatar');
+
+    if (userNameEl) {
+      userNameEl.textContent = user.fullname || user.username || 'User';
+    }
+
+    if (userAvatarEl) {
+      // Cari avatar image atau initial
+      const avatarImg = userAvatarEl.querySelector('img');
+      const avatarInitial = userAvatarEl.querySelector('.avatar-initial');
+
+      if (avatarImg) {
+        avatarImg.src = user.avatar;
+        avatarImg.alt = user.fullname;
+        if (avatarInitial) avatarInitial.style.display = 'none';
+      } else if (avatarInitial) {
+        // Fallback ke initial
+        avatarInitial.textContent = user.fullname.charAt(0).toUpperCase();
+      }
+    }
+
+    // Update profile page jika ada
+    const profileFullname = document.getElementById('profileFullname');
+    const profileUsername = document.getElementById('profileUsername');
+    const profileAvatar = document.getElementById('profileAvatar');
+
+    if (profileFullname) profileFullname.textContent = user.fullname;
+    if (profileUsername) profileUsername.textContent = user.username ? `@${user.username}` : '-';
+    if (profileAvatar) profileAvatar.src = user.avatar;
+  }
+
+  // Apply Telegram theme colors
+  function applyTelegramTheme() {
     if (!window.tg) return;
-    
+
     const theme = window.tg.themeParams;
     if (!theme) return;
-    
+
     const root = document.documentElement;
-    
+
     // Map Telegram theme to CSS variables
     if (theme.bg_color) {
-        root.style.setProperty('--tg-bg-color', theme.bg_color);
-        root.style.setProperty('--tg-theme-bg-color', theme.bg_color);
+      root.style.setProperty('--tg-bg-color', theme.bg_color);
+      root.style.setProperty('--tg-theme-bg-color', theme.bg_color);
     }
     if (theme.text_color) {
-        root.style.setProperty('--tg-text-color', theme.text_color);
-        root.style.setProperty('--tg-theme-text-color', theme.text_color);
+      root.style.setProperty('--tg-text-color', theme.text_color);
+      root.style.setProperty('--tg-theme-text-color', theme.text_color);
     }
     if (theme.button_color) {
-        root.style.setProperty('--tg-button-color', theme.button_color);
-        root.style.setProperty('--tg-theme-button-color', theme.button_color);
+      root.style.setProperty('--tg-button-color', theme.button_color);
+      root.style.setProperty('--tg-theme-button-color', theme.button_color);
     }
     if (theme.button_text_color) {
-        root.style.setProperty('--tg-button-text-color', theme.button_text_color);
-        root.style.setProperty('--tg-theme-button-text-color', theme.button_text_color);
+      root.style.setProperty('--tg-button-text-color', theme.button_text_color);
+      root.style.setProperty('--tg-theme-button-text-color', theme.button_text_color);
     }
-    if (theme.hint_color) {
-        root.style.setProperty('--tg-hint-color', theme.hint_color);
-    }
-    if (theme.link_color) {
-        root.style.setProperty('--tg-link-color', theme.link_color);
-    }
-}
+  }
 
-// Get init data for API calls
-function getTelegramInitData() {
-    if (window.tg && window.tg.initData) {
-        return window.tg.initData;
-    }
-    return '';
-}
+  // Setup back button
+  function setupBackButton() {
+    if (!window.tg || !window.tg.BackButton) return;
 
-// Show popup
-function showTelegramPopup(title, message, buttons, callback) {
-    if (window.tg) {
-        window.tg.showPopup({ title, message, buttons }, callback);
-    } else {
-        // Fallback to browser confirm/alert
-        if (confirm(`${title}\n\n${message}`)) {
-            callback?.('ok');
-        }
-    }
-}
+    window.tg.BackButton.hide();
 
-// Show confirmation
-function showTelegramConfirm(message, callback) {
-    showTelegramPopup('Confirm', message, [
-        { id: 'cancel', type: 'destructive', text: 'Cancel' },
-        { id: 'ok', type: 'default', text: 'OK' }
-    ], (id) => {
-        if (id === 'ok') callback?.(true);
-        else callback?.(false);
+    document.addEventListener('popupOpened', () => {
+      window.tg.BackButton.show();
+      window.tg.BackButton.onClick(() => {
+        document.dispatchEvent(new Event('popupCloseRequest'));
+        window.tg.BackButton.hide();
+      });
     });
-}
 
-// Show alert
-function showTelegramAlert(message, callback) {
-    showTelegramPopup('Alert', message, [
-        { id: 'ok', type: 'default', text: 'OK' }
-    ], callback);
-}
+    document.addEventListener('popupClosed', () => {
+      window.tg.BackButton.hide();
+    });
+  }
 
-// Share to story
-function shareToStory(mediaUrl, text) {
-    if (window.tg && window.tg.shareToStory) {
-        window.tg.shareToStory(mediaUrl, { text });
-        return true;
-    }
-    return false;
-}
+  // JALANKAN INISIALISASI
+  const user = initTelegram();
+  if (user) {
+    applyTelegramTheme();
+    setupBackButton();
+  }
 
-// Initialize on load
-initTelegram().then(user => {
-    console.log('Telegram init complete:', user);
-});
-
-// Export functions
-window.initTelegram = initTelegram;
-window.getTelegramInitData = getTelegramInitData;
-window.showTelegramPopup = showTelegramPopup;
-window.showTelegramConfirm = showTelegramConfirm;
-window.showTelegramAlert = showTelegramAlert;
-window.shareToStory = shareToStory;
+  // Ekspos fungsi ke global
+  window.getTelegramUser = () => window.telegramUser;
+  window.getTelegramTG = () => window.tg;
+})();
