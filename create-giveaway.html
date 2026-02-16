@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Buat Giveaway - GiftFreebies</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="logo">🎁 GiftFreebies</div>
+            <div class="nav-links">
+                <a href="index.html">GIVEAWAYS</a>
+                <a href="profile.html">PROFIL</a>
+            </div>
+            <div class="user-info" id="userInfo">
+                <img src="https://via.placeholder.com/40" alt="User" class="user-avatar" id="userAvatar">
+                <span id="userName">Loading...</span>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="form-container">
+            <h1 style="text-align: center; margin-bottom: 2rem;">🎨 Buat Giveaway Baru</h1>
+            
+            <form id="createGiveawayForm">
+                <!-- Hadiah -->
+                <div class="form-group">
+                    <label>🏆 Hadiah Utama *</label>
+                    <input type="text" id="prize" required placeholder="Contoh: iPhone 15 Pro">
+                </div>
+
+                <div class="form-group">
+                    <label>📝 Deskripsi Hadiah</label>
+                    <textarea id="prizeDescription" placeholder="Jelaskan detail hadiah..."></textarea>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>💰 Nilai Hadiah (Rp)</label>
+                        <input type="number" id="prizeValue" placeholder="25000000">
+                    </div>
+                    <div class="form-group">
+                        <label>👥 Jumlah Pemenang</label>
+                        <input type="number" id="totalWinners" value="1" min="1" max="100">
+                    </div>
+                </div>
+
+                <!-- Chat ID -->
+                <div class="form-group">
+                    <label>💬 Chat/Channel ID *</label>
+                    <input type="text" id="chatId" required placeholder="-1001234567890 atau @username">
+                    <small style="color: rgba(255,255,255,0.5);">Gunakan -100... untuk private, @username untuk public</small>
+                </div>
+
+                <!-- Waktu Berakhir -->
+                <div class="form-group">
+                    <label>⏰ Durasi Giveaway *</label>
+                    <div class="duration-picker">
+                        <input type="number" id="durationHours" value="24" min="0" max="720">
+                        <span>Jam</span>
+                        <input type="number" id="durationMinutes" value="0" min="0" max="59">
+                        <span>Menit</span>
+                    </div>
+                </div>
+
+                <!-- Text Giveaway -->
+                <div class="form-group">
+                    <label>📄 Text Giveaway *</label>
+                    <textarea id="giveawayText" required placeholder="Teks untuk giveaway...">🎉 GIVEAWAY TIME! 🎉
+
+Hadiah: {prize}
+Berakhir dalam: {duration}
+
+Cara Join:
+1. Klik tombol "Ikut Giveaway" di bawah
+2. {requirements}
+
+Good luck! 🍀</textarea>
+                </div>
+
+                <!-- Button Text -->
+                <div class="form-group">
+                    <label>🔘 Text Tombol</label>
+                    <input type="text" id="buttonText" value="Ikut Giveaway">
+                </div>
+
+                <!-- Requirements -->
+                <div class="form-group">
+                    <label>📋 Syarat-syarat</label>
+                    <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                        <label style="display: flex; align-items: center; gap: 0.5rem;">
+                            <input type="checkbox" id="requireJoin" value="1">
+                            Wajib join channel/group
+                        </label>
+                        <div id="joinChannelsField" style="display: none; margin-left: 1.5rem;">
+                            <input type="text" id="joinChannels" placeholder="@channel1, @channel2 (pisah dengan koma)">
+                        </div>
+                        
+                        <label style="display: flex; align-items: center; gap: 0.5rem;">
+                            <input type="checkbox" id="requireComment" value="1">
+                            Wajib komentar
+                        </label>
+                        
+                        <label style="display: flex; align-items: center; gap: 0.5rem;">
+                            <input type="checkbox" id="requireReaction" value="1">
+                            Wajib react
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Share Mode -->
+                <div class="form-group">
+                    <label>🔄 Mode Share</label>
+                    <select id="shareMode">
+                        <option value="nonaktif">Nonaktif</option>
+                        <option value="wajib">Wajib share</option>
+                        <option value="bonus">Bonus tiket untuk share</option>
+                    </select>
+                </div>
+
+                <!-- Max Tickets -->
+                <div class="form-group">
+                    <label>🎫 Maksimal Tiket per User</label>
+                    <input type="number" id="maxTickets" value="1" min="1" max="100">
+                </div>
+
+                <!-- Submit Button -->
+                <button type="submit" class="start-giveaway-btn">
+                    🚀 MULAI GIVEAWAY
+                </button>
+            </form>
+
+            <div id="result" style="margin-top: 2rem;"></div>
+        </div>
+    </div>
+
+    <script src="js/main.js"></script>
+    <script src="js/create-giveaway.js"></script>
+</body>
+</html>
