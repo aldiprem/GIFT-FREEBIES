@@ -10,11 +10,6 @@
   <link rel="stylesheet" href="css/style.css">
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
-
-<script src="js/telegram.js"></script>
-<script src="js/main.js"></script>
-<script src="js/profile.js"></script>
-
 <body>
     <nav class="navbar">
         <div class="nav-container">
@@ -24,7 +19,9 @@
                 <a href="profile.html" class="active">PROFIL</a>
             </div>
             <div class="user-info" id="userInfo">
-                <img src="https://via.placeholder.com/40" alt="User" class="user-avatar" id="userAvatar">
+                <div class="user-avatar" id="userAvatar">
+                    <span class="avatar-initial">?</span>
+                </div>
                 <span id="userName">Loading...</span>
             </div>
         </div>
@@ -51,7 +48,7 @@
             </button>
 
             <!-- Stats Grid -->
-            <div class="stats-grid" id="userStats">
+            <div class="stats-grid">
                 <div class="stat-card">
                     <div class="stat-value" id="totalGiveaways">0</div>
                     <div class="stat-label">Giveaway Dibuat</div>
@@ -80,7 +77,9 @@
         </div>
     </div>
 
-    <script src="js/main.js"></script>
-    <script src="js/profile.js"></script>
+    <!-- SCRIPTS - URUTAN PENTING! Hanya sekali -->
+    <script src="js/telegram.js"></script>  <!-- PERTAMA: Telegram dulu -->
+    <script src="js/main.js"></script>      <!-- KEDUA: Main.js -->
+    <script src="js/profile.js"></script>   <!-- KETIGA: Profile.js -->
 </body>
 </html>
