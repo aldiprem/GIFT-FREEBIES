@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Create Giveaway - GiftFreebies</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/create.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+</head>
+<body>
+    <div class="container">
+        
+        <div class="top-container">
+            
+            <!-- BORDER 1 : LOGO -->
+            <div class="logo-box">
+                <img src="img/logo.png" class="logo-img" alt="logo" onerror="this.style.display='none'">
+                <span class="logo-text">CREATE GIVEAWAY</span>
+            </div>
+            
+            <!-- FORM CREATE GIVEAWAY -->
+            <div class="form-container">
+                
+                <!-- Loading State -->
+                <div id="loading" class="loading-state">
+                    <div class="spinner"></div>
+                    <p>Memuat form...</p>
+                </div>
+                
+                <!-- Error State -->
+                <div id="error" class="error-state" style="display: none;">
+                    <div>❌ Gagal memuat form</div>
+                    <button onclick="location.reload()" class="retry-btn">Coba Lagi</button>
+                </div>
+                
+                <!-- Form Content -->
+                <div id="formContent" class="form-content" style="display: none;">
+                    <form id="giveawayForm">
+                        
+                        <!-- Header Form -->
+                        <div class="form-header">
+                            <h2 class="form-title">Buat Giveaway Baru</h2>
+                            <p class="form-subtitle">Isi detail giveaway Anda di bawah ini</p>
+                        </div>
+                        
+                        <!-- Jenis Hadiah -->
+                        <div class="form-group">
+                            <label class="form-label">
+                                <span class="label-text">Jenis Hadiah</span>
+                                <span class="label-required">*</span>
+                            </label>
+                            <div class="input-wrapper">
+                                <input type="text" id="prizeInput" class="form-input" placeholder="Contoh: iPhone 15, Smartwatch, Voucher" value="Gaming Bundle">
+                                <div class="input-icon">🎁</div>
+                            </div>
+                            <div class="input-helper">Pisahkan dengan koma jika lebih dari 1 hadiah</div>
+                        </div>
+                        
+                        <!-- Multiple Prizes Tags -->
+                        <div class="prizes-tags" id="prizesTags">
+                            <span class="prize-tag">Gaming Bundle <span class="tag-remove" data-prize="Gaming Bundle">×</span></span>
+                        </div>
+                        
+                        <!-- Text Giveaway -->
+                        <div class="form-group">
+                            <label class="form-label">
+                                <span class="label-text">Text Giveaway</span>
+                            </label>
+                            <div class="textarea-wrapper">
+                                <textarea id="giveawayText" class="form-textarea" rows="4" placeholder="Tulis deskripsi giveaway...">Ikuti giveaway ini dan menangkan hadiah menarik! 🎁</textarea>
+                                <div class="textarea-icon">📝</div>
+                            </div>
+                            <div class="input-helper">Deskripsi giveaway, bisa dikosongi untuk menggunakan teks default</div>
+                        </div>
+                        
+                        <!-- Syarat Giveaway (Multi-select) -->
+                        <div class="form-group">
+                            <label class="form-label">
+                                <span class="label-text">Syarat Giveaway</span>
+                                <span class="label-optional">(bisa pilih lebih dari 1)</span>
+                            </label>
+                            <div class="requirements-grid">
+                                <label class="requirement-item">
+                                    <input type="checkbox" name="requirements" value="subscribe" class="requirement-checkbox">
+                                    <span class="requirement-content">
+                                        <span class="requirement-icon">🔔</span>
+                                        <span class="requirement-text">Subscribe</span>
+                                    </span>
+                                </label>
+                                <label class="requirement-item">
+                                    <input type="checkbox" name="requirements" value="premium" class="requirement-checkbox">
+                                    <span class="requirement-content">
+                                        <span class="requirement-icon">⭐</span>
+                                        <span class="requirement-text">Premium</span>
+                                    </span>
+                                </label>
+                                <label class="requirement-item">
+                                    <input type="checkbox" name="requirements" value="nonpremium" class="requirement-checkbox">
+                                    <span class="requirement-content">
+                                        <span class="requirement-icon">👤</span>
+                                        <span class="requirement-text">Non-Premium</span>
+                                    </span>
+                                </label>
+                                <label class="requirement-item">
+                                    <input type="checkbox" name="requirements" value="aktif" class="requirement-checkbox">
+                                    <span class="requirement-content">
+                                        <span class="requirement-icon">✅</span>
+                                        <span class="requirement-text">Aktif</span>
+                                    </span>
+                                </label>
+                                <label class="requirement-item">
+                                    <input type="checkbox" name="requirements" value="share" class="requirement-checkbox">
+                                    <span class="requirement-content">
+                                        <span class="requirement-icon">📤</span>
+                                        <span class="requirement-text">Share</span>
+                                    </span>
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <!-- Durasi Giveaway -->
+                        <div class="form-group">
+                            <label class="form-label">
+                                <span class="label-text">Durasi Giveaway</span>
+                                <span class="label-required">*</span>
+                            </label>
+                            <div class="duration-selector">
+                                <div class="duration-tabs">
+                                    <button type="button" class="duration-tab active" data-type="duration">Durasi</button>
+                                    <button type="button" class="duration-tab" data-type="date">Tanggal</button>
+                                </div>
+                                
+                                <!-- Durasi Mode -->
+                                <div id="durationMode" class="duration-mode active">
+                                    <div class="duration-input-group">
+                                        <input type="number" id="durationValue" class="duration-input" value="2" min="1" max="365">
+                                        <select id="durationUnit" class="duration-select">
+                                            <option value="minutes">Menit</option>
+                                            <option value="hours" selected>Jam</option>
+                                            <option value="days">Hari</option>
+                                            <option value="weeks">Minggu</option>
+                                            <option value="months">Bulan</option>
+                                        </select>
+                                    </div>
+                                    <div class="input-helper">Contoh: 2 jam, 3 hari, 1 minggu</div>
+                                </div>
+                                
+                                <!-- Tanggal Mode -->
+                                <div id="dateMode" class="duration-mode">
+                                    <div class="date-input-group">
+                                        <input type="datetime-local" id="endDate" class="date-input" value="2026-02-20T15:00">
+                                    </div>
+                                    <div class="input-helper">Format: 20.02.2026 15:00</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Foto / Media -->
+                        <div class="form-group">
+                            <label class="form-label">
+                                <span class="label-text">Foto / Media</span>
+                                <span class="label-optional">(opsional)</span>
+                            </label>
+                            <div class="media-uploader" id="mediaUploader">
+                                <input type="file" id="mediaInput" class="media-input" accept="image/*,video/*">
+                                <div class="media-placeholder">
+                                    <div class="media-icon">📸</div>
+                                    <div class="media-text">Tap untuk pilih foto atau video</div>
+                                    <div class="media-hint">Maksimal 20MB</div>
+                                </div>
+                                <div class="media-preview" id="mediaPreview" style="display: none;">
+                                    <img id="previewImage" class="preview-image" src="" alt="Preview">
+                                    <video id="previewVideo" class="preview-video" style="display: none;" controls></video>
+                                    <button type="button" class="media-remove" id="mediaRemove">×</button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- CAPTCHA Toggle -->
+                        <div class="form-group">
+                            <label class="form-label">
+                                <span class="label-text">CAPTCHA</span>
+                            </label>
+                            <div class="toggle-container">
+                                <label class="toggle-switch">
+                                    <input type="checkbox" id="captchaToggle" checked>
+                                    <span class="toggle-slider"></span>
+                                </label>
+                                <span class="toggle-label" id="captchaLabel">Aktif</span>
+                            </div>
+                            <div class="input-helper">Aktifkan untuk mencegah bot</div>
+                        </div>
+                        
+                        <!-- Submit Buttons -->
+                        <div class="form-actions">
+                            <button type="button" class="btn btn-secondary" id="cancelBtn">Batal</button>
+                            <button type="submit" class="btn btn-primary" id="submitBtn">
+                                <span class="btn-text">Buat Giveaway</span>
+                                <span class="btn-loader" style="display: none;"></span>
+                            </button>
+                        </div>
+                        
+                    </form>
+                </div>
+                
+            </div>
+            
+        </div>
+        
+    </div>
+    
+    <script src="js/create.js"></script>
+</body>
+</html>
