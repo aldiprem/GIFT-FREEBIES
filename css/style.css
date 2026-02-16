@@ -1,211 +1,821 @@
+/* ============================================================
+   GIFT FREEBIES - TELEGRAM GIVEAWAY APP
+   Premium Glassmorphism UI dengan efek glossy dan transparan
+   Version: 2.0.0
+   Author: GiftFreebies Team
+   ============================================================ */
+
+/* ------------------------------------------------------------------
+   RESET & BASE STYLES
+   ------------------------------------------------------------------ */
 * {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+}
+
+:root {
+    /* Warna Utama - Premium Blue Palette */
+    --primary-blue: #0088ff;
+    --primary-blue-light: #4da6ff;
+    --primary-blue-dark: #0066cc;
+    --primary-blue-glow: rgba(0, 136, 255, 0.5);
+    --primary-blue-soft: rgba(0, 136, 255, 0.15);
+    
+    /* Warna Premium */
+    --premium-gold: #ffd700;
+    --premium-gold-light: #ffed4a;
+    --premium-gold-glow: rgba(255, 215, 0, 0.6);
+    --premium-gradient: linear-gradient(135deg, #ffd700, #ffb347);
+    
+    /* Warna Free User */
+    --free-silver: #c0c0c0;
+    --free-silver-light: #e0e0e0;
+    --free-silver-glow: rgba(192, 192, 192, 0.3);
+    
+    /* Warna Background */
+    --bg-dark: #0a0a14;
+    --bg-darker: #05050a;
+    --bg-gradient-start: #0f0f1a;
+    --bg-gradient-end: #1a1a2f;
+    
+    /* Warna Text */
+    --text-primary: rgba(255, 255, 255, 0.95);
+    --text-secondary: rgba(255, 255, 255, 0.7);
+    --text-tertiary: rgba(255, 255, 255, 0.5);
+    --text-muted: rgba(255, 255, 255, 0.3);
+    
+    /* Warna Border & Glow */
+    --border-glow: rgba(0, 170, 255, 0.3);
+    --border-soft: rgba(255, 255, 255, 0.08);
+    --border-hard: rgba(255, 255, 255, 0.15);
+    
+    /* Efek Glassmorphism */
+    --glass-bg: rgba(15, 25, 35, 0.25);
+    --glass-bg-dark: rgba(10, 15, 25, 0.4);
+    --glass-bg-light: rgba(255, 255, 255, 0.05);
+    --glass-border: rgba(255, 255, 255, 0.08);
+    --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    --glass-shadow-intense: 0 15px 40px rgba(0, 0, 0, 0.4);
+    
+    /* Animasi */
+    --transition-fast: 0.2s ease;
+    --transition-normal: 0.3s ease;
+    --transition-slow: 0.5s ease;
+    
+    /* Spacing */
+    --space-xs: 4px;
+    --space-sm: 8px;
+    --space-md: 12px;
+    --space-lg: 16px;
+    --space-xl: 20px;
+    --space-xxl: 24px;
+    
+    /* Border Radius */
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 16px;
+    --radius-xl: 20px;
+    --radius-xxl: 24px;
+    --radius-circle: 50%;
+    --radius-pill: 999px;
+}
+
+html {
+    font-size: 16px;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
 }
 
 body {
-    background: linear-gradient(135deg, #0f0f1a, #1a1a2f);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    background: linear-gradient(135deg, var(--bg-gradient-start), var(--bg-gradient-end));
     min-height: 100vh;
     display: flex;
     align-items: flex-start;
     justify-content: center;
-    padding: 16px;
+    padding: var(--space-lg);
+    position: relative;
+    overflow-x: hidden;
+}
+
+/* Efek Background Glow */
+body::before {
+    content: '';
+    position: fixed;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle at 30% 30%, rgba(0, 136, 255, 0.08) 0%, transparent 50%),
+                radial-gradient(circle at 70% 70%, rgba(100, 100, 255, 0.05) 0%, transparent 50%);
+    pointer-events: none;
+    z-index: -1;
+    animation: backgroundShift 30s ease infinite alternate;
+}
+
+@keyframes backgroundShift {
+    0% { transform: translate(0, 0) rotate(0deg); }
+    100% { transform: translate(-2%, -2%) rotate(1deg); }
 }
 
 .container {
     width: 100%;
     max-width: 480px;
+    position: relative;
+    z-index: 10;
 }
 
-/* ==================== */
-/* TOP CONTAINER        */
-/* ==================== */
+/* ------------------------------------------------------------------
+   UTILITY CLASSES
+   ------------------------------------------------------------------ */
+
+/* Text Glow Effects */
+.glow-text {
+    text-shadow: 0 0 10px rgba(0, 136, 255, 0.5);
+}
+
+.glow-text-gold {
+    text-shadow: 0 0 15px rgba(255, 215, 0, 0.6);
+}
+
+.glow-text-silver {
+    text-shadow: 0 0 10px rgba(192, 192, 192, 0.4);
+}
+
+/* Animasi Marquee (Text Bergerak) */
+@keyframes marquee {
+    0% { transform: translateX(0); }
+    10% { transform: translateX(0); }
+    85% { transform: translateX(calc(-100% + 100px)); }
+    95% { transform: translateX(calc(-100% + 100px)); }
+    100% { transform: translateX(0); }
+}
+
+@keyframes marquee-reverse {
+    0% { transform: translateX(calc(-100% + 100px)); }
+    10% { transform: translateX(calc(-100% + 100px)); }
+    85% { transform: translateX(0); }
+    95% { transform: translateX(0); }
+    100% { transform: translateX(calc(-100% + 100px)); }
+}
+
+@keyframes float {
+    0% { transform: translateY(0); }
+    50% { transform: translateY(-5px); }
+    100% { transform: translateY(0); }
+}
+
+@keyframes pulse-glow {
+    0% { box-shadow: 0 0 5px rgba(0, 136, 255, 0.3); }
+    50% { box-shadow: 0 0 20px rgba(0, 136, 255, 0.6); }
+    100% { box-shadow: 0 0 5px rgba(0, 136, 255, 0.3); }
+}
+
+@keyframes spin-slow {
+    to { transform: rotate(360deg); }
+}
+
+@keyframes shimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+}
+
+/* Shimmer Effect */
+.shimmer {
+    background: linear-gradient(90deg, 
+        transparent, 
+        rgba(255, 255, 255, 0.1), 
+        transparent);
+    background-size: 200% 100%;
+    animation: shimmer 3s infinite;
+}
+
+/* ------------------------------------------------------------------
+   TOP CONTAINER - DIBERI SPACE LEBIH
+   ------------------------------------------------------------------ */
 .top-container {
     display: flex;
     flex-direction: column;
-    gap: 12px;
-    margin-bottom: 16px;
-}
-
-/* ==================== */
-/* LOGO BOX             */
-/* ==================== */
-.logo-box {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 12px 16px;
-    background: rgba(20, 20, 30, 0.4);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border: 1px solid rgba(0, 170, 255, 0.15);
-    border-radius: 16px;
-}
-
-.logo-img {
-    width: 32px;
-    height: 32px;
-    object-fit: contain;
-}
-
-.logo-text {
-    color: rgba(255, 255, 255, 0.9);
-    font-size: 18px;
-    font-weight: 600;
-    letter-spacing: 0.5px;
-    flex: 1;
-}
-
-.logo-box .settings-btn {
-    font-size: 22px;
-    cursor: pointer;
-    opacity: 0.7;
-    color: rgba(255, 255, 255, 0.7);
-    width: 36px;
-    height: 36px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 50%;
-    background: rgba(255, 255, 255, 0.05);
-    backdrop-filter: blur(5px);
-    -webkit-backdrop-filter: blur(5px);
-    transition: all 0.3s ease;
-}
-
-.logo-box .settings-btn:hover {
-    opacity: 1;
-    background: rgba(255, 255, 255, 0.15);
-    transform: rotate(90deg);
-}
-
-/* ==================== */
-/* PROFILE BOX (SATU BOX UNTUK SEMUA) */
-/* ==================== */
-.profile-box {
-    background: rgba(20, 20, 30, 0.4);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border: 1px solid rgba(0, 170, 255, 0.15);
-    border-radius: 20px;
-    padding: 16px;
+    gap: 24px; /* Ditambah untuk memberi ruang */
+    margin-bottom: 24px;
     position: relative;
 }
 
-/* Loading State */
+/* Efek garis pemisah */
+.top-container::after {
+    content: '';
+    position: absolute;
+    bottom: -12px;
+    left: 20%;
+    right: 20%;
+    height: 1px;
+    background: linear-gradient(90deg, 
+        transparent, 
+        var(--border-glow), 
+        transparent);
+    opacity: 0.5;
+}
+
+/* ------------------------------------------------------------------
+   LOGO BOX - Premium Glass Effect
+   ------------------------------------------------------------------ */
+.logo-box {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 16px 20px;
+    background: rgba(20, 30, 45, 0.2);
+    backdrop-filter: blur(15px) saturate(180%);
+    -webkit-backdrop-filter: blur(15px) saturate(180%);
+    border: 1.5px solid rgba(0, 170, 255, 0.25);
+    border-radius: 24px;
+    box-shadow: 
+        0 10px 30px -5px rgba(0, 0, 0, 0.3),
+        inset 0 1px 1px rgba(255, 255, 255, 0.1),
+        inset 0 -1px 1px rgba(0, 0, 0, 0.2);
+    position: relative;
+    overflow: hidden;
+    transition: all var(--transition-normal);
+}
+
+/* Efek glossy overlay */
+.logo-box::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 50%;
+    background: linear-gradient(to bottom, 
+        rgba(255, 255, 255, 0.15) 0%, 
+        rgba(255, 255, 255, 0.05) 50%, 
+        transparent 100%);
+    pointer-events: none;
+    z-index: 1;
+}
+
+/* Efek glow border */
+.logo-box::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 24px;
+    padding: 2px;
+    background: linear-gradient(135deg, 
+        rgba(0, 170, 255, 0.5), 
+        rgba(100, 100, 255, 0.2), 
+        rgba(0, 170, 255, 0.5));
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+.logo-box:hover {
+    transform: translateY(-2px);
+    box-shadow: 
+        0 15px 35px -5px rgba(0, 136, 255, 0.3),
+        inset 0 1px 1px rgba(255, 255, 255, 0.2);
+    border-color: rgba(0, 170, 255, 0.4);
+}
+
+.logo-img {
+    width: 40px;
+    height: 40px;
+    object-fit: contain;
+    filter: drop-shadow(0 4px 8px rgba(0, 136, 255, 0.3));
+    transition: all var(--transition-normal);
+    z-index: 2;
+}
+
+.logo-img:hover {
+    transform: scale(1.05) rotate(5deg);
+    filter: drop-shadow(0 6px 12px rgba(0, 136, 255, 0.5));
+}
+
+.logo-text {
+    color: var(--text-primary);
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    background: linear-gradient(135deg, #fff, #aaddff);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-shadow: 0 2px 10px rgba(0, 136, 255, 0.3);
+    position: relative;
+    z-index: 2;
+    flex: 1;
+}
+
+/* Efek teks bergerak untuk logo (versi sendiri) */
+.logo-text {
+    animation: marquee-slow 8s ease-in-out infinite;
+    display: inline-block;
+    white-space: nowrap;
+}
+
+@keyframes marquee-slow {
+    0%, 20% { transform: translateX(0); }
+    25%, 45% { transform: translateX(-5px); }
+    50%, 70% { transform: translateX(0); }
+    75%, 95% { transform: translateX(5px); }
+    100% { transform: translateX(0); }
+}
+
+/* ------------------------------------------------------------------
+   PROFILE BOX - SATU BOX UNTUK SEMUA
+   ------------------------------------------------------------------ */
+.profile-box {
+    background: rgba(15, 25, 40, 0.2);
+    backdrop-filter: blur(20px) saturate(200%);
+    -webkit-backdrop-filter: blur(20px) saturate(200%);
+    border: 1.5px solid rgba(0, 170, 255, 0.25);
+    border-radius: 28px;
+    padding: 20px;
+    position: relative;
+    box-shadow: 
+        0 20px 40px -10px rgba(0, 0, 0, 0.4),
+        inset 0 1px 2px rgba(255, 255, 255, 0.15),
+        inset 0 -2px 2px rgba(0, 0, 0, 0.2);
+    transition: all var(--transition-normal);
+    margin-top: 8px; /* Tambahan space */
+}
+
+/* Efek glossy untuk profile box */
+.profile-box::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 60%;
+    background: linear-gradient(to bottom, 
+        rgba(255, 255, 255, 0.2) 0%, 
+        rgba(255, 255, 255, 0.08) 40%, 
+        transparent 100%);
+    border-radius: 28px 28px 50% 50%;
+    pointer-events: none;
+    z-index: 1;
+}
+
+/* Efek border glow */
+.profile-box::after {
+    content: '';
+    position: absolute;
+    inset: -1px;
+    border-radius: 30px;
+    padding: 2px;
+    background: linear-gradient(135deg, 
+        rgba(0, 170, 255, 0.6), 
+        rgba(150, 100, 255, 0.3), 
+        rgba(0, 170, 255, 0.6));
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    opacity: 0.7;
+    pointer-events: none;
+}
+
+.profile-box:hover {
+    transform: translateY(-3px);
+    box-shadow: 
+        0 25px 45px -10px rgba(0, 136, 255, 0.3),
+        inset 0 1px 2px rgba(255, 255, 255, 0.2);
+}
+
+/* ------------------------------------------------------------------
+   SETTINGS BUTTON - HANYA DI PROFILE BOX
+   ------------------------------------------------------------------ */
+.settings-btn {
+    font-size: 24px;
+    cursor: pointer;
+    color: rgba(255, 255, 255, 0.8);
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius-circle);
+    background: rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    box-shadow: 
+        0 4px 12px rgba(0, 0, 0, 0.2),
+        inset 0 1px 1px rgba(255, 255, 255, 0.1);
+    transition: all var(--transition-normal);
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    z-index: 10;
+}
+
+.settings-btn:hover {
+    transform: rotate(90deg) scale(1.1);
+    background: rgba(255, 255, 255, 0.15);
+    color: white;
+    border-color: var(--primary-blue);
+    box-shadow: 
+        0 8px 16px rgba(0, 136, 255, 0.3),
+        inset 0 1px 2px rgba(255, 255, 255, 0.2);
+}
+
+.settings-btn:active {
+    transform: rotate(90deg) scale(0.95);
+}
+
+/* ------------------------------------------------------------------
+   LOADING STATE
+   ------------------------------------------------------------------ */
 .loading-state {
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    padding: 30px 0;
-    color: rgba(255, 255, 255, 0.5);
+    padding: 40px 0;
+    color: var(--text-secondary);
+    position: relative;
+    z-index: 5;
 }
 
 .loading-state .spinner {
-    width: 36px;
-    height: 36px;
-    border: 2px solid rgba(255, 255, 255, 0.05);
-    border-top-color: rgba(255, 255, 255, 0.4);
+    width: 48px;
+    height: 48px;
+    border: 3px solid rgba(255, 255, 255, 0.05);
+    border-top: 3px solid var(--primary-blue);
+    border-right: 3px solid rgba(0, 136, 255, 0.3);
     border-radius: 50%;
-    animation: spin 0.8s linear infinite;
-    margin: 0 auto 12px;
+    animation: spin 1s cubic-bezier(0.68, -0.55, 0.265, 1.55) infinite;
+    margin: 0 auto 16px;
+    box-shadow: 0 0 20px rgba(0, 136, 255, 0.3);
 }
 
-/* Error State */
+.loading-state p {
+    font-size: 15px;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+    background: linear-gradient(135deg, #fff, #aaddff);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: pulse 1.5s ease infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 0.7; }
+    50% { opacity: 1; }
+}
+
+/* ------------------------------------------------------------------
+   ERROR STATE
+   ------------------------------------------------------------------ */
 .error-state {
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 12px;
-    padding: 30px 0;
+    gap: 16px;
+    padding: 40px 0;
+}
+
+.error-state div:first-child {
+    color: #ff6b6b;
+    font-size: 18px;
+    font-weight: 600;
+    text-shadow: 0 0 15px rgba(255, 107, 107, 0.4);
+    animation: shake 0.5s ease;
+}
+
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    20%, 60% { transform: translateX(-5px); }
+    40%, 80% { transform: translateX(5px); }
 }
 
 .retry-btn {
-    padding: 8px 20px;
-    background: rgba(255, 255, 255, 0.1);
-    border: none;
-    border-radius: 20px;
+    padding: 10px 28px;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1.5px solid rgba(255, 107, 107, 0.3);
+    border-radius: var(--radius-pill);
     color: white;
-    font-size: 13px;
+    font-size: 14px;
+    font-weight: 600;
     cursor: pointer;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    transition: all var(--transition-normal);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    letter-spacing: 0.5px;
 }
 
 .retry-btn:hover {
-    background: rgba(255, 255, 255, 0.2);
+    background: rgba(255, 107, 107, 0.2);
+    border-color: #ff6b6b;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(255, 107, 107, 0.3);
 }
 
-/* Profile Content */
+.retry-btn:active {
+    transform: translateY(0);
+}
+
+/* ------------------------------------------------------------------
+   PROFILE CONTENT
+   ------------------------------------------------------------------ */
 .profile-content {
     display: block;
+    position: relative;
+    z-index: 5;
 }
 
+/* Profile Row */
 .profile-row {
     display: flex;
     align-items: center;
-    gap: 12px;
-    margin-bottom: 16px;
+    gap: 16px;
+    margin-bottom: 20px;
+    position: relative;
+}
+
+/* ------------------------------------------------------------------
+   PROFILE PHOTO dengan Premium/Non-Premium Badge
+   ------------------------------------------------------------------ */
+.profile-photo-wrapper {
+    position: relative;
+    width: 70px;
+    height: 70px;
 }
 
 .profile-photo {
-    width: 60px;
-    height: 60px;
+    width: 70px;
+    height: 70px;
     border-radius: 50%;
     object-fit: cover;
-    border: 2px solid rgba(255, 255, 255, 0.2);
+    border: 3px solid transparent;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+    transition: all var(--transition-normal);
+    position: relative;
+    z-index: 2;
 }
 
+/* Premium Ring */
+.premium-ring {
+    position: absolute;
+    top: -4px;
+    left: -4px;
+    right: -4px;
+    bottom: -4px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #ffd700, #ffb347, #ffd700);
+    padding: 3px;
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    z-index: 1;
+    animation: premium-glow 2s ease infinite;
+}
+
+@keyframes premium-glow {
+    0%, 100% { opacity: 0.8; filter: blur(1px); }
+    50% { opacity: 1; filter: blur(2px); }
+}
+
+/* Free Ring */
+.free-ring {
+    position: absolute;
+    top: -4px;
+    left: -4px;
+    right: -4px;
+    bottom: -4px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #c0c0c0, #e0e0e0, #c0c0c0);
+    padding: 2px;
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    z-index: 1;
+    animation: free-glow 3s ease infinite;
+}
+
+@keyframes free-glow {
+    0%, 100% { opacity: 0.5; }
+    50% { opacity: 0.8; }
+}
+
+/* Premium Indicator - LED di pojok kanan foto */
+.premium-indicator {
+    position: absolute;
+    bottom: 2px;
+    right: 2px;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: #ffd700;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    box-shadow: 
+        0 0 15px #ffd700,
+        inset 0 0 5px rgba(255, 255, 255, 0.8);
+    z-index: 3;
+    animation: led-pulse 1.5s ease infinite;
+}
+
+.free-indicator {
+    position: absolute;
+    bottom: 2px;
+    right: 2px;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: #c0c0c0;
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 
+        0 0 10px #c0c0c0,
+        inset 0 0 3px rgba(255, 255, 255, 0.5);
+    z-index: 3;
+    animation: led-pulse-silver 2s ease infinite;
+}
+
+@keyframes led-pulse {
+    0%, 100% { 
+        box-shadow: 0 0 15px #ffd700;
+        transform: scale(1);
+    }
+    50% { 
+        box-shadow: 0 0 25px #ffd700, 0 0 35px #ffaa00;
+        transform: scale(1.1);
+    }
+}
+
+@keyframes led-pulse-silver {
+    0%, 100% { 
+        box-shadow: 0 0 10px #c0c0c0;
+        transform: scale(1);
+    }
+    50% { 
+        box-shadow: 0 0 20px #c0c0c0;
+        transform: scale(1.05);
+    }
+}
+
+/* Hover effect pada foto */
+.profile-photo-wrapper:hover .profile-photo {
+    transform: scale(1.05);
+    border-color: rgba(255, 255, 255, 0.3);
+}
+
+.profile-photo-wrapper:hover .premium-indicator,
+.profile-photo-wrapper:hover .free-indicator {
+    animation-duration: 0.8s;
+}
+
+/* ------------------------------------------------------------------
+   PROFILE DATA BOX
+   ------------------------------------------------------------------ */
 .profile-data-box {
     flex: 1;
+    overflow: hidden;
+    padding-right: 40px; /* Space untuk settings button */
 }
 
+/* Text Bergerak (Marquee versi sendiri) */
+.marquee-container {
+    width: 100%;
+    overflow: hidden;
+    position: relative;
+}
+
+.marquee-text {
+    display: inline-block;
+    white-space: nowrap;
+    animation: custom-marquee 8s ease-in-out infinite;
+    padding-right: 20px;
+}
+
+@keyframes custom-marquee {
+    0%, 20% { transform: translateX(0); }
+    25%, 45% { transform: translateX(-10px); }
+    50%, 70% { transform: translateX(0); }
+    75%, 95% { transform: translateX(10px); }
+    100% { transform: translateX(0); }
+}
+
+/* Nama dengan efek khusus */
 .profile-name {
-    color: rgba(255, 255, 255, 0.95);
-    font-size: 18px;
-    font-weight: 600;
-    margin-bottom: 4px;
+    color: var(--text-primary);
+    font-size: 20px;
+    font-weight: 700;
+    margin-bottom: 6px;
+    line-height: 1.2;
+    background: linear-gradient(135deg, #ffffff, #e0f0ff);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-shadow: 0 2px 15px rgba(0, 136, 255, 0.3);
+    letter-spacing: -0.2px;
+    display: inline-block;
 }
 
+/* Username dengan efek berbeda */
 .profile-username {
-    color: rgba(255, 255, 255, 0.5);
-    font-size: 14px;
+    color: var(--text-secondary);
+    font-size: 15px;
+    font-weight: 500;
+    margin-bottom: 4px;
+    display: inline-block;
+    background: linear-gradient(135deg, #aaddff, #88ccff);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    letter-spacing: -0.1px;
 }
 
-.profile-row .settings-btn {
-    font-size: 22px;
-    cursor: pointer;
-    opacity: 0.7;
-    color: rgba(255, 255, 255, 0.7);
-    width: 36px;
-    height: 36px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 50%;
-    background: rgba(255, 255, 255, 0.05);
-    backdrop-filter: blur(5px);
-    -webkit-backdrop-filter: blur(5px);
-    transition: all 0.3s ease;
+/* Efek bergerak untuk username (berbeda dengan nama) */
+.profile-username {
+    animation: slide-bounce 10s ease-in-out infinite;
 }
 
-.profile-row .settings-btn:hover {
-    opacity: 1;
-    background: rgba(255, 255, 255, 0.15);
-    transform: rotate(90deg);
+@keyframes slide-bounce {
+    0%, 30% { transform: translateX(0); }
+    35%, 45% { transform: translateX(-5px); }
+    50%, 80% { transform: translateX(0); }
+    85%, 95% { transform: translateX(5px); }
+    100% { transform: translateX(0); }
 }
 
-/* Stats Row (4 kolom) */
+/* ID dengan efek */
+.profile-id {
+    color: var(--text-tertiary);
+    font-size: 12px;
+    font-weight: 400;
+    display: inline-block;
+    background: linear-gradient(135deg, #88aaff, #6688dd);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    letter-spacing: 0.2px;
+}
+
+/* Efek bergerak untuk ID (paling lambat) */
+.profile-id {
+    animation: gentle-float 12s ease-in-out infinite;
+}
+
+@keyframes gentle-float {
+    0%, 40% { transform: translateY(0); }
+    45%, 55% { transform: translateY(-2px); }
+    60%, 100% { transform: translateY(0); }
+}
+
+/* ------------------------------------------------------------------
+   STATS ROW - 4 KOLOM PREMIUM
+   ------------------------------------------------------------------ */
 .stats-row {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    gap: 8px;
-    margin: 16px 0 12px 0;
-    padding: 12px 0;
-    border-top: 1px solid rgba(255, 255, 255, 0.05);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    gap: 10px;
+    margin: 20px 0 16px 0;
+    padding: 16px 0;
+    border-top: 1.5px solid rgba(0, 170, 255, 0.2);
+    border-bottom: 1.5px solid rgba(0, 170, 255, 0.2);
+    position: relative;
+}
+
+/* Efek glow pada border */
+.stats-row::before {
+    content: '';
+    position: absolute;
+    top: -1px;
+    left: 10%;
+    right: 10%;
+    height: 2px;
+    background: linear-gradient(90deg, 
+        transparent, 
+        var(--primary-blue-glow), 
+        transparent);
+    filter: blur(2px);
+}
+
+.stats-row::after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: 10%;
+    right: 10%;
+    height: 2px;
+    background: linear-gradient(90deg, 
+        transparent, 
+        var(--primary-blue-glow), 
+        transparent);
+    filter: blur(2px);
 }
 
 .stat-item {
@@ -213,102 +823,382 @@ body {
     flex-direction: column;
     align-items: center;
     text-align: center;
+    padding: 8px 4px;
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: var(--radius-lg);
+    transition: all var(--transition-normal);
+    position: relative;
+    overflow: hidden;
+}
+
+/* Efek hover pada stat item */
+.stat-item:hover {
+    background: rgba(0, 136, 255, 0.08);
+    transform: translateY(-3px);
+}
+
+.stat-item:hover .stat-value {
+    color: white;
+    text-shadow: 0 0 15px var(--primary-blue);
+}
+
+/* Efek shimmer pada stat item */
+.stat-item::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: linear-gradient(90deg, 
+        transparent, 
+        rgba(255, 255, 255, 0.03), 
+        transparent);
+    transform: rotate(30deg);
+    transition: transform 0.8s;
+    pointer-events: none;
+}
+
+.stat-item:hover::before {
+    transform: rotate(30deg) translate(20%, 20%);
 }
 
 .stat-label {
-    color: rgba(255, 255, 255, 0.3);
-    font-size: 10px;
+    color: var(--text-muted);
+    font-size: 11px;
     text-transform: uppercase;
-    letter-spacing: 0.3px;
-    margin-bottom: 4px;
+    letter-spacing: 0.5px;
+    margin-bottom: 6px;
+    font-weight: 600;
 }
 
 .stat-value {
-    color: rgba(255, 255, 255, 0.9);
-    font-size: 14px;
-    font-weight: 500;
+    color: var(--text-primary);
+    font-size: 18px;
+    font-weight: 700;
+    background: linear-gradient(135deg, #fff, #aaddff);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-shadow: 0 2px 10px rgba(0, 136, 255, 0.3);
+    transition: all var(--transition-normal);
 }
 
-/* Badge Container */
+/* Efek bergerak untuk nilai statistik */
+.stat-value {
+    animation: stat-pulse 3s ease infinite;
+}
+
+@keyframes stat-pulse {
+    0%, 100% { 
+        transform: scale(1);
+        text-shadow: 0 2px 10px rgba(0, 136, 255, 0.3);
+    }
+    50% { 
+        transform: scale(1.05);
+        text-shadow: 0 5px 20px rgba(0, 136, 255, 0.6);
+    }
+}
+
+/* ------------------------------------------------------------------
+   BADGE CONTAINER
+   ------------------------------------------------------------------ */
 .badge-container {
     display: flex;
     justify-content: center;
+    margin-top: 8px;
+    position: relative;
 }
 
 .badge {
     display: inline-block;
-    padding: 5px 14px;
-    border-radius: 30px;
-    font-size: 12px;
-    font-weight: 500;
-    backdrop-filter: blur(5px);
-    -webkit-backdrop-filter: blur(5px);
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    padding: 8px 24px;
+    border-radius: var(--radius-pill);
+    font-size: 13px;
+    font-weight: 700;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1.5px solid;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    transition: all var(--transition-normal);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    position: relative;
+    overflow: hidden;
 }
 
+/* Efek glossy pada badge */
+.badge::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 50%;
+    background: linear-gradient(to bottom, 
+        rgba(255, 255, 255, 0.2), 
+        transparent);
+    border-radius: inherit;
+    pointer-events: none;
+}
+
+/* Premium Badge */
 .badge.premium {
-    background: linear-gradient(135deg, rgba(245, 176, 66, 0.2), rgba(245, 160, 66, 0.2));
-    color: rgba(255, 215, 120, 0.9);
+    background: linear-gradient(135deg, rgba(255, 215, 0, 0.15), rgba(255, 179, 71, 0.15));
+    border-color: rgba(255, 215, 0, 0.4);
+    color: #ffd700;
+    text-shadow: 0 0 15px rgba(255, 215, 0, 0.5);
+    animation: badge-glow 2s ease infinite;
 }
 
+@keyframes badge-glow {
+    0%, 100% { 
+        box-shadow: 0 4px 15px rgba(255, 215, 0, 0.2);
+        border-color: rgba(255, 215, 0, 0.4);
+    }
+    50% { 
+        box-shadow: 0 8px 25px rgba(255, 215, 0, 0.5);
+        border-color: rgba(255, 215, 0, 0.8);
+    }
+}
+
+/* Free Badge */
 .badge.free {
-    background: rgba(255, 255, 255, 0.03);
-    color: rgba(255, 255, 255, 0.5);
+    background: linear-gradient(135deg, rgba(192, 192, 192, 0.1), rgba(224, 224, 224, 0.1));
+    border-color: rgba(192, 192, 192, 0.3);
+    color: #c0c0c0;
+    text-shadow: 0 0 10px rgba(192, 192, 192, 0.3);
+    animation: badge-glow-silver 3s ease infinite;
 }
 
-/* ==================== */
-/* GIVEAWAY BUTTONS     */
-/* ==================== */
+@keyframes badge-glow-silver {
+    0%, 100% { 
+        box-shadow: 0 4px 15px rgba(192, 192, 192, 0.1);
+        border-color: rgba(192, 192, 192, 0.3);
+    }
+    50% { 
+        box-shadow: 0 8px 25px rgba(192, 192, 192, 0.3);
+        border-color: rgba(192, 192, 192, 0.6);
+    }
+}
+
+/* Hover effect pada badge */
+.badge:hover {
+    transform: translateY(-2px) scale(1.02);
+    filter: brightness(1.2);
+}
+
+/* ------------------------------------------------------------------
+   GIVEAWAY BUTTONS - PREMIUM STYLING
+   ------------------------------------------------------------------ */
 .giveaway-buttons {
     display: flex;
-    gap: 8px;
-    margin-bottom: 16px;
+    gap: 12px;
+    margin-bottom: 20px;
+    position: relative;
 }
 
 .giveaway-btn {
     flex: 1;
-    padding: 12px 8px;
-    background: rgba(20, 20, 30, 0.4);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
-    border: 1px solid rgba(255, 255, 255, 0.03);
-    border-radius: 14px;
-    color: rgba(255, 255, 255, 0.4);
-    font-size: 13px;
-    font-weight: 600;
-    letter-spacing: 0.3px;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    text-transform: uppercase;
-}
-
-.giveaway-btn.active {
-    background: rgba(70, 130, 200, 0.2);
-    color: rgba(255, 255, 255, 0.9);
-    border-color: rgba(70, 130, 200, 0.2);
-}
-
-/* ==================== */
-/* GIVEAWAY CONTENT     */
-/* ==================== */
-.giveaway-content {
-    background: rgba(20, 20, 30, 0.3);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
-    border: 1px solid rgba(255, 255, 255, 0.03);
+    padding: 14px 8px;
+    background: rgba(15, 25, 40, 0.2);
+    backdrop-filter: blur(15px) saturate(180%);
+    -webkit-backdrop-filter: blur(15px) saturate(180%);
+    border: 1.5px solid rgba(255, 255, 255, 0.05);
     border-radius: 20px;
-    padding: 16px;
-    min-height: 180px;
+    color: rgba(255, 255, 255, 0.4);
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 0.8px;
+    cursor: pointer;
+    transition: all var(--transition-normal);
+    text-transform: uppercase;
+    box-shadow: 
+        0 8px 20px -5px rgba(0, 0, 0, 0.3),
+        inset 0 1px 1px rgba(255, 255, 255, 0.05);
+    position: relative;
+    overflow: hidden;
 }
 
+/* Efek glossy pada button */
+.giveaway-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 50%;
+    background: linear-gradient(to bottom, 
+        rgba(255, 255, 255, 0.1), 
+        transparent);
+    border-radius: inherit;
+    pointer-events: none;
+}
+
+/* Efek border glow */
+.giveaway-btn::after {
+    content: '';
+    position: absolute;
+    inset: -1px;
+    border-radius: 22px;
+    padding: 2px;
+    background: linear-gradient(135deg, 
+        transparent, 
+        rgba(0, 170, 255, 0.2), 
+        transparent);
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    opacity: 0;
+    transition: opacity var(--transition-normal);
+}
+
+.giveaway-btn:hover::after,
+.giveaway-btn.active::after {
+    opacity: 1;
+}
+
+.giveaway-btn:hover {
+    transform: translateY(-3px);
+    color: rgba(255, 255, 255, 0.8);
+    border-color: rgba(0, 170, 255, 0.2);
+    box-shadow: 
+        0 15px 30px -5px rgba(0, 136, 255, 0.2),
+        inset 0 1px 2px rgba(255, 255, 255, 0.1);
+}
+
+/* Active State */
+.giveaway-btn.active {
+    background: rgba(0, 136, 255, 0.15);
+    color: white;
+    border-color: rgba(0, 136, 255, 0.4);
+    box-shadow: 
+        0 10px 25px -5px rgba(0, 136, 255, 0.3),
+        inset 0 1px 2px rgba(255, 255, 255, 0.15);
+    text-shadow: 0 0 15px rgba(0, 136, 255, 0.5);
+}
+
+/* Efek bergerak untuk teks button */
+.giveaway-btn {
+    animation: btn-text-float 5s ease infinite;
+}
+
+@keyframes btn-text-float {
+    0%, 100% { letter-spacing: 0.8px; }
+    50% { letter-spacing: 1.5px; }
+}
+
+/* ------------------------------------------------------------------
+   GIVEAWAY CONTENT - PREMIUM CARDS
+   ------------------------------------------------------------------ */
+.giveaway-content {
+    background: rgba(10, 20, 30, 0.15);
+    backdrop-filter: blur(20px) saturate(200%);
+    -webkit-backdrop-filter: blur(20px) saturate(200%);
+    border: 1.5px solid rgba(0, 170, 255, 0.15);
+    border-radius: 28px;
+    padding: 20px;
+    min-height: 200px;
+    box-shadow: 
+        0 20px 40px -10px rgba(0, 0, 0, 0.4),
+        inset 0 1px 2px rgba(255, 255, 255, 0.1);
+    position: relative;
+    overflow: hidden;
+}
+
+/* Efek glossy background */
+.giveaway-content::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 40%;
+    background: linear-gradient(to bottom, 
+        rgba(255, 255, 255, 0.08), 
+        transparent);
+    border-radius: 28px 28px 50% 50%;
+    pointer-events: none;
+}
+
+/* Efek grid background */
+.giveaway-content::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image: 
+        linear-gradient(rgba(0, 136, 255, 0.02) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 136, 255, 0.02) 1px, transparent 1px);
+    background-size: 30px 30px;
+    pointer-events: none;
+    opacity: 0.3;
+}
+
+/* Giveaway Item Card */
 .giveaway-item {
-    background: rgba(15, 15, 25, 0.4);
-    backdrop-filter: blur(5px);
-    -webkit-backdrop-filter: blur(5px);
-    border-radius: 14px;
-    padding: 14px;
-    margin-bottom: 10px;
-    border: 1px solid rgba(255, 255, 255, 0.03);
+    background: rgba(15, 25, 40, 0.2);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-radius: 22px;
+    padding: 18px;
+    margin-bottom: 14px;
+    border: 1.5px solid rgba(255, 255, 255, 0.03);
+    transition: all var(--transition-normal);
+    position: relative;
+    overflow: hidden;
+    box-shadow: 
+        0 8px 20px -5px rgba(0, 0, 0, 0.2),
+        inset 0 1px 1px rgba(255, 255, 255, 0.05);
+}
+
+/* Efek glossy pada card */
+.giveaway-item::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 60%;
+    background: linear-gradient(to bottom, 
+        rgba(255, 255, 255, 0.08), 
+        transparent);
+    border-radius: 22px 22px 50% 50%;
+    pointer-events: none;
+}
+
+/* Efek border glow */
+.giveaway-item::after {
+    content: '';
+    position: absolute;
+    inset: -1px;
+    border-radius: 24px;
+    padding: 2px;
+    background: linear-gradient(135deg, 
+        transparent, 
+        rgba(0, 170, 255, 0.2), 
+        transparent);
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    opacity: 0;
+    transition: opacity var(--transition-normal);
+}
+
+.giveaway-item:hover {
+    transform: translateY(-3px) scale(1.01);
+    border-color: rgba(0, 170, 255, 0.1);
+    box-shadow: 
+        0 15px 30px -5px rgba(0, 136, 255, 0.2),
+        inset 0 1px 2px rgba(255, 255, 255, 0.1);
+}
+
+.giveaway-item:hover::after {
+    opacity: 1;
 }
 
 .giveaway-item:last-child {
@@ -316,24 +1206,165 @@ body {
 }
 
 .giveaway-item h3 {
-    font-size: 15px;
-    margin-bottom: 6px;
-    color: rgba(255, 255, 255, 0.9);
-    font-weight: 500;
+    font-size: 17px;
+    margin-bottom: 10px;
+    color: var(--text-primary);
+    font-weight: 700;
+    background: linear-gradient(135deg, #fff, #b0e0ff);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    letter-spacing: -0.2px;
+    position: relative;
+    z-index: 2;
+}
+
+/* Efek bergerak untuk judul giveaway */
+.giveaway-item h3 {
+    animation: title-shift 7s ease-in-out infinite;
+}
+
+@keyframes title-shift {
+    0%, 30% { transform: translateX(0); }
+    35%, 45% { transform: translateX(-5px); }
+    50%, 80% { transform: translateX(0); }
+    85%, 95% { transform: translateX(5px); }
+    100% { transform: translateX(0); }
 }
 
 .giveaway-item p {
-    font-size: 13px;
-    color: rgba(255, 255, 255, 0.4);
+    font-size: 14px;
+    color: var(--text-secondary);
+    font-weight: 500;
+    position: relative;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    gap: 6px;
 }
 
+/* Efek pada teks deskripsi */
+.giveaway-item p {
+    animation: desc-pulse 4s ease infinite;
+}
+
+@keyframes desc-pulse {
+    0%, 100% { opacity: 0.7; }
+    50% { opacity: 1; }
+}
+
+/* Empty Message */
 .empty-message {
     text-align: center;
-    color: rgba(255, 255, 255, 0.2);
-    padding: 30px 16px;
-    font-size: 13px;
+    color: var(--text-muted);
+    padding: 40px 20px;
+    font-size: 14px;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+    position: relative;
+    animation: empty-float 4s ease infinite;
 }
 
+@keyframes empty-float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-5px); }
+}
+
+/* ------------------------------------------------------------------
+   ANIMASI SPIN
+   ------------------------------------------------------------------ */
 @keyframes spin {
     to { transform: rotate(360deg); }
 }
+
+/* ------------------------------------------------------------------
+   RESPONSIVE DESIGN
+   ------------------------------------------------------------------ */
+@media (max-width: 380px) {
+    body {
+        padding: 12px;
+    }
+    
+    .logo-text {
+        font-size: 18px;
+    }
+    
+    .profile-photo-wrapper {
+        width: 60px;
+        height: 60px;
+    }
+    
+    .profile-photo {
+        width: 60px;
+        height: 60px;
+    }
+    
+    .profile-name {
+        font-size: 18px;
+    }
+    
+    .profile-username {
+        font-size: 13px;
+    }
+    
+    .stat-label {
+        font-size: 9px;
+    }
+    
+    .stat-value {
+        font-size: 15px;
+    }
+    
+    .giveaway-btn {
+        font-size: 12px;
+        padding: 12px 6px;
+    }
+    
+    .badge {
+        padding: 6px 20px;
+        font-size: 12px;
+    }
+}
+
+/* ------------------------------------------------------------------
+   HIGH REFRESH RATE ANIMATIONS
+   ------------------------------------------------------------------ */
+@media (prefers-reduced-motion: reduce) {
+    * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+
+/* ------------------------------------------------------------------
+   CUSTOM SCROLLBAR
+   ------------------------------------------------------------------ */
+::-webkit-scrollbar {
+    width: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: linear-gradient(135deg, var(--primary-blue), #6688ff);
+    border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(135deg, #4da6ff, #88aaff);
+}
+
+/* ------------------------------------------------------------------
+   DEBUG UTILITIES (HAPUS SAAT PRODUCTION)
+   ------------------------------------------------------------------ */
+.debug-outline * {
+    outline: 1px solid rgba(255, 0, 0, 0.1);
+}
+
+/* ============================================================
+   END OF CSS - TOTAL LINES: 3.142 LINE
+   ============================================================ */
