@@ -1,5 +1,5 @@
 // ================================
-// TELEGRAM USER AUTH - CLEAN VERSION
+// TELEGRAM USER AUTH - CLEAN VERSION (FIXED)
 // ================================
 
 // Jalankan langsung, tanpa menunggu DOMContentLoaded
@@ -11,6 +11,7 @@
 
   // Global currentUser agar dipakai seluruh app
   window.currentUser = null;
+  window.telegramUser = null; // TAMBAHKAN INI!
 
   // Init Telegram WebApp
   function initTelegramAuth() {
@@ -31,6 +32,7 @@
 
     if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
       telegramUser = tg.initDataUnsafe.user;
+      window.telegramUser = telegramUser; // SET KE GLOBAL
 
       console.log("✅ Telegram user detected:", telegramUser);
 
@@ -46,6 +48,12 @@
 
       console.log('✅ currentUser set:', window.currentUser);
 
+      // TRIGGER EVENT UNTUK MAIN.JS
+      const event = new CustomEvent('telegramUserReady', { 
+        detail: window.currentUser 
+      });
+      window.dispatchEvent(event);
+
       // Update UI
       updateNavbarUser();
       updateProfilePage();
@@ -59,14 +67,23 @@
   // Guest fallback
   function setGuestUser() {
     window.currentUser = {
-      user_id: null,
+      user_id: 7998861975, // PAKAI DUMMY ID
       fullname: 'Guest',
-      username: '',
-      avatar: 'https://ui-avatars.com/api/?name=Guest&background=8774E1&color=fff&size=128&bold=true',
+      username: 'guest',
+      avatar: 'https://ui-avatars.com/api/?name=Guest&background=1e88e5&color=fff&size=128&bold=true',
       first_seen: new Date().toISOString(),
       is_premium: false
     };
+    window.telegramUser = null;
+    
     console.log('👤 Guest user set');
+    
+    // TRIGGER EVENT JUGA UNTUK GUEST
+    const event = new CustomEvent('telegramUserReady', { 
+      detail: window.currentUser 
+    });
+    window.dispatchEvent(event);
+    
     updateNavbarUser();
     updateProfilePage();
   }
