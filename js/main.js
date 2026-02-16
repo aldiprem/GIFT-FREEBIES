@@ -12,8 +12,10 @@
         profileContent: document.getElementById('profileContent'),
         
         profilePhoto: document.getElementById('profilePhoto'),
+        profilePhotoWrapper: document.getElementById('profilePhotoWrapper'),
         profileNameDisplay: document.getElementById('profileNameDisplay'),
         profileUsernameDisplay: document.getElementById('profileUsernameDisplay'),
+        profileIdDisplay: document.getElementById('profileIdDisplay'),
         
         userId: document.getElementById('userId'),
         languageCode: document.getElementById('languageCode'),
@@ -22,7 +24,6 @@
         premiumBadge: document.getElementById('premiumBadge'),
         
         settingsBtn: document.getElementById('settingsBtn'),
-        profileSettingsBtn: document.getElementById('profileSettingsBtn'),
         activeBtn: document.getElementById('activeBtn'),
         endedBtn: document.getElementById('endedBtn'),
         giveawayContent: document.getElementById('giveawayContent')
@@ -59,7 +60,21 @@
 
     function generateAvatarUrl(name) {
         if (!name) return 'https://ui-avatars.com/api/?name=U&size=120&background=1e88e5&color=fff';
-        return `https://ui-avatars.com/api/?name=${name.charAt(0).toUpperCase()}&size=120&background=1e88e5&color=fff`;
+        return `https://ui-avatars.com/api/?name=${encodeURIComponent(name.charAt(0).toUpperCase())}&size=120&background=1e88e5&color=fff`;
+    }
+
+    // Fungsi untuk menambahkan indicator premium/free di foto
+    function addPremiumIndicator(isPremium) {
+        if (!elements.profilePhotoWrapper) return;
+        
+        // Hapus indicator lama jika ada
+        const oldIndicator = elements.profilePhotoWrapper.querySelector('.premium-indicator, .free-indicator');
+        if (oldIndicator) oldIndicator.remove();
+        
+        // Buat indicator baru
+        const indicator = document.createElement('div');
+        indicator.className = isPremium ? 'premium-indicator' : 'free-indicator';
+        elements.profilePhotoWrapper.appendChild(indicator);
     }
 
     // ==================== API CALLS ====================
@@ -82,13 +97,15 @@
         const fullName = user.fullname || [user.first_name, user.last_name].filter(Boolean).join(' ') || 'No Name';
         const username = user.username ? (user.username.startsWith('@') ? user.username : `@${user.username}`) : '(no username)';
         const isPremium = user.is_premium || false;
+        const userId = user.user_id || user.id || '-';
         
-        // Update profile
+        // Update profile dengan efek marquee
         if (elements.profileNameDisplay) elements.profileNameDisplay.textContent = fullName;
         if (elements.profileUsernameDisplay) elements.profileUsernameDisplay.textContent = username;
+        if (elements.profileIdDisplay) elements.profileIdDisplay.textContent = `ID: ${userId}`;
         
         // Update stats
-        if (elements.userId) elements.userId.textContent = user.user_id || user.id || '-';
+        if (elements.userId) elements.userId.textContent = userId;
         if (elements.languageCode) elements.languageCode.textContent = (user.language_code || 'id').toUpperCase();
         if (elements.participations) elements.participations.textContent = user.total_participations || 0;
         if (elements.wins) elements.wins.textContent = user.total_wins || 0;
@@ -108,6 +125,9 @@
         if (elements.profilePhoto) {
             elements.profilePhoto.src = user.photo_url || generateAvatarUrl(fullName);
         }
+        
+        // Add premium/free indicator
+        addPremiumIndicator(isPremium);
         
         showProfile();
     }
@@ -167,8 +187,7 @@
     }
 
     // ==================== EVENT LISTENERS ====================
-    elements.settingsBtn?.addEventListener('click', () => alert('Settings'));
-    elements.profileSettingsBtn?.addEventListener('click', () => alert('Settings'));
+    elements.settingsBtn?.addEventListener('click', () => alert('Settings Menu'));
     
     elements.activeBtn?.addEventListener('click', () => {
         elements.activeBtn.classList.add('active');
