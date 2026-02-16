@@ -1,6 +1,7 @@
 // ==================== KONFIGURASI API ====================
 const API_URL = 'https://individually-threaded-jokes-letting.trycloudflare.com';
 
+// currentUser akan diisi oleh telegram.js
 let currentUser = null;
 
 // ==================== FUNGSI UTILITY ====================
@@ -55,133 +56,98 @@ function getUrlParameter(name) {
     return urlParams.get(name);
 }
 
-async function loadUserSession() {
-  console.log('🔄 Loading user session...');
-
-  // PRIORITAS 1: Cek window.telegramUser (dari telegram.js) - INI YANG PALING CEPAT
-  if (window.telegramUser) {
-    console.log('✅ Telegram user detected from window:', window.telegramUser);
-    const tgUser = {
-      user_id: window.telegramUser.id,
-      fullname: (window.telegramUser.first_name + ' ' + (window.telegramUser.last_name || '')).trim(),
-      username: window.telegramUser.username || '',
-      avatar: window.telegramUser.photo_url || `https://ui-avatars.com/api/?name=${window.telegramUser.first_name}&size=120&background=1e88e5&color=fff`,
-      is_premium: window.telegramUser.is_premium || false,
-      language_code: window.telegramUser.language_code || 'id',
-      first_seen: new Date().toISOString()
-    };
-    currentUser = tgUser;
-    localStorage.setItem('giftfreebies_user', JSON.stringify(tgUser));
-    updateUserUI();
-    return;
-  }
-
-  // PRIORITAS 2: Cek localStorage
-  const savedUser = localStorage.getItem('giftfreebies_user');
-  if (savedUser) {
-    try {
-      currentUser = JSON.parse(savedUser);
-      console.log('✅ Loaded user from localStorage:', currentUser);
-      updateUserUI();
-      return;
-    } catch (e) {
-      console.error('Error parsing saved user:', e);
-      localStorage.removeItem('giftfreebies_user'); // Hapus yang corrupt
-    }
-  }
-
-  // PRIORITAS 3: Cek parameter URL (untuk testing)
-  const userId = getUrlParameter('user_id');
-  if (userId) {
-    try {
-      console.log('🔍 Fetching user by ID:', userId);
-      const response = await fetch(`${API_URL}/api/user/${userId}`);
-      if (response.ok) {
-        currentUser = await response.json();
-        localStorage.setItem('giftfreebies_user', JSON.stringify(currentUser));
-        updateUserUI();
-        return;
-      }
-    } catch (error) {
-      console.error('Error loading user:', error);
-    }
-  }
-
-  // PRIORITAS 4: Fallback ke dummy
-  console.log('ℹ️ No user found, using dummy');
-  currentUser = {
-    user_id: 7998861975,
-    fullname: 'John Doe',
-    username: 'johndoe',
-    avatar: 'https://via.placeholder.com/120',
-    first_seen: new Date().toISOString()
-  };
-  localStorage.setItem('giftfreebies_user', JSON.stringify(currentUser));
-  updateUserUI();
-}
-
+// ==================== USER SESSION MANAGEMENT ====================
 // Listen for Telegram user ready event (DARI TELEGRAM.JS)
 window.addEventListener('telegramUserReady', (event) => {
-  console.log('📡 TELEGRAM USER READY EVENT RECEIVED:', event.detail);
+    console.log('📡 TELEGRAM USER READY EVENT RECEIVED:', event.detail);
 
-  if (event.detail) {
-    currentUser = event.detail;
-    localStorage.setItem('giftfreebies_user', JSON.stringify(currentUser));
-    updateUserUI();
+    if (event.detail) {
+        currentUser = event.detail;
+        localStorage.setItem('giftfreebies_user', JSON.stringify(currentUser));
+        updateUserUI();
 
-    // Reload profile if on profile page
-    if (window.location.pathname.includes('profile.html')) {
-      console.log('🔄 Reloading profile page with Telegram data...');
-      if (typeof loadUserProfile === 'function') {
-        loadUserProfile();
-      }
+        // Reload profile if on profile page
+        if (window.location.pathname.includes('profile.html')) {
+            console.log('🔄 Reloading profile page with Telegram data...');
+            if (typeof loadUserProfile === 'function') {
+                loadUserProfile();
+            }
+        }
     }
-  }
 });
+
+// Fallback jika tidak ada event dari Telegram (misal localStorage masih ada)
+function loadUserFromStorage() {
+    const savedUser = localStorage.getItem('giftfreebies_user');
+    if (savedUser) {
+        try {
+            currentUser = JSON.parse(savedUser);
+            console.log('✅ Loaded user from localStorage:', currentUser);
+            updateUserUI();
+            return true;
+        } catch (e) {
+            console.error('Error parsing saved user:', e);
+            localStorage.removeItem('giftfreebies_user');
+        }
+    }
+    return false;
+}
 
 // Update UI dengan data user
 function updateUserUI() {
-  if (!currentUser) return;
+    if (!currentUser) return;
 
-  console.log('🖼️ Updating UI for user:', currentUser);
+    console.log('🖼️ Updating UI for user:', currentUser);
 
-  const userNameEl = document.getElementById('userName');
-  const userAvatarEl = document.getElementById('userAvatar');
-  const profileFullname = document.getElementById('profileFullname');
-  const profileUsername = document.getElementById('profileUsername');
-  const profileAvatar = document.getElementById('profileAvatar');
+    const userNameEl = document.getElementById('userName');
+    const userAvatarEl = document.getElementById('userAvatar');
+    const profileFullname = document.getElementById('profileFullname');
+    const profileUsername = document.getElementById('profileUsername');
+    const profileAvatar = document.getElementById('profileAvatar');
 
-  if (userNameEl) {
-    userNameEl.textContent = currentUser.fullname || currentUser.username || 'User';
-  }
+    if (userNameEl) {
+        userNameEl.textContent = currentUser.fullname || currentUser.username || 'User';
+    }
 
-  if (userAvatarEl) {
-    // Hapus semua child dulu
-    userAvatarEl.innerHTML = '';
+    if (userAvatarEl) {
+        // Hapus semua child dulu
+        userAvatarEl.innerHTML = '';
 
-    // Buat elemen img baru
-    const img = document.createElement('img');
-    img.src = currentUser.avatar || 'https://via.placeholder.com/40';
-    img.alt = currentUser.fullname || 'User';
-    img.className = 'avatar-image';
-    img.onerror = () => {
-      // Fallback kalau gambar gagal load
-      img.src = 'https://via.placeholder.com/40';
-    };
-    userAvatarEl.appendChild(img);
-  }
+        // Cek apakah ada foto real dari Telegram
+        if (currentUser.avatar && !currentUser.avatar.includes('ui-avatars') && !currentUser.avatar.includes('placeholder')) {
+            const img = document.createElement('img');
+            img.src = currentUser.avatar;
+            img.alt = currentUser.fullname || 'User';
+            img.className = 'avatar-image';
+            img.style = 'width:100%;height:100%;border-radius:50%;object-fit:cover;';
+            img.onerror = () => {
+                // Fallback kalau gambar gagal load
+                const initial = (currentUser.fullname || 'U').charAt(0).toUpperCase();
+                userAvatarEl.innerHTML = `<span class="avatar-initial">${initial}</span>`;
+            };
+            userAvatarEl.appendChild(img);
+        } else {
+            // Fallback ke initial
+            const initial = (currentUser.fullname || 'U').charAt(0).toUpperCase();
+            userAvatarEl.innerHTML = `<span class="avatar-initial">${initial}</span>`;
+        }
+    }
 
-  if (profileFullname) {
-    profileFullname.textContent = currentUser.fullname || 'No Name';
-  }
+    if (profileFullname) {
+        profileFullname.textContent = currentUser.fullname || 'No Name';
+    }
 
-  if (profileUsername) {
-    profileUsername.textContent = currentUser.username ? `@${currentUser.username}` : '-';
-  }
+    if (profileUsername) {
+        profileUsername.textContent = currentUser.username ? `@${currentUser.username}` : '-';
+    }
 
-  if (profileAvatar && currentUser.avatar) {
-    profileAvatar.src = currentUser.avatar;
-  }
+    if (profileAvatar && currentUser.avatar) {
+        if (!currentUser.avatar.includes('ui-avatars') && !currentUser.avatar.includes('placeholder')) {
+            profileAvatar.src = currentUser.avatar;
+        } else {
+            profileAvatar.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(currentUser.fullname || 'User')}&background=1e88e5&color=fff&size=120&bold=true`;
+        }
+    }
 }
 
 // ==================== API CALLS ====================
@@ -352,8 +318,17 @@ function createGiveawayCard(giveaway) {
 document.addEventListener('DOMContentLoaded', async () => {
     console.log('🚀 Main.js initialized');
     
-    // Load user session
-    await loadUserSession();
+    // Coba load dari localStorage dulu (untuk guest atau session sebelumnya)
+    const hasUser = loadUserFromStorage();
+    
+    if (!hasUser) {
+        console.log('⏳ Menunggu data dari Telegram...');
+        // Jika tidak ada user, tampilkan loading di navbar
+        const userNameEl = document.getElementById('userName');
+        const userAvatarEl = document.getElementById('userAvatar');
+        if (userNameEl) userNameEl.textContent = 'Loading...';
+        if (userAvatarEl) userAvatarEl.innerHTML = '<span class="avatar-initial">?</span>';
+    }
     
     // Test API connection
     testApiConnection();
