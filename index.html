@@ -17,63 +17,58 @@
             <div class="logo-box">
                 <img src="img/logo.png" class="logo-img" alt="logo" onerror="this.style.display='none'">
                 <span class="logo-text">GIFT FREEBIES</span>
+                <div class="settings-btn" id="settingsBtn">⚙️</div>
             </div>
             
-            <!-- BORDER 2 : PROFILE (RINGKASAN) -->
+            <!-- BORDER 2 : PROFILE (LENGKAP) - SATU BOX SAJA -->
             <div class="profile-box">
-                <img src="img/default-avatar.png" class="profile-photo" id="profilePhoto" alt="profile">
-                <div class="profile-data-box">
-                    <div class="profile-name" id="profileNameDisplay">Memuat...</div>
-                    <div class="profile-username" id="profileUsernameDisplay">@...</div>
-                    <div class="profile-id" id="profileIdDisplay">ID: -</div>
-                </div>
-                <div class="settings-btn" id="profileSettingsBtn">⚙️</div>
-            </div>
-            
-            <!-- USER PROFILE DETAIL SECTION -->
-            <div class="profile-detail">
-                <div id="loading" class="loading">
-                    <div class="spinner"></div>
-                    <p>Mengambil data dari server...</p>
+                <!-- Loading State -->
+                <div id="loading" class="profile-loading">
+                    <div class="spinner-small"></div>
+                    <span>Memuat data...</span>
                 </div>
                 
-                <div id="userData" style="display: none;">
-                    <div class="avatar" id="avatarContainer">
-                        <span id="avatarInitial">?</span>
-                    </div>
-                    
-                    <div class="info-item">
-                        <div class="info-label">Nama Lengkap</div>
-                        <div class="info-value" id="fullName">-</div>
-                    </div>
-                    
-                    <div class="info-item">
-                        <div class="info-label">Username</div>
-                        <div class="info-value" id="username">-</div>
-                    </div>
-                    
-                    <div class="info-item">
-                        <div class="info-label">User ID</div>
-                        <div class="info-value" id="userId">-</div>
-                    </div>
-                    
-                    <div class="info-item">
-                        <div class="info-label">Bahasa</div>
-                        <div class="info-value" id="languageCode">-</div>
-                    </div>
-                    
-                    <div class="info-item">
-                        <div class="info-label">Statistik</div>
-                        <div class="info-value" id="userStats">Partisipasi: 0 | Menang: 0</div>
-                    </div>
-                    
-                    <div id="premiumBadge" class="badge free">Free User</div>
+                <!-- Error State -->
+                <div id="error" class="profile-error" style="display: none;">
+                    <span>❌ Gagal memuat</span>
+                    <button onclick="location.reload()" class="retry-btn">Ulang</button>
                 </div>
                 
-                <div id="error" style="display: none; text-align: center; padding: 30px 20px;">
-                    <div style="color: #ff6b6b; font-size: 16px; margin-bottom: 10px;">❌ Gagal memuat data</div>
-                    <div style="color: rgba(255,255,255,0.4); font-size: 13px;" id="errorMessage">Pastikan dibuka dari Telegram</div>
-                    <button onclick="location.reload()" style="margin-top: 20px; padding: 8px 20px; background: rgba(255,255,255,0.1); border: none; border-radius: 20px; color: white; cursor: pointer;">Coba Lagi</button>
+                <!-- Profile Content -->
+                <div id="profileContent" style="display: none;">
+                    <!-- Baris 1: Avatar + Nama + Username + Settings (summary) -->
+                    <div class="profile-row">
+                        <img src="img/default-avatar.png" class="profile-photo" id="profilePhoto" alt="profile">
+                        <div class="profile-data-box">
+                            <div class="profile-name" id="profileNameDisplay">-</div>
+                            <div class="profile-username" id="profileUsernameDisplay">@-</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Baris 2: Detail Info (User ID, Bahasa, Statistik, Badge) -->
+                    <div class="profile-detail-info">
+                        <div class="detail-item">
+                            <span class="detail-label">User ID</span>
+                            <span class="detail-value" id="userId">-</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Bahasa</span>
+                            <span class="detail-value" id="languageCode">ID</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Partisipasi</span>
+                            <span class="detail-value" id="participations">0</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Menang</span>
+                            <span class="detail-value" id="wins">0</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Badge Premium/Free -->
+                    <div class="badge-container">
+                        <div id="premiumBadge" class="badge free">Free User</div>
+                    </div>
                 </div>
             </div>
             
@@ -86,9 +81,7 @@
         </div>
         
         <!-- Content Area for Giveaways -->
-        <div class="giveaway-content" id="giveawayContent">
-            <!-- Content will be populated by JS -->
-        </div>
+        <div class="giveaway-content" id="giveawayContent"></div>
         
     </div>
     
