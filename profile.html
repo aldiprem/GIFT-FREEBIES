@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <meta name="HandheldFriendly" content="true">
   <meta name="MobileOptimized" content="width">
-
   <title>Profil - GiftFreebies</title>
   <link rel="stylesheet" href="css/style.css">
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -29,7 +28,6 @@
 
     <div class="container">
         <div class="profile-container">
-            <!-- Profile Header -->
             <div class="profile-header">
                 <img src="https://via.placeholder.com/120" alt="Profile" class="profile-avatar" id="profileAvatar">
                 <div class="profile-title">
@@ -39,7 +37,6 @@
                 </div>
             </div>
 
-            <!-- Create Giveaway Button -->
             <button class="create-giveaway-btn" onclick="window.location.href='create-giveaway.html'">
                 <svg viewBox="0 0 24 24" width="24" height="24">
                     <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
@@ -47,7 +44,6 @@
                 CREATE GIVEAWAY
             </button>
 
-            <!-- Stats Grid -->
             <div class="stats-grid">
                 <div class="stat-card">
                     <div class="stat-value" id="totalGiveaways">0</div>
@@ -67,7 +63,6 @@
                 </div>
             </div>
 
-            <!-- User Giveaways -->
             <h2 style="margin: 2rem 0 1rem;">Giveaway Saya</h2>
             <div id="userGiveaways" class="giveaway-list">
                 <div class="loading">
@@ -77,9 +72,9 @@
         </div>
     </div>
 
-    <!-- SCRIPTS - URUTAN PENTING! Hanya sekali -->
-    <script src="js/telegram.js"></script>  <!-- PERTAMA: Telegram dulu -->
-    <script src="js/main.js"></script>      <!-- KEDUA: Main.js -->
-    <script src="js/profile.js"></script>   <!-- KETIGA: Profile.js -->
+    <!-- SCRIPTS - URUTAN PENTING! HANYA SEKALI -->
+    <script src="js/telegram.js"></script>
+    <script src="js/main.js"></script>
+    <script src="js/profile.js"></script>
 </body>
 </html>
