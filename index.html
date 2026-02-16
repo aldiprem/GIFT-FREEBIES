@@ -3,20 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <meta name="HandheldFriendly" content="true">
-  <meta name="MobileOptimized" content="width">
-
-  <title>Profil - GiftFreebies</title>
+  <title>Giveaway - GiftFreebies</title>
   <link rel="stylesheet" href="css/style.css">
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
-
-<script src="js/telegram.js"></script>
-<script src="js/main.js"></script>
-<script src="js/giveaway.js"></script>
-
 <body>
-    <!-- Navbar -->
     <nav class="navbar">
         <div class="nav-container">
             <div class="logo">🎁 GiftFreebies</div>
@@ -25,23 +16,22 @@
                 <a href="profile.html">PROFIL</a>
             </div>
             <div class="user-info" id="userInfo">
-                <img src="https://via.placeholder.com/40" alt="User" class="user-avatar" id="userAvatar">
+                <div class="user-avatar" id="userAvatar">
+                    <span class="avatar-initial">?</span>
+                </div>
                 <span id="userName">Loading...</span>
             </div>
         </div>
     </nav>
 
-    <!-- Main Content -->
     <div class="container">
         <h1>🎉 Giveaway Aktif</h1>
         
-        <!-- Search Bar -->
         <div style="margin: 2rem 0;">
             <input type="text" id="searchGiveaway" placeholder="Cari giveaway atau masukkan link giveaway..." 
                    style="width: 100%; padding: 1rem; background: rgba(255,255,255,0.05); border: 1px solid var(--primary-blue); border-radius: 8px; color: white;">
         </div>
 
-        <!-- Giveaway List -->
         <div id="giveawayList" class="giveaway-list">
             <div class="loading">
                 <div class="spinner"></div>
@@ -49,6 +39,7 @@
         </div>
     </div>
 
+    <script src="js/telegram.js"></script>
     <script src="js/main.js"></script>
     <script src="js/giveaway.js"></script>
 </body>
