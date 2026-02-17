@@ -299,23 +299,24 @@
 
     // ==================== SAVE AND CLOSE ====================
     function saveAndClose() {
-        console.log('💾 Save and close, sending links to parent');
-        hapticImpact('medium');
-        
-        // Kirim data links ke parent window (create.html)
-        if (window.opener) {
-            window.opener.postMessage({
-                type: 'linksUpdated',
-                links: links
-            }, '*');
-            console.log('📨 Links sent to parent');
-        } else {
-            console.warn('⚠️ No opener window found');
-            // If no opener, just go back
-        }
-        
-        // Kembali ke create.html
-        window.location.href = 'create.html';
+      console.log('💾 Save and close, sending links to parent');
+      hapticImpact('medium');
+    
+      // Kirim data links ke parent window (create.html)
+      if (window.opener) {
+        window.opener.postMessage({
+          type: 'linksUpdated',
+          links: links
+        }, '*');
+        console.log('📨 Links sent to parent');
+      } else {
+        console.warn('⚠️ No opener window found');
+        // Fallback: simpan di localStorage dan redirect
+        saveLinks();
+      }
+    
+      // Kembali ke create.html
+      window.location.href = 'create.html';
     }
 
     // ==================== SETUP EVENT LISTENERS ====================
