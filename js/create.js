@@ -73,7 +73,16 @@
         closePanelBtn: document.getElementById('closePanelBtn'),
         selectedTags: document.getElementById('selectedTags'),
         
-        // Add Link button
+        // Link Manager elements - SESUAIKAN DENGAN HTML TERBARU
+        linkManagerBtn: document.getElementById('linkManagerBtn'),
+        linkExpandBtn: document.getElementById('linkExpandBtn'),
+        linkPreviewArea: document.getElementById('linkPreviewArea'),
+        linkTags: document.getElementById('linkTags'),
+        linkEmptyState: document.getElementById('linkEmptyState'),
+        linkCount: document.getElementById('linkCount'),
+        linkTagsContainer: document.getElementById('linkTagsContainer'),
+        
+        // Add Link button (lama, akan disembunyikan)
         addLinkBtn: document.getElementById('addLinkBtn'),
         savedLinksContainer: document.getElementById('savedLinksContainer')
     };
@@ -83,7 +92,8 @@
     let selectedFile = null;
     let telegramUser = null;
     let selectedRequirements = ['subscribe'];
-    let savedLinks = []; // STATE untuk menyimpan links
+    let savedLinks = [];
+    let isLinkExpanded = false;
 
     // ==================== FUNGSI LINK MANAGER ====================
     function loadSavedLinks() {
@@ -93,7 +103,7 @@
             try {
                 savedLinks = JSON.parse(saved);
                 console.log('✅ Loaded links:', savedLinks);
-                displaySavedLinks();
+                updateLinkDisplay(); // Langsung update display
             } catch (e) {
                 console.error('❌ Error parsing saved links:', e);
                 savedLinks = [];
@@ -109,39 +119,145 @@
         localStorage.setItem('giftfreebies_links', JSON.stringify(savedLinks));
     }
 
+    // Fungsi displaySavedLinks yang lama - kita biarkan tapi tidak digunakan
     function displaySavedLinks() {
-        const container = elements.savedLinksContainer;
-        if (!container) {
-            console.warn('⚠️ Saved links container not found');
+        // Tidak digunakan lagi, tapi biarkan untuk kompatibilitas
+        updateLinkDisplay();
+    }
+
+    function setupLinkManager() {
+        console.log('🔧 Setting up Link Manager...');
+        
+        if (elements.linkManagerBtn) {
+            elements.linkManagerBtn.addEventListener('click', () => {
+                hapticImpact('medium');
+                window.location.href = 'link-manager.html';
+            });
+        }
+        
+        if (elements.linkExpandBtn) {
+            elements.linkExpandBtn.addEventListener('click', () => {
+                hapticImpact('light');
+                toggleLinkExpand();
+            });
+        }
+        
+        // Update tampilan link
+        updateLinkDisplay();
+    }
+    
+    function toggleLinkExpand() {
+        isLinkExpanded = !isLinkExpanded;
+        
+        if (isLinkExpanded) {
+            elements.linkTagsContainer.style.display = 'block';
+            elements.linkPreviewArea.style.display = 'none';
+            elements.linkExpandBtn.classList.add('expanded');
+            elements.linkExpandBtn.textContent = '▲';
+        } else {
+            elements.linkTagsContainer.style.display = 'none';
+            elements.linkPreviewArea.style.display = 'flex';
+            elements.linkExpandBtn.classList.remove('expanded');
+            elements.linkExpandBtn.textContent = '▼';
+        }
+    }
+    
+    function updateLinkDisplay() {
+        if (!elements.linkPreviewArea || !elements.linkTags) return;
+        
+        // Update counter
+        updateLinkCount();
+        
+        // Tampilkan atau sembunyikan tombol expand berdasarkan jumlah link
+        if (savedLinks.length > 1) {
+            elements.linkExpandBtn.style.display = 'flex';
+        } else {
+            elements.linkExpandBtn.style.display = 'none';
+            // Jika expand sedang aktif, matikan
+            if (isLinkExpanded) {
+                isLinkExpanded = false;
+                elements.linkTagsContainer.style.display = 'none';
+                elements.linkPreviewArea.style.display = 'flex';
+                elements.linkExpandBtn.classList.remove('expanded');
+                elements.linkExpandBtn.textContent = '▼';
+            }
+        }
+        
+        if (savedLinks.length === 0) {
+            // Empty state
+            elements.linkPreviewArea.style.display = 'none';
+            elements.linkTagsContainer.style.display = 'none';
+            elements.linkEmptyState.style.display = 'flex';
+            elements.linkTags.innerHTML = '';
             return;
         }
         
-        if (!savedLinks || savedLinks.length === 0) {
-            container.innerHTML = '';
-            return;
+        elements.linkEmptyState.style.display = 'none';
+        
+        // Update preview (link pertama)
+        const firstLink = savedLinks[0];
+        elements.linkPreviewArea.innerHTML = `
+            <div class="link-preview-item" data-id="${firstLink.id}">
+                <span class="link-preview-icon">🔗</span>
+                <div class="link-preview-content">
+                    <div class="link-preview-title">${escapeHtml(firstLink.title || 'Untitled')}</div>
+                    <div class="link-preview-url">${escapeHtml(firstLink.url || '#')}</div>
+                </div>
+                <span class="link-preview-remove" data-id="${firstLink.id}">×</span>
+            </div>
+        `;
+        elements.linkPreviewArea.style.display = 'flex';
+        
+        // Add remove listener untuk preview
+        const previewRemove = elements.linkPreviewArea.querySelector('.link-preview-remove');
+        if (previewRemove) {
+            previewRemove.addEventListener('click', (e) => {
+                e.stopPropagation();
+                hapticImpact('light');
+                const id = previewRemove.dataset.id;
+                removeLinkById(id);
+            });
         }
         
+        // Update semua link di container expand
         let html = '';
-        // Tampilkan maksimal 3 link terbaru
-        const recentLinks = savedLinks.slice(-3);
-        
-        recentLinks.forEach(link => {
+        savedLinks.forEach((link, index) => {
             html += `
-                <div class="saved-link-preview">
-                    <div class="link-icon">🔗</div>
-                    <div class="link-info">
-                        <div class="link-title">${escapeHtml(link.title || 'Untitled')}</div>
-                        <div class="link-url">${escapeHtml(link.url || '#')}</div>
+                <div class="link-tag-item" data-id="${link.id}">
+                    <span class="link-tag-icon">🔗</span>
+                    <div class="link-tag-content">
+                        <div class="link-tag-title">${escapeHtml(link.title || 'Untitled')}</div>
+                        <div class="link-tag-url">${escapeHtml(link.url || '#')}</div>
                     </div>
+                    <span class="link-tag-remove" data-id="${link.id}" data-index="${index}">×</span>
                 </div>
             `;
         });
         
-        if (savedLinks.length > 3) {
-            html += `<div class="saved-link-preview" style="justify-content: center; opacity: 0.7;">+${savedLinks.length - 3} tautan lainnya</div>`;
-        }
+        elements.linkTags.innerHTML = html;
         
-        container.innerHTML = html;
+        // Add remove event listeners untuk semua tag
+        document.querySelectorAll('.link-tag-remove').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                hapticImpact('light');
+                const id = btn.dataset.id;
+                removeLinkById(id);
+            });
+        });
+    }
+    
+    function removeLinkById(id) {
+        savedLinks = savedLinks.filter(link => link.id !== id);
+        saveLinksToStorage();
+        updateLinkDisplay();
+        hapticNotification('success');
+    }
+    
+    function updateLinkCount() {
+        if (elements.linkCount) {
+            elements.linkCount.textContent = savedLinks.length;
+        }
     }
 
     function escapeHtml(text) {
@@ -169,6 +285,9 @@
         // Load saved links
         loadSavedLinks();
         
+        // Setup Link Manager UI
+        setupLinkManager();
+        
         // Setup event listeners
         setupEventListeners();
         
@@ -180,6 +299,18 @@
         
         // Inisialisasi status selected option button
         initSelectedOptions();
+        
+        // Listen for messages from link manager
+        window.addEventListener('message', (event) => {
+            console.log('📨 Received message:', event.data);
+            if (event.data && event.data.type === 'linksUpdated') {
+                savedLinks = event.data.links || [];
+                console.log('🔗 Links updated:', savedLinks);
+                saveLinksToStorage();
+                updateLinkDisplay(); // Langsung update display
+                hapticNotification('success');
+            }
+        });
         
         // Show form
         setTimeout(() => {
@@ -209,36 +340,11 @@
             });
         }
 
-        // Add Link button
+        // Add Link button (lama) - sembunyikan, tapi kita nonaktifkan
         if (elements.addLinkBtn) {
-            console.log('🔗 Add Link button found');
-            elements.addLinkBtn.addEventListener('click', () => {
-                hapticImpact('medium');
-                // Buka link manager dalam popup
-                const width = 450;
-                const height = 650;
-                const left = (window.screen.width - width) / 2;
-                const top = (window.screen.height - height) / 2;
-                
-                window.open('link-manager.html', 'Link Manager', 
-                    `width=${width},height=${height},left=${left},top=${top},resizable=yes,scrollbars=yes`);
-            });
-        } else {
-            console.warn('⚠️ Add Link button not found');
+            // elements.addLinkBtn.style.display = 'none'; // CSS sudah handle
         }
     
-        // Listen for messages from link manager
-        window.addEventListener('message', (event) => {
-            console.log('📨 Received message:', event.data);
-            if (event.data && event.data.type === 'linksUpdated') {
-                savedLinks = event.data.links || [];
-                console.log('🔗 Links updated:', savedLinks);
-                saveLinksToStorage();
-                displaySavedLinks();
-                hapticNotification('success');
-            }
-        });
-
         // Duration tabs
         if (elements.durationTabs) {
             elements.durationTabs.forEach(tab => {
