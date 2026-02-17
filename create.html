@@ -48,6 +48,7 @@
                         <!-- Jenis Hadiah -->
                         <div class="form-group">
                             <label class="form-label">
+                                <span class="info-icon">ℹ️</span>
                                 <span class="label-text">Jenis Hadiah</span>
                                 <span class="label-required">*</span>
                             </label>
@@ -62,19 +63,18 @@
                                     <div class="prize-input-icon">🎁</div>
                                 </div>
                             </div>
-                            <div class="input-helper">Tekan koma (,) atau Enter untuk menambah hadiah</div>
                         </div>
                         
                         <!-- Text Giveaway -->
                         <div class="form-group">
                             <label class="form-label">
+                                <span class="info-icon">ℹ️</span>
                                 <span class="label-text">Text Giveaway</span>
                             </label>
                             <div class="textarea-wrapper">
                                 <textarea id="giveawayText" class="form-textarea" rows="4" placeholder="Tulis deskripsi giveaway...">Ikuti giveaway ini dan menangkan hadiah menarik! 🎁</textarea>
                                 <div class="textarea-icon">📝</div>
                             </div>
-                            <div class="input-helper">Deskripsi giveaway, bisa dikosongi untuk menggunakan teks default</div>
                         </div>
                         
                         <!-- Syarat Giveaway -->
@@ -88,11 +88,11 @@
                                 <!-- Border untuk syarat terpilih (rata kiri) -->
                                 <div class="selected-requirements" id="selectedRequirements">
                                     <div class="selected-tags-scroll" id="selectedTags">
-                                        <span class="selected-tag">Subscribe <span class="tag-remove" data-req="subscribe">×</span></span>
+                                        <span class="selected-tag">🔔 Subscribe <span class="tag-remove" data-req="subscribe">×</span></span>
                                     </div>
                                 </div>
                         
-                                <!-- Tombol SELECT (rata kanan) -->
+                                <!-- Tombol SELECT (rata kanan) - 3D Glossy -->
                                 <button type="button" class="select-btn" id="selectRequirementsBtn">
                                     <span class="select-text">Select</span>
                                     <span class="select-icon">▼</span>
@@ -115,28 +115,47 @@
                             </div>
                         </div>
 
-                        <!-- ADD LINK BUTTON -->
+                        <!-- TAUTAN/LINK - DESAIN BARU -->
                         <div class="form-group">
-                            <label class="form-label">
-                                <span class="info-icon">🔗</span>
-                                <span class="label-text">Tautan/Link</span>
-                                <span class="label-optional">(opsional)</span>
-                            </label>
+                            <div class="link-header">
+                                <label class="form-label">
+                                    <span class="info-icon">ℹ️</span>
+                                    <span class="label-text">Tautan/Link</span>
+                                    <span class="label-optional">(opsional)</span>
+                                </label>
+                                
+                                <div class="link-controls">
+                                    <div class="link-add-group">
+                                        <span class="link-count-badge" id="linkCount">0</span>
+                                        <button type="button" class="link-add-btn" id="linkManagerBtn" title="Kelola Tautan">+</button>
+                                    </div>
+                                </div>
+                            </div>
                             
-                            <!-- Tombol ADD LINK - seperti tombol BATAL & BUAT GIVEAWAY -->
-                            <button type="button" class="add-link-btn" id="addLinkBtn">
-                                <span class="btn-icon">➕</span>
-                                <span class="btn-text">KELOLA TAUTAN</span>
-                                <span class="btn-icon">→</span>
-                            </button>
-                        
-                            <!-- Container untuk link yang sudah disimpan -->
-                            <div class="saved-links-container" id="savedLinksContainer"></div>
+                            <!-- Border Container untuk Link -->
+                            <div class="link-border-container" id="linkBorderContainer">
+                                <!-- Single Link Preview (visible when collapsed) -->
+                                <div class="link-preview-area" id="linkPreviewArea"></div>
+                                
+                                <!-- Tombol Expand/Collapse (V) - menempel di luar border bawah -->
+                                <div class="link-expand-btn" id="linkExpandBtn" style="display: none;">▼</div>
+                                
+                                <!-- Container untuk semua Link Tags (saat expand) -->
+                                <div class="link-tags-container" id="linkTagsContainer" style="display: none;">
+                                    <div class="link-tags-scroll" id="linkTags"></div>
+                                </div>
+                                
+                                <!-- Empty State (ketika belum ada link) -->
+                                <div class="link-empty-state" id="linkEmptyState">
+                                    <span class="link-empty-text">Belum ada tautan</span>
+                                </div>
+                            </div>
                         </div>
                         
                         <!-- Durasi Giveaway -->
                         <div class="form-group">
                             <label class="form-label">
+                                <span class="info-icon">ℹ️</span>
                                 <span class="label-text">Durasi Giveaway</span>
                                 <span class="label-required">*</span>
                             </label>
@@ -158,7 +177,6 @@
                                             <option value="months">Bulan</option>
                                         </select>
                                     </div>
-                                    <div class="input-helper">Contoh: 2 jam, 3 hari, 1 minggu</div>
                                 </div>
                                 
                                 <!-- Tanggal Mode -->
@@ -166,7 +184,6 @@
                                     <div class="date-input-group">
                                         <input type="datetime-local" id="endDate" class="date-input" value="2026-02-20T15:00">
                                     </div>
-                                    <div class="input-helper">Format: 20.02.2026 15:00</div>
                                 </div>
                             </div>
                         </div>
@@ -174,6 +191,7 @@
                         <!-- Foto / Media -->
                         <div class="form-group">
                             <label class="form-label">
+                                <span class="info-icon">ℹ️</span>
                                 <span class="label-text">Foto / Media</span>
                                 <span class="label-optional">(opsional)</span>
                             </label>
@@ -195,6 +213,7 @@
                         <!-- CAPTCHA Toggle -->
                         <div class="form-group">
                             <label class="form-label">
+                                <span class="info-icon">ℹ️</span>
                                 <span class="label-text">CAPTCHA</span>
                             </label>
                             <div class="toggle-container">
@@ -204,7 +223,6 @@
                                 </label>
                                 <span class="toggle-label" id="captchaLabel">Aktif</span>
                             </div>
-                            <div class="input-helper">Aktifkan untuk mencegah bot</div>
                         </div>
                         
                         <!-- Submit Buttons - 2 tombol per baris -->
