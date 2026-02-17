@@ -2,15 +2,18 @@
 (function() {
   console.log('🎁 GIFT FREEBIES - Script started...');
 
+  // ==================== FUNGSI GETARAN ====================
+  function vibrate(duration = 20) {
+    // Cek apakah vibration API didukung
+    if (window.navigator && window.navigator.vibrate) {
+      window.navigator.vibrate(duration);
+    } else {
+      console.log('Vibration API tidak didukung di browser ini');
+    }
+  }
+
   // ==================== KONFIGURASI ====================
   const API_BASE_URL = 'https://individually-threaded-jokes-letting.trycloudflare.com';
-
-    const createGiveawayBtn = document.getElementById('createGiveawayBtn');
-    if (createGiveawayBtn) {
-      createGiveawayBtn.addEventListener('click', () => {
-        window.location.href = 'create.html';
-      });
-    }
 
   // ==================== DOM ELEMENTS ====================
   const elements = {
@@ -24,16 +27,16 @@
     profileUsernameDisplay: document.getElementById('profileUsernameDisplay'),
     profileIdDisplay: document.getElementById('profileIdDisplay'),
 
-    userId: document.getElementById('userId'),
+    totalCreate: document.getElementById('totalCreate'),
     languageCode: document.getElementById('languageCode'),
     participations: document.getElementById('participations'),
     wins: document.getElementById('wins'),
-    premiumBadge: document.getElementById('premiumBadge'),
 
     settingsBtn: document.getElementById('settingsBtn'),
     activeBtn: document.getElementById('activeBtn'),
     endedBtn: document.getElementById('endedBtn'),
-    giveawayContent: document.getElementById('giveawayContent')
+    giveawayContent: document.getElementById('giveawayContent'),
+    createGiveawayBtn: document.getElementById('createGiveawayBtn')
   };
 
   // ==================== DATA GIVEAWAY ====================
@@ -52,6 +55,7 @@
 
   // ==================== FUNGSI UTILITY ====================
   function showError(msg) {
+    vibrate(30); // Getar lebih panjang untuk error
     if (elements.loading) elements.loading.style.display = 'none';
     if (elements.error) {
       elements.error.style.display = 'flex';
@@ -74,11 +78,9 @@
   function addPremiumIndicator(isPremium) {
     if (!elements.profilePhotoWrapper) return;
 
-    // Hapus indicator lama jika ada
     const oldIndicator = elements.profilePhotoWrapper.querySelector('.premium-indicator, .free-indicator');
     if (oldIndicator) oldIndicator.remove();
 
-    // Buat indicator baru
     const indicator = document.createElement('div');
     indicator.className = isPremium ? 'premium-indicator' : 'free-indicator';
     elements.profilePhotoWrapper.appendChild(indicator);
@@ -99,49 +101,49 @@
     }
   }
 
+  // Fetch user's giveaway count
+  async function fetchUserGiveawayCount(userId) {
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/giveaways/user/${userId}?limit=1`, {
+        headers: { 'Accept': 'application/json' },
+        mode: 'cors'
+      });
+      if (!res.ok) return 0;
+      const data = await res.json();
+      return data.count || 0;
+    } catch {
+      return 0;
+    }
+  }
+
   // ==================== UPDATE UI ====================
-  function updateUI(user) {
+  async function updateUI(user) {
     const fullName = user.fullname || [user.first_name, user.last_name].filter(Boolean).join(' ') || 'No Name';
     const username = user.username ? (user.username.startsWith('@') ? user.username : `@${user.username}`) : '(no username)';
     const isPremium = user.is_premium || false;
     const userId = user.user_id || user.id || '-';
 
-    // Update profile dengan efek marquee
     if (elements.profileNameDisplay) elements.profileNameDisplay.textContent = fullName;
     if (elements.profileUsernameDisplay) elements.profileUsernameDisplay.textContent = username;
     if (elements.profileIdDisplay) elements.profileIdDisplay.textContent = `ID: ${userId}`;
 
-    // Update stats
-    if (elements.userId) elements.userId.textContent = userId;
+    const totalCreate = await fetchUserGiveawayCount(userId);
+
+    if (elements.totalCreate) elements.totalCreate.textContent = totalCreate;
     if (elements.languageCode) elements.languageCode.textContent = (user.language_code || 'id').toUpperCase();
     if (elements.participations) elements.participations.textContent = user.total_participations || 0;
     if (elements.wins) elements.wins.textContent = user.total_wins || 0;
 
-    // Update badge
-    if (elements.premiumBadge) {
-      if (isPremium) {
-        elements.premiumBadge.textContent = '⭐ Premium User';
-        elements.premiumBadge.className = 'badge premium';
-      } else {
-        elements.premiumBadge.textContent = 'Free User';
-        elements.premiumBadge.className = 'badge free';
-      }
-    }
-
-    // Update avatar
     if (elements.profilePhoto) {
       elements.profilePhoto.src = user.photo_url || generateAvatarUrl(fullName);
     }
 
-    // Add premium/free indicator
     addPremiumIndicator(isPremium);
-
     showProfile();
   }
 
   // ==================== INIT ====================
   async function init() {
-    // Cek Telegram
     if (!window.Telegram?.WebApp) {
       return showMockData();
     }
@@ -155,32 +157,34 @@
       return showError('Tidak ada data user');
     }
 
-    // Coba ambil dari API
     const apiUser = await fetchUserFromApi(user.id);
 
     if (apiUser) {
-      updateUI({ ...user, ...apiUser });
+      await updateUI({ ...user, ...apiUser });
     } else {
-      updateUI(user);
+      await updateUI(user);
     }
   }
 
   // ==================== MOCK DATA ====================
   function showMockData() {
-    setTimeout(() => {
-      updateUI({
+    setTimeout(async () => {
+      await updateUI({
         id: 7998861975,
         first_name: 'Al',
         last_name: 'wayss',
         username: 'fTamous',
         language_code: 'id',
-        is_premium: false
+        is_premium: false,
+        total_participations: 5,
+        total_wins: 1
       });
     }, 800);
   }
 
   // ==================== GIVEAWAY ====================
   function displayGiveaways(type) {
+    vibrate(15); // Getar saat ganti tab giveaway
     const data = giveaways[type];
     let html = '';
     data.forEach(item => {
@@ -194,19 +198,37 @@
   }
 
   // ==================== EVENT LISTENERS ====================
-  elements.settingsBtn?.addEventListener('click', () => alert('Settings Menu'));
+  if (elements.settingsBtn) {
+    elements.settingsBtn.addEventListener('click', () => {
+      vibrate(20);
+      alert('Settings Menu');
+    });
+  }
 
-  elements.activeBtn?.addEventListener('click', () => {
-    elements.activeBtn.classList.add('active');
-    elements.endedBtn.classList.remove('active');
-    displayGiveaways('active');
-  });
+  if (elements.createGiveawayBtn) {
+    elements.createGiveawayBtn.addEventListener('click', () => {
+      vibrate(15);
+      window.location.href = 'create.html';
+    });
+  }
 
-  elements.endedBtn?.addEventListener('click', () => {
-    elements.endedBtn.classList.add('active');
-    elements.activeBtn.classList.remove('active');
-    displayGiveaways('ended');
-  });
+  if (elements.activeBtn) {
+    elements.activeBtn.addEventListener('click', () => {
+      vibrate(10);
+      elements.activeBtn.classList.add('active');
+      elements.endedBtn.classList.remove('active');
+      displayGiveaways('active');
+    });
+  }
+
+  if (elements.endedBtn) {
+    elements.endedBtn.addEventListener('click', () => {
+      vibrate(10);
+      elements.endedBtn.classList.add('active');
+      elements.activeBtn.classList.remove('active');
+      displayGiveaways('ended');
+    });
+  }
 
   // ==================== START ====================
   displayGiveaways('active');
