@@ -1191,35 +1191,146 @@ input:checked ~ .toggle-label {
    ADD LINK BUTTON
    ------------------------------------------------------------------ */
 .add-link-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  width: 100%;
+  padding: 16px 20px;
+  background: rgba(0, 136, 255, 0.1);
+  border: 2px dashed rgba(0, 136, 255, 0.4);
+  border-radius: 30px;
+  color: white;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  margin-bottom: 16px;
+}
+
+.add-link-btn:hover {
+  background: rgba(0, 136, 255, 0.2);
+  border-color: var(--primary-blue);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(0, 136, 255, 0.2);
+}
+
+.add-link-btn .btn-icon {
+  font-size: 20px;
+  filter: drop-shadow(0 2px 5px rgba(0, 0, 0, 0.2));
+}
+
+/* ------------------------------------------------------------------
+   LINK MANAGER BUTTON - SEPERTI TOMBOL CREATE GIVEAWAY
+   ------------------------------------------------------------------ */
+.link-manager-btn {
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 12px;
     width: 100%;
-    padding: 16px 20px;
-    background: rgba(0, 136, 255, 0.1);
-    border: 2px dashed rgba(0, 136, 255, 0.4);
-    border-radius: 30px;
+    padding: 14px 20px;
+    background: linear-gradient(135deg, #6c5ce7, #a463f5);
+    border: none;
+    border-radius: 40px;
     color: white;
     font-size: 16px;
-    font-weight: 600;
+    font-weight: 700;
     cursor: pointer;
-    transition: all 0.3s ease;
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
+    transition: all var(--transition-normal);
+    box-shadow: 
+        0 8px 20px rgba(108, 92, 231, 0.3),
+        inset 0 1px 2px rgba(255, 255, 255, 0.2);
+    position: relative;
+    overflow: hidden;
+    letter-spacing: 1px;
+    text-transform: uppercase;
     margin-bottom: 16px;
 }
 
-.add-link-btn:hover {
-    background: rgba(0, 136, 255, 0.2);
-    border-color: var(--primary-blue);
-    transform: translateY(-2px);
-    box-shadow: 0 8px 20px rgba(0, 136, 255, 0.2);
+/* Efek glossy */
+.link-manager-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 50%;
+    background: linear-gradient(to bottom, 
+        rgba(255, 255, 255, 0.3), 
+        transparent);
+    border-radius: inherit;
+    pointer-events: none;
 }
 
-.add-link-btn .btn-icon {
+/* Efek shimmer */
+.link-manager-btn::after {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -60%;
+    width: 200%;
+    height: 200%;
+    background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(255, 255, 255, 0.2),
+        transparent
+    );
+    transform: rotate(30deg);
+    animation: shimmer 3s infinite;
+    pointer-events: none;
+}
+
+@keyframes shimmer {
+    0% {
+        transform: rotate(30deg) translateX(-100%);
+    }
+    100% {
+        transform: rotate(30deg) translateX(100%);
+    }
+}
+
+.link-manager-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 
+        0 15px 30px rgba(108, 92, 231, 0.4),
+        inset 0 1px 3px rgba(255, 255, 255, 0.3);
+    background: linear-gradient(135deg, #7d6cf0, #b574ff);
+}
+
+.link-manager-btn:active {
+    transform: translateY(0);
+    box-shadow: 
+        0 5px 15px rgba(108, 92, 231, 0.3),
+        inset 0 1px 2px rgba(255, 255, 255, 0.2);
+}
+
+.link-manager-btn .btn-icon {
     font-size: 20px;
     filter: drop-shadow(0 2px 5px rgba(0, 0, 0, 0.2));
+    animation: icon-bounce 2s ease infinite;
+}
+
+@keyframes icon-bounce {
+    0%, 100% {
+        transform: translateX(0);
+    }
+    50% {
+        transform: translateX(5px);
+    }
+}
+
+.link-manager-btn .btn-text {
+    flex: 1;
+    text-align: center;
+}
+
+/* Sembunyikan tombol add-link-btn yang lama */
+.add-link-btn {
+    display: none;
 }
 
 /* ------------------------------------------------------------------
@@ -1560,6 +1671,447 @@ input:checked ~ .toggle-label {
     font-size: 12px;
     margin-top: 8px;
     padding-left: 16px;
+}
+
+/* ------------------------------------------------------------------
+   TAUTAN/LINK - DESAIN BARU (REVISI FINAL)
+   ------------------------------------------------------------------ */
+
+/* Header Link dengan kontrol di kanan */
+.link-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+}
+
+.link-header .form-label {
+    margin-bottom: 0;
+}
+
+.link-controls {
+    display: flex;
+    align-items: center;
+}
+
+/* Grup untuk badge dan tombol + dalam satu border */
+.link-add-group {
+    display: flex;
+    align-items: center;
+    background: rgba(30, 40, 50, 0.3);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1.5px solid rgba(255, 255, 255, 0.1);
+    border-radius: 30px;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+/* Badge counter dalam border */
+.link-count-badge {
+    font-size: 14px;
+    font-weight: 600;
+    color: white;
+    padding: 6px 12px;
+    background: transparent;
+    border-right: 1.5px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Tombol + dalam border yang sama */
+.link-add-btn {
+    width: 36px;
+    height: 36px;
+    background: transparent;
+    border: none;
+    color: white;
+    font-size: 20px;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    padding: 0;
+    line-height: 1;
+}
+
+.link-add-btn:hover {
+    background: rgba(0, 136, 255, 0.2);
+    color: var(--primary-blue);
+}
+
+.link-add-btn:active {
+    transform: scale(0.95);
+}
+
+/* Border Container untuk Link */
+.link-border-container {
+    background: rgba(10, 20, 30, 0.3);
+    border: 1.5px solid rgba(0, 170, 255, 0.15);
+    border-radius: 20px;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    transition: all var(--transition-normal);
+    box-shadow: 
+        inset 0 2px 4px rgba(0, 0, 0, 0.2),
+        0 4px 12px rgba(0, 0, 0, 0.1);
+    position: relative;
+    min-height: 56px;
+    width: 100%;
+    padding: 12px;
+    margin-bottom: 24px; /* Ditingkatkan untuk memberi ruang pada tombol expand */
+}
+
+.link-border-container:focus-within {
+    border-color: var(--primary-blue);
+    box-shadow: 
+        0 0 0 3px rgba(0, 136, 255, 0.2),
+        inset 0 2px 4px rgba(0, 0, 0, 0.2);
+    background: rgba(15, 25, 40, 0.4);
+}
+
+/* Area Preview untuk link (saat collapsed) */
+.link-preview-area {
+    min-height: 40px;
+    display: flex;
+    align-items: center;
+    width: 100%;
+}
+
+/* Single link preview item */
+.link-preview-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    background: rgba(0, 136, 255, 0.15);
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
+    border: 1px solid rgba(0, 136, 255, 0.3);
+    border-radius: 30px;
+    color: white;
+    font-size: 13px;
+    font-weight: 500;
+    width: 100%;
+    animation: tagAppear 0.3s ease;
+}
+
+.link-preview-icon {
+    font-size: 16px;
+    color: var(--primary-blue);
+}
+
+.link-preview-content {
+    flex: 1;
+    overflow: hidden;
+}
+
+.link-preview-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: white;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.link-preview-url {
+    font-size: 10px;
+    color: rgba(255, 255, 255, 0.5);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.link-preview-remove {
+    cursor: pointer;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 50%;
+    font-size: 12px;
+    transition: all 0.2s ease;
+    color: rgba(255, 255, 255, 0.7);
+    flex-shrink: 0;
+}
+
+.link-preview-remove:hover {
+    background: rgba(255, 107, 107, 0.8);
+    transform: rotate(90deg);
+    color: white;
+}
+
+/* Tombol Expand/Collapse - MENYATU DENGAN BORDER (VERSI STABIL) */
+.link-expand-btn {
+    position: absolute;
+    bottom: -28px;
+    right: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 70px;
+    height: 28px;
+    padding: 0 16px;
+    
+    /* Warna dan efek sama persis dengan border */
+    background: rgba(10, 20, 30, 0.3);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    
+    /* Border yang menyatu dengan border container */
+    border: 1.5px solid rgba(0, 170, 255, 0.15);
+    border-top: none;
+    
+    /* Hanya border kiri, kanan, bawah yang terlihat */
+    border-bottom-left-radius: 20px;
+    border-bottom-right-radius: 20px;
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
+    
+    color: white;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease; /* Hanya properti tertentu yang di-transisi */
+    z-index: 5;
+    letter-spacing: 1px;
+    
+    /* Efek glossy */
+    box-shadow: 
+        inset 0 -1px 1px rgba(0, 0, 0, 0.2),
+        0 4px 8px rgba(0, 0, 0, 0.2);
+    
+    /* PENTING: Matikan transform untuk menghindari pergeseran */
+    transform: none !important;
+}
+
+/* Efek glossy di bagian dalam */
+.link-expand-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 40%;
+    background: linear-gradient(to bottom, 
+        rgba(255, 255, 255, 0.1), 
+        transparent);
+    border-radius: inherit;
+    pointer-events: none;
+}
+
+/* Efek border glow yang menyatu */
+.link-expand-btn::after {
+    content: '';
+    position: absolute;
+    inset: -1px;
+    border-radius: inherit;
+    padding: 2px;
+    background: linear-gradient(135deg, 
+        rgba(0, 170, 255, 0.3), 
+        transparent);
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    opacity: 0.4;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+}
+
+/* Hover - tanpa transform */
+.link-expand-btn:hover {
+    background: rgba(20, 30, 45, 0.4);
+    border-color: var(--primary-blue);
+    box-shadow: 
+        inset 0 -2px 2px rgba(0, 0, 0, 0.2),
+        0 6px 12px rgba(0, 136, 255, 0.2);
+}
+
+.link-expand-btn:hover::after {
+    opacity: 0.8;
+}
+
+/* Active - tanpa transform */
+.link-expand-btn:active {
+    background: rgba(0, 136, 255, 0.2);
+    box-shadow: 
+        inset 0 1px 2px rgba(0, 0, 0, 0.3),
+        0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* Saat expanded (▲) */
+.link-expand-btn.expanded {
+    background: rgba(0, 136, 255, 0.15);
+    border-color: var(--primary-blue);
+}
+
+/* Expanded hover */
+.link-expand-btn.expanded:hover {
+    background: rgba(0, 136, 255, 0.25);
+}
+
+/* Sesuaikan margin bottom container */
+.link-border-container {
+    background: rgba(10, 20, 30, 0.3);
+    border: 1.5px solid rgba(0, 170, 255, 0.15);
+    border-radius: 20px;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    transition: all var(--transition-normal);
+    box-shadow: 
+        inset 0 2px 4px rgba(0, 0, 0, 0.2),
+        0 4px 12px rgba(0, 0, 0, 0.1);
+    position: relative;
+    min-height: 56px;
+    width: 100%;
+    padding: 12px;
+    margin-bottom: 30px; /* Sesuaikan dengan posisi tombol */
+}
+
+.link-expand-btn.expanded:hover {
+    transform: translateX(-50%) translateY(-2px);
+}
+
+/* Container untuk semua Link Tags (saat expand) */
+.link-tags-container {
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+    animation: fadeSlideDown 0.3s ease;
+}
+
+@keyframes fadeSlideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Scroll area untuk link tags */
+.link-tags-scroll {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    max-height: 250px;
+    overflow-y: auto;
+    padding-right: 4px;
+}
+
+.link-tags-scroll::-webkit-scrollbar {
+    width: 4px;
+}
+
+.link-tags-scroll::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 4px;
+}
+
+.link-tags-scroll::-webkit-scrollbar-thumb {
+    background: var(--primary-blue);
+    border-radius: 4px;
+}
+
+/* Link Tag Item (di mode expand) */
+.link-tag-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    background: rgba(0, 136, 255, 0.1);
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
+    border: 1px solid rgba(0, 136, 255, 0.3);
+    border-radius: 30px;
+    color: white;
+    font-size: 14px;
+    font-weight: 500;
+    animation: tagAppear 0.3s ease;
+    transition: all 0.2s ease;
+}
+
+.link-tag-item:hover {
+    background: rgba(0, 136, 255, 0.2);
+    transform: translateX(2px);
+}
+
+.link-tag-icon {
+    font-size: 18px;
+    color: var(--primary-blue);
+    filter: drop-shadow(0 0 5px rgba(0, 136, 255, 0.5));
+}
+
+.link-tag-content {
+    flex: 1;
+    overflow: hidden;
+}
+
+.link-tag-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: white;
+    margin-bottom: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.link-tag-url {
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.5);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.link-tag-remove {
+    cursor: pointer;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 50%;
+    font-size: 14px;
+    transition: all 0.2s ease;
+    color: rgba(255, 255, 255, 0.7);
+    flex-shrink: 0;
+}
+
+.link-tag-remove:hover {
+    background: rgba(255, 107, 107, 0.8);
+    transform: rotate(90deg) scale(1.1);
+    color: white;
+}
+
+/* Empty State */
+.link-empty-state {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 12px;
+    color: rgba(255, 255, 255, 0.3);
+    font-size: 13px;
+    font-style: italic;
+}
+
+.link-empty-text {
+    background: rgba(255, 255, 255, 0.03);
+    padding: 6px 16px;
+    border-radius: 30px;
+}
+
+/* Sembunyikan container lama */
+.saved-links-container {
+    display: none;
 }
 
 /* ------------------------------------------------------------------
