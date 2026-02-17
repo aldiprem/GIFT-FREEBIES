@@ -30,25 +30,20 @@
     // ==================== KONFIGURASI ====================
     const API_BASE_URL = 'https://individually-threaded-jokes-letting.trycloudflare.com';
     
-    // ==================== DOM ELEMENTS ====================
     const elements = {
         loading: document.getElementById('loading'),
         error: document.getElementById('error'),
         formContent: document.getElementById('formContent'),
-        
+    
         // Form inputs
         prizeInput: document.getElementById('prizeInput'),
         prizesTags: document.getElementById('prizesTags'),
         giveawayText: document.getElementById('giveawayText'),
         requirementCheckboxes: document.querySelectorAll('input[name="requirements"]'),
-        
-        // Duration elements
-        durationTabs: document.querySelectorAll('.duration-tab'),
-        durationMode: document.getElementById('durationMode'),
-        dateMode: document.getElementById('dateMode'),
-        durationValue: document.getElementById('durationValue'),
-        durationUnit: document.getElementById('durationUnit'),
-        endDate: document.getElementById('endDate'),
+    
+        // Channel elements - TAMBAHKAN INI
+        channelInput: document.getElementById('channelInput'),
+        channelTags: document.getElementById('channelTags'),
         
         // Media uploader
         mediaInput: document.getElementById('mediaInput'),
@@ -67,13 +62,13 @@
         submitBtn: document.getElementById('submitBtn'),
         form: document.getElementById('giveawayForm'),
         
-        // New elements untuk Syarat Giveaway
+        // Syarat Giveaway
         selectRequirementsBtn: document.getElementById('selectRequirementsBtn'),
         selectPanel: document.getElementById('selectPanel'),
         closePanelBtn: document.getElementById('closePanelBtn'),
         selectedTags: document.getElementById('selectedTags'),
         
-        // Link Manager elements - SESUAIKAN DENGAN HTML TERBARU
+        // Link Manager elements
         linkManagerBtn: document.getElementById('linkManagerBtn'),
         linkExpandBtn: document.getElementById('linkExpandBtn'),
         linkPreviewArea: document.getElementById('linkPreviewArea'),
@@ -82,18 +77,36 @@
         linkCount: document.getElementById('linkCount'),
         linkTagsContainer: document.getElementById('linkTagsContainer'),
         
-        // Add Link button (lama, akan disembunyikan)
+        // Duration elements
+        durationAddBtn: document.getElementById('durationAddBtn'),
+        durationSettingsContainer: document.getElementById('durationSettingsContainer'),
+        durationDisplay: document.getElementById('durationDisplay'),
+        durationSaveBtn: document.getElementById('durationSaveBtn'),
+        daysDisplay: document.getElementById('daysDisplay'),
+        hoursDisplay: document.getElementById('hoursDisplay'),
+        minutesDisplay: document.getElementById('minutesDisplay'),
+        secondsDisplay: document.getElementById('secondsDisplay'),
+        
+        // Add Link button (lama)
         addLinkBtn: document.getElementById('addLinkBtn'),
         savedLinksContainer: document.getElementById('savedLinksContainer')
     };
 
     // ==================== STATE ====================
-    let prizes = ['Gaming Bundle']; // Default prize
+    let channels = [];
+    let prizes = ['Gaming Bundle'];
     let selectedFile = null;
     let telegramUser = null;
     let selectedRequirements = ['subscribe'];
     let savedLinks = [];
     let isLinkExpanded = false;
+    let isDurationExpanded = false;
+    
+    // Duration values
+    let durationDays = 10;
+    let durationHours = 2;
+    let durationMinutes = 30;
+    let durationSeconds = 0;
 
     // ==================== FUNGSI LINK MANAGER ====================
     function loadSavedLinks() {
@@ -103,7 +116,7 @@
             try {
                 savedLinks = JSON.parse(saved);
                 console.log('✅ Loaded links:', savedLinks);
-                updateLinkDisplay(); // Langsung update display
+                updateLinkDisplay();
             } catch (e) {
                 console.error('❌ Error parsing saved links:', e);
                 savedLinks = [];
@@ -119,31 +132,30 @@
         localStorage.setItem('giftfreebies_links', JSON.stringify(savedLinks));
     }
 
-    // Fungsi displaySavedLinks yang lama - kita biarkan tapi tidak digunakan
-    function displaySavedLinks() {
-        // Tidak digunakan lagi, tapi biarkan untuk kompatibilitas
-        updateLinkDisplay();
-    }
-
     function setupLinkManager() {
-        console.log('🔧 Setting up Link Manager...');
-        
-        if (elements.linkManagerBtn) {
-            elements.linkManagerBtn.addEventListener('click', () => {
-                hapticImpact('medium');
-                window.location.href = 'link-manager.html';
-            });
-        }
-        
-        if (elements.linkExpandBtn) {
-            elements.linkExpandBtn.addEventListener('click', () => {
-                hapticImpact('light');
-                toggleLinkExpand();
-            });
-        }
-        
-        // Update tampilan link
-        updateLinkDisplay();
+      console.log('🔧 Setting up Link Manager...');
+    
+      if (elements.linkManagerBtn) {
+        // Hapus event listener lama biar gak dobel
+        elements.linkManagerBtn.replaceWith(elements.linkManagerBtn.cloneNode(true));
+        elements.linkManagerBtn = document.getElementById('linkManagerBtn');
+    
+        elements.linkManagerBtn.addEventListener('click', () => {
+          hapticImpact('medium');
+          // Simpan state ke sessionStorage sebelum pindah halaman
+          saveFormState();
+          window.location.href = 'link-manager.html';
+        });
+      }
+    
+      if (elements.linkExpandBtn) {
+        elements.linkExpandBtn.addEventListener('click', () => {
+          hapticImpact('light');
+          toggleLinkExpand();
+        });
+      }
+    
+      updateLinkDisplay();
     }
     
     function toggleLinkExpand() {
@@ -165,15 +177,12 @@
     function updateLinkDisplay() {
         if (!elements.linkPreviewArea || !elements.linkTags) return;
         
-        // Update counter
         updateLinkCount();
         
-        // Tampilkan atau sembunyikan tombol expand berdasarkan jumlah link
         if (savedLinks.length > 1) {
             elements.linkExpandBtn.style.display = 'flex';
         } else {
             elements.linkExpandBtn.style.display = 'none';
-            // Jika expand sedang aktif, matikan
             if (isLinkExpanded) {
                 isLinkExpanded = false;
                 elements.linkTagsContainer.style.display = 'none';
@@ -184,7 +193,6 @@
         }
         
         if (savedLinks.length === 0) {
-            // Empty state
             elements.linkPreviewArea.style.display = 'none';
             elements.linkTagsContainer.style.display = 'none';
             elements.linkEmptyState.style.display = 'flex';
@@ -194,7 +202,6 @@
         
         elements.linkEmptyState.style.display = 'none';
         
-        // Update preview (link pertama)
         const firstLink = savedLinks[0];
         elements.linkPreviewArea.innerHTML = `
             <div class="link-preview-item" data-id="${firstLink.id}">
@@ -208,7 +215,6 @@
         `;
         elements.linkPreviewArea.style.display = 'flex';
         
-        // Add remove listener untuk preview
         const previewRemove = elements.linkPreviewArea.querySelector('.link-preview-remove');
         if (previewRemove) {
             previewRemove.addEventListener('click', (e) => {
@@ -219,7 +225,6 @@
             });
         }
         
-        // Update semua link di container expand
         let html = '';
         savedLinks.forEach((link, index) => {
             html += `
@@ -236,7 +241,6 @@
         
         elements.linkTags.innerHTML = html;
         
-        // Add remove event listeners untuk semua tag
         document.querySelectorAll('.link-tag-remove').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 e.stopPropagation();
@@ -267,69 +271,401 @@
         return div.innerHTML;
     }
 
-    // ==================== INITIALIZATION ====================
-    function init() {
-        console.log('🚀 Initializing create giveaway form...');
+    // ==================== FUNGSI DURASI GIVEAWAY (IPHONE STYLE) ====================
+    function setupDurationManager() {
+        console.log('⏰ Setting up Duration Manager (iPhone style)...');
         
-        // Check Telegram
-        if (window.Telegram?.WebApp) {
-            const tg = window.Telegram.WebApp;
-            tg.expand();
-            tg.ready();
-            
-            telegramUser = tg.initDataUnsafe?.user;
-            console.log('👤 Telegram User:', telegramUser);
-            console.log('📱 HapticFeedback available:', !!tg.HapticFeedback);
-        }
+        // Set nilai default
+        if (durationDays === undefined) durationDays = 10;
+        if (durationHours === undefined) durationHours = 2;
+        if (durationMinutes === undefined) durationMinutes = 30;
+        if (durationSeconds === undefined) durationSeconds = 0;
         
-        // Load saved links
-        loadSavedLinks();
+        // Generate options untuk setiap kolom
+        generateWheelOptions('days', 0, 31, durationDays);
+        generateWheelOptions('hours', 0, 23, durationHours);
+        generateWheelOptions('minutes', 0, 59, durationMinutes);
+        generateWheelOptions('seconds', 0, 59, durationSeconds);
         
-        // Setup Link Manager UI
-        setupLinkManager();
-        
-        // Setup event listeners
-        setupEventListeners();
-        
-        // Set default date (2 days from now)
-        setDefaultDate();
-        
-        // Update selected tags untuk syarat (default Subscribe)
-        updateSelectedTags();
-        
-        // Inisialisasi status selected option button
-        initSelectedOptions();
-        
-        // Listen for messages from link manager
-        window.addEventListener('message', (event) => {
-            console.log('📨 Received message:', event.data);
-            if (event.data && event.data.type === 'linksUpdated') {
-                savedLinks = event.data.links || [];
-                console.log('🔗 Links updated:', savedLinks);
-                saveLinksToStorage();
-                updateLinkDisplay(); // Langsung update display
-                hapticNotification('success');
-            }
+        // Setup wheel scroll listeners
+        setupWheelScroll('days', 0, 31, (value) => { // UBAH min dari 1 jadi 0
+          durationDays = value;
+          if (elements.daysDisplay) elements.daysDisplay.textContent = value;
+          hapticSelection();
+          updateDurationDisplay();
         });
         
-        // Show form
+        setupWheelScroll('hours', 0, 23, (value) => {
+          durationHours = value;
+          if (elements.hoursDisplay) elements.hoursDisplay.textContent = value;
+          hapticSelection();
+          updateDurationDisplay();
+        });
+        
+        setupWheelScroll('minutes', 0, 59, (value) => {
+          durationMinutes = value;
+          if (elements.minutesDisplay) elements.minutesDisplay.textContent = value;
+          hapticSelection();
+          updateDurationDisplay();
+        });
+        
+        setupWheelScroll('seconds', 0, 59, (value) => {
+          durationSeconds = value;
+          if (elements.secondsDisplay) elements.secondsDisplay.textContent = value;
+          hapticSelection();
+          updateDurationDisplay();
+        });
+        
+        // Tombol + untuk expand/collapse
+        if (elements.durationAddBtn) {
+            elements.durationAddBtn.addEventListener('click', () => {
+                hapticImpact('light');
+                toggleDurationExpand();
+            });
+        }
+        
+        // Tombol simpan
+        if (elements.durationSaveBtn) {
+            elements.durationSaveBtn.addEventListener('click', () => {
+                hapticImpact('medium');
+                saveDurationSettings();
+            });
+        }
+        
+        // Update tampilan durasi
+        updateDurationDisplay();
+    }
+    
+    function generateWheelOptions(unit, min, max, selectedValue) {
+        const optionsContainer = document.getElementById(`${unit}Options`);
+        if (!optionsContainer) return;
+        
+        let html = '';
+        for (let i = min; i <= max; i++) {
+            const isSelected = (i === selectedValue);
+            html += `<div class="selector-option ${isSelected ? 'selected' : ''}" data-value="${i}">${i}</div>`;
+        }
+        optionsContainer.innerHTML = html;
+        
+        // Scroll ke nilai yang dipilih dengan posisi tengah yang PRESISI
         setTimeout(() => {
-            if (elements.loading) elements.loading.style.display = 'none';
-            if (elements.formContent) elements.formContent.style.display = 'block';
-        }, 500);
+            const selector = document.getElementById(`${unit}Selector`);
+            if (selector) {
+                const selectedIndex = selectedValue - min;
+                
+                // PERBAIKAN: Hitung scroll position dengan tepat
+                // Tinggi item: 48px, padding-top: 76px, setengah item: 24px
+                // Rumus yang benar: (selectedIndex * 48) + (paddingTop - halfItem)
+                // paddingTop - halfItem = 76 - 24 = 52
+                const scrollPosition = (selectedIndex * 48) + 52;
+                
+                selector.scrollTop = scrollPosition;
+            }
+        }, 100);
+    }
+    
+  function setupWheelScroll(unit, min, max, onChange) {
+    const selector = document.getElementById(`${unit}Selector`);
+    if (!selector) return;
+  
+    let snapTimeout;
+    let lastValue = -1;
+    let isScrolling = false; // TAMBAHKAN FLAG INI
+    const itemHeight = 48;
+    const paddingTop = 76;
+    const halfItem = 24;
+    const offset = paddingTop - halfItem; // 52
+  
+    // Fungsi untuk mendapatkan nilai berdasarkan posisi scroll
+    function getValueFromScroll(scrollTop) {
+      const adjustedScroll = scrollTop - offset;
+      let index = Math.floor(adjustedScroll / itemHeight);
+  
+      if (adjustedScroll < 0) index = 0;
+      index = Math.max(0, Math.min(max - min, Math.floor(index)));
+  
+      return min + index;
+    }
+  
+    // Fungsi untuk mendapatkan posisi scroll dari nilai
+    function getScrollFromValue(value) {
+      const index = value - min;
+      return (index * itemHeight) + offset;
+    }
+  
+    // Fungsi untuk snap ke posisi terdekat
+    function snapToNearest() {
+      // HANYA SNAP JIKA TIDAK SEDANG DISCROLL
+      if (!isScrolling) {
+        const currentValue = getValueFromScroll(selector.scrollTop);
+        const targetScroll = getScrollFromValue(currentValue);
+  
+        if (Math.abs(selector.scrollTop - targetScroll) > 1) {
+          selector.scrollTop = targetScroll;
+        }
+  
+        if (currentValue !== lastValue) {
+          lastValue = currentValue;
+          onChange(currentValue);
+  
+          const options = selector.querySelectorAll('.selector-option');
+          options.forEach((opt, idx) => {
+            const optValue = min + idx;
+            if (optValue === currentValue) {
+              opt.classList.add('selected');
+            } else {
+              opt.classList.remove('selected');
+            }
+          });
+  
+          hapticSelection();
+        }
+      }
+    }
+  
+    selector.addEventListener('touchstart', () => {
+      isScrolling = true; // SET FLAG SAAT MULAI SCROLL
+      clearTimeout(snapTimeout);
+    }, { passive: true });
+  
+    selector.addEventListener('touchend', () => {
+      isScrolling = false; // RESET FLAG SAAT SCROLL SELESAI
+      snapTimeout = setTimeout(snapToNearest, 100);
+    });
+  
+    selector.addEventListener('touchcancel', () => {
+      isScrolling = false; // RESET FLAG KALO DISCROLL DIBATALKAN
+      snapTimeout = setTimeout(snapToNearest, 100);
+    });
+  
+    selector.addEventListener('scroll', () => {
+      const currentValue = getValueFromScroll(selector.scrollTop);
+  
+      if (currentValue !== lastValue) {
+        lastValue = currentValue;
+        onChange(currentValue);
+  
+        const options = selector.querySelectorAll('.selector-option');
+        options.forEach((opt, idx) => {
+          const optValue = min + idx;
+          if (optValue === currentValue) {
+            opt.classList.add('selected');
+          } else {
+            opt.classList.remove('selected');
+          }
+        });
+      }
+  
+      // HANYA SET TIMEOUT KALAU TIDAK SEDANG DISCROLL
+      if (!isScrolling) {
+        clearTimeout(snapTimeout);
+        snapTimeout = setTimeout(snapToNearest, 150);
+      }
+    });
+  
+    selector.addEventListener('mouseup', () => {
+      isScrolling = false; // UNTUK MOUSE
+      clearTimeout(snapTimeout);
+      snapTimeout = setTimeout(snapToNearest, 80);
+    });
+  
+    selector.addEventListener('mousedown', () => {
+      isScrolling = true; // UNTUK MOUSE
+      clearTimeout(snapTimeout);
+    });
+  
+    // Set initial scroll position
+    setTimeout(() => {
+      const initialValue = unit === 'days' ? durationDays :
+        unit === 'hours' ? durationHours :
+        unit === 'minutes' ? durationMinutes : durationSeconds;
+      selector.scrollTop = getScrollFromValue(initialValue);
+      lastValue = initialValue;
+    }, 100);
+  }
+    
+    function toggleDurationExpand() {
+      isDurationExpanded = !isDurationExpanded;
+    
+      if (elements.durationSettingsContainer) {
+        elements.durationSettingsContainer.style.display = isDurationExpanded ? 'block' : 'none';
+    
+        // Reset scroll positions saat expand
+        if (isDurationExpanded) {
+          setTimeout(() => {
+                    ['days', 'hours', 'minutes', 'seconds'].forEach(unit => {
+              const selector = document.getElementById(`${unit}Selector`);
+              if (selector) {
+                const value = unit === 'days' ? durationDays :
+                  unit === 'hours' ? durationHours :
+                  unit === 'minutes' ? durationMinutes : durationSeconds;
+    
+                // SEMUA UNIT PAKAI min = 0
+                const min = 0;
+    
+                // Gunakan rumus yang sama
+                const index = value - min;
+                const itemHeight = 48;
+                const offset = 52;
+    
+                const scrollPosition = (index * itemHeight) + offset;
+    
+                selector.scrollTop = scrollPosition;
+              }
+            });
+          }, 100);
+        }
+      }
+    }
+    
+    function saveDurationSettings() {
+        updateDurationDisplay();
+        isDurationExpanded = false;
+        if (elements.durationSettingsContainer) {
+            elements.durationSettingsContainer.style.display = 'none';
+        }
+        hapticNotification('success');
+    }
+    
+    function updateDurationDisplay() {
+        if (!elements.durationDisplay) return;
+        
+        let parts = [];
+        if (durationDays > 0) parts.push(`${durationDays} hari`);
+        if (durationHours > 0) parts.push(`${durationHours} jam`);
+        if (durationMinutes > 0) parts.push(`${durationMinutes} menit`);
+        if (durationSeconds > 0) parts.push(`${durationSeconds} detik`);
+        
+        let text = parts.join(' ') || '0 detik';
+        
+        elements.durationDisplay.innerHTML = `<span class="duration-text">${text}</span>`;
     }
 
-    // ==================== SETUP EVENT LISTENERS ====================
+    function saveFormState() {
+      const formState = {
+        prizes: prizes,
+        channels: channels,
+        selectedRequirements: selectedRequirements,
+        giveawayText: elements.giveawayText?.value || '',
+        durationDays: durationDays,
+        durationHours: durationHours,
+        durationMinutes: durationMinutes,
+        durationSeconds: durationSeconds,
+        captchaEnabled: elements.captchaToggle?.checked || true
+      };
+    
+      sessionStorage.setItem('giftfreebies_form_state', JSON.stringify(formState));
+      console.log('💾 Form state saved:', formState);
+    }
+    
+    function restoreFormState() {
+      const savedState = sessionStorage.getItem('giftfreebies_form_state');
+      if (!savedState) return false;
+    
+      try {
+        const state = JSON.parse(savedState);
+        console.log('📥 Restoring form state:', state);
+    
+        // Restore prizes
+        if (state.prizes && state.prizes.length > 0) {
+          prizes = state.prizes;
+          updatePrizesTags();
+        }
+    
+        // Restore channels - TAMBAH INI
+        if (state.channels && state.channels.length > 0) {
+          channels = state.channels;
+          updateChannelsTags();
+        }
+    
+        // Restore prizes
+        if (state.prizes && state.prizes.length > 0) {
+          prizes = state.prizes;
+          updatePrizesTags();
+        }
+    
+        // Restore requirements
+        if (state.selectedRequirements && state.selectedRequirements.length > 0) {
+          selectedRequirements = state.selectedRequirements;
+          document.querySelectorAll('input[name="requirements"]').forEach(cb => {
+            cb.checked = selectedRequirements.includes(cb.value);
+          });
+          updateSelectedTags();
+          initSelectedOptions();
+        }
+    
+        // Restore giveaway text
+        if (state.giveawayText && elements.giveawayText) {
+          elements.giveawayText.value = state.giveawayText;
+        }
+    
+        // Restore duration
+        if (state.durationDays !== undefined) durationDays = state.durationDays;
+        if (state.durationHours !== undefined) durationHours = state.durationHours;
+        if (state.durationMinutes !== undefined) durationMinutes = state.durationMinutes;
+        if (state.durationSeconds !== undefined) durationSeconds = state.durationSeconds;
+    
+        // Update displays
+        if (elements.daysDisplay) elements.daysDisplay.textContent = durationDays;
+        if (elements.hoursDisplay) elements.hoursDisplay.textContent = durationHours;
+        if (elements.minutesDisplay) elements.minutesDisplay.textContent = durationMinutes;
+        if (elements.secondsDisplay) elements.secondsDisplay.textContent = durationSeconds;
+    
+        // Regenerate wheel options
+        generateWheelOptions('days', 0, 31, durationDays);
+        generateWheelOptions('hours', 0, 23, durationHours);
+        generateWheelOptions('minutes', 0, 59, durationMinutes);
+        generateWheelOptions('seconds', 0, 59, durationSeconds);
+        updateDurationDisplay();
+    
+        // Restore captcha
+        if (elements.captchaToggle && state.captchaEnabled !== undefined) {
+          elements.captchaToggle.checked = state.captchaEnabled;
+          if (elements.captchaLabel) {
+            elements.captchaLabel.textContent = state.captchaEnabled ? 'Aktif' : 'Nonaktif';
+          }
+        }
+    
+        // HAPUS: Restore links - karena links pake localStorage, bukan sessionStorage
+    
+        sessionStorage.removeItem('giftfreebies_form_state');
+        return true;
+      } catch (e) {
+        console.error('❌ Error restoring form state:', e);
+        return false;
+      }
+    }
+
     function setupEventListeners() {
-        console.log('🔧 Setting up event listeners...');
-        
-        // Prize input - handle comma separated values
+      console.log('🔧 Setting up event listeners...');
+    
+      // ==================== CHANNEL INPUT ====================
+      if (elements.channelInput) {
+        elements.channelInput.addEventListener('focus', handleChannelInputFocus);
+        elements.channelInput.addEventListener('keydown', handleChannelInputKeydown); // PENTING: untuk cegah hapus @
+        elements.channelInput.addEventListener('input', handleChannelInput); // untuk maintain @
+        elements.channelInput.addEventListener('keydown', handleChannelInput); // untuk deteksi koma/enter
+        elements.channelInput.addEventListener('blur', handleChannelBlur);
+      }
+    
+      // Channel tags remove
+      if (elements.channelTags) {
+        elements.channelTags.addEventListener('click', (e) => {
+          if (e.target.classList.contains('tag-remove')) {
+            hapticImpact('light');
+            const channel = e.target.dataset.channel;
+            removeChannel(channel);
+          }
+        });
+      }
+
+        // Prize input
         if (elements.prizeInput) {
             elements.prizeInput.addEventListener('keydown', handlePrizeInput);
             elements.prizeInput.addEventListener('blur', handlePrizeBlur);
         }
         
-        // Prize tags remove (delegation)
+        // Prize tags remove
         if (elements.prizesTags) {
             elements.prizesTags.addEventListener('click', (e) => {
                 if (e.target.classList.contains('tag-remove')) {
@@ -337,21 +673,6 @@
                     const prize = e.target.dataset.prize;
                     removePrize(prize);
                 }
-            });
-        }
-
-        // Add Link button (lama) - sembunyikan, tapi kita nonaktifkan
-        if (elements.addLinkBtn) {
-            // elements.addLinkBtn.style.display = 'none'; // CSS sudah handle
-        }
-    
-        // Duration tabs
-        if (elements.durationTabs) {
-            elements.durationTabs.forEach(tab => {
-                tab.addEventListener('click', () => {
-                    hapticImpact('light');
-                    switchDurationTab(tab.dataset.type);
-                });
             });
         }
         
@@ -396,24 +717,18 @@
             });
         }
         
-        // ==================== SYARAT GIVEAWAY EVENT LISTENERS ====================
-        
-        // Select button untuk membuka/tutup panel
+        // ==================== SYARAT GIVEAWAY ====================
         if (elements.selectRequirementsBtn) {
             elements.selectRequirementsBtn.addEventListener('click', (e) => {
                 e.stopPropagation();
                 hapticImpact('light');
                 if (elements.selectPanel) {
-                    if (elements.selectPanel.style.display === 'none' || !elements.selectPanel.style.display) {
-                        elements.selectPanel.style.display = 'block';
-                    } else {
-                        elements.selectPanel.style.display = 'none';
-                    }
+                    elements.selectPanel.style.display = 
+                        elements.selectPanel.style.display === 'none' ? 'block' : 'none';
                 }
             });
         }
         
-        // Close panel button
         if (elements.closePanelBtn) {
             elements.closePanelBtn.addEventListener('click', () => {
                 hapticImpact('light');
@@ -423,24 +738,16 @@
             });
         }
         
-        // Option buttons di panel
         document.querySelectorAll('.option-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 e.stopPropagation();
                 hapticSelection();
                 const value = btn.dataset.value;
-                const icon = btn.dataset.icon;
-                const text = btn.textContent.trim();
-                
-                // Toggle selection
-                toggleRequirement(value, icon, text);
-                
-                // Toggle class selected pada button
+                toggleRequirement(value);
                 btn.classList.toggle('selected');
             });
         });
         
-        // Close panel saat klik di luar
         document.addEventListener('click', (e) => {
             if (elements.selectPanel && elements.selectRequirementsBtn) {
                 if (!elements.selectPanel.contains(e.target) && 
@@ -450,7 +757,6 @@
             }
         });
         
-        // Remove tag dari selected requirements
         if (elements.selectedTags) {
             elements.selectedTags.addEventListener('click', (e) => {
                 if (e.target.classList.contains('tag-remove')) {
@@ -458,7 +764,6 @@
                     const reqValue = e.target.dataset.req;
                     removeRequirement(reqValue);
                     
-                    // Update class selected pada option button
                     document.querySelectorAll('.option-btn').forEach(btn => {
                         if (btn.dataset.value === reqValue) {
                             btn.classList.remove('selected');
@@ -488,7 +793,7 @@
             hapticImpact('light');
             const newPrizes = value.split(',').map(p => p.trim()).filter(p => p);
             newPrizes.forEach(prize => {
-                if (prize && !prizes.includes(prize)) {
+                if (prize) {
                     prizes.push(prize);
                 }
             });
@@ -501,16 +806,32 @@
         prizes = prizes.filter(p => p !== prize);
         updatePrizesTags();
     }
+    
+    // ==================== FUNGSI RANDOM COLOR ====================
+    function getRandomColor(index) {
+        const colors = [
+            '#FF6B6B', '#4ECDC4', '#FFD166', '#A06CD5', '#F7B731',
+            '#45AAF2', '#FC5C65', '#26DE81', '#A55EEA', '#FF9F1C',
+            '#2E86C1', '#E67E22', '#E74C3C', '#3498DB', '#9B59B6',
+            '#1ABC9C', '#F1C40F', '#E67E22', '#E74C3C', '#2C3E50'
+        ];
+        return colors[index % colors.length];
+    }
 
     function updatePrizesTags() {
         if (!elements.prizesTags) return;
-
+        
         let html = '';
-        prizes.forEach(prize => {
-            html += `<span class="prize-tag">${prize} <span class="tag-remove" data-prize="${prize}">×</span></span>`;
+        prizes.forEach((prize, index) => {
+            const bgColor = getRandomColor(index);
+            html += `<span class="prize-tag">
+                <span class="prize-number" style="background: ${bgColor}; box-shadow: 0 0 10px ${bgColor}80;">${index + 1}</span>
+                ${prize} 
+                <span class="tag-remove" data-prize="${prize}">×</span>
+            </span>`;
         });
         elements.prizesTags.innerHTML = html;
-
+        
         setTimeout(() => {
             const scrollContainer = document.querySelector('.prize-tags-scroll');
             if (scrollContainer) {
@@ -520,7 +841,7 @@
     }
 
     // ==================== REQUIREMENTS HANDLERS ====================
-    function toggleRequirement(value, icon, text) {
+    function toggleRequirement(value) {
         if (selectedRequirements.includes(value)) {
             selectedRequirements = selectedRequirements.filter(req => req !== value);
             const checkbox = document.querySelector(`input[name="requirements"][value="${value}"]`);
@@ -576,41 +897,6 @@
                 btn.classList.add('selected');
             }
         });
-    }
-
-    // ==================== DURATION HANDLERS ====================
-    function switchDurationTab(type) {
-        elements.durationTabs.forEach(tab => {
-            if (tab.dataset.type === type) {
-                tab.classList.add('active');
-            } else {
-                tab.classList.remove('active');
-            }
-        });
-        
-        if (type === 'duration') {
-            elements.durationMode.classList.add('active');
-            elements.dateMode.classList.remove('active');
-        } else {
-            elements.durationMode.classList.remove('active');
-            elements.dateMode.classList.add('active');
-        }
-    }
-
-    function setDefaultDate() {
-        if (elements.endDate) {
-            const date = new Date();
-            date.setDate(date.getDate() + 2);
-            date.setHours(15, 0, 0, 0);
-            
-            const year = date.getFullYear();
-            const month = String(date.getMonth() + 1).padStart(2, '0');
-            const day = String(date.getDate()).padStart(2, '0');
-            const hours = String(date.getHours()).padStart(2, '0');
-            const minutes = String(date.getMinutes()).padStart(2, '0');
-            
-            elements.endDate.value = `${year}-${month}-${day}T${hours}:${minutes}`;
-        }
     }
 
     // ==================== MEDIA HANDLERS ====================
@@ -693,10 +979,15 @@
         }
         
         hapticImpact('heavy');
-        
         setButtonLoading(true);
         
         const requirements = selectedRequirements;
+        
+        // Hitung total detik
+        const totalSeconds = (durationDays * 24 * 3600) + 
+                            (durationHours * 3600) + 
+                            (durationMinutes * 60) + 
+                            durationSeconds;
         
         const formData = {
             creator_user_id: telegramUser?.id || 123456789,
@@ -706,21 +997,19 @@
             giveaway_text: elements.giveawayText.value || 'Ikuti giveaway ini dan menangkan hadiah menarik! 🎁',
             requirements: requirements,
             links: savedLinks,
-            duration_type: elements.durationMode.classList.contains('active') ? 'duration' : 'date',
+            duration: {
+                days: durationDays,
+                hours: durationHours,
+                minutes: durationMinutes,
+                seconds: durationSeconds,
+                total_seconds: totalSeconds
+            },
             captcha_enabled: elements.captchaToggle.checked ? 1 : 0
         };
-        
-        if (formData.duration_type === 'duration') {
-            formData.duration_value = parseInt(elements.durationValue.value) || 2;
-            formData.duration_unit = elements.durationUnit.value;
-        } else {
-            formData.end_date = elements.endDate.value;
-        }
         
         console.log('📤 Submitting giveaway:', formData);
         
         try {
-            // Di sini nanti panggil API beneran
             await new Promise(resolve => setTimeout(resolve, 1500));
             const giveawayId = generateGiveawayId();
             setButtonLoading(false);
@@ -768,6 +1057,298 @@
             alert(`✅ Giveaway berhasil dibuat!\n\nGiveaway ID: ${giveawayId}\n\nLink: ${API_BASE_URL}/giveaway/${giveawayId}`);
             window.location.href = 'index.html';
         }, 500);
+    }
+
+    function setupFoldableSections() {
+      console.log('🔧 Setting up foldable sections...');
+    
+      const sections = [
+        { header: 'prizeHeader', content: 'prizeContent', btn: 'prizeToggleBtn' },
+        { header: 'textHeader', content: 'textContent', btn: 'textToggleBtn' },
+        { header: 'channelHeader', content: 'channelContent', btn: 'channelToggleBtn' }, // SECTION BARU
+        { header: 'requirementsHeader', content: 'requirementsContent', btn: 'requirementsToggleBtn' },
+        { header: 'linkHeader', content: 'linkContent', btn: 'linkToggleBtn' },
+        { header: 'durationHeader', content: 'durationContent', btn: 'durationToggleBtn' },
+        { header: 'mediaHeader', content: 'mediaContent', btn: 'mediaToggleBtn' },
+        { header: 'captchaHeader', content: 'captchaContent', btn: 'captchaToggleBtn' }
+        ];
+    
+      sections.forEach(section => {
+        const header = document.getElementById(section.header);
+        const content = document.getElementById(section.content);
+        const btn = document.getElementById(section.btn);
+        const foldableSection = header?.closest('.foldable-section');
+    
+        if (header && content) {
+          // Set initial state: SEMUA TERTUTUP
+          content.style.display = 'none';
+          foldableSection?.classList.remove('expanded');
+          if (btn) {
+            btn.classList.remove('rotated');
+            btn.textContent = '▼'; // Panah bawah
+          }
+    
+          // Toggle function
+          const toggleSection = () => {
+            hapticImpact('light');
+            const isHidden = content.style.display === 'none';
+    
+            // Toggle content
+            content.style.display = isHidden ? 'block' : 'none';
+    
+            // Toggle class pada section
+            if (isHidden) {
+              foldableSection?.classList.add('expanded');
+            } else {
+              foldableSection?.classList.remove('expanded');
+            }
+    
+            // Toggle tombol panah
+            if (btn) {
+              if (isHidden) {
+                btn.classList.add('rotated');
+                btn.textContent = '▲'; // Panah atas saat terbuka
+              } else {
+                btn.classList.remove('rotated');
+                btn.textContent = '▼'; // Panah bawah saat tertutup
+              }
+            }
+          };
+    
+          // Add click listener to header
+          header.addEventListener('click', (e) => {
+            // Don't toggle if clicking on button inside header (except the toggle btn)
+            if (e.target.closest('button') && e.target.closest('button') !== btn) {
+              return;
+            }
+            toggleSection();
+          });
+    
+          // Add click listener to toggle button
+          if (btn) {
+            btn.addEventListener('click', (e) => {
+              e.stopPropagation();
+              toggleSection();
+            });
+          }
+        }
+      });
+    }
+
+    // ==================== CHANNEL HANDLERS ====================
+    function handleChannelInput(e) {
+      // Cek apakah pengguna mencoba menghapus karakter pertama (@)
+      if (e.key === 'Backspace' && e.target.selectionStart === 1 && e.target.selectionEnd === 1) {
+        e.preventDefault();
+        hapticImpact('medium'); // Getar haptic
+        return;
+      }
+    
+      if (e.key === ',' || e.key === 'Enter') {
+        e.preventDefault();
+        hapticImpact('soft');
+        addChannelFromInput();
+      }
+    }
+    
+    function handleChannelBlur() {
+      addChannelFromInput();
+    }
+    
+    function handleChannelInputFocus() {
+      const input = elements.channelInput;
+      // Jika input kosong, set value dengan @
+      if (!input.value) {
+        input.value = '@';
+        // Set cursor setelah @
+        setTimeout(() => {
+          input.setSelectionRange(1, 1);
+        }, 10);
+      }
+    }
+    
+    function handleChannelInputKeydown(e) {
+      const input = e.target;
+    
+      // Cegah penghapusan karakter @ pertama
+      if (e.key === 'Backspace' && input.selectionStart === 1 && input.selectionEnd === 1) {
+        e.preventDefault();
+        hapticImpact('medium'); // Getar haptic
+        return;
+      }
+    
+      // Cegah karakter pertama selain @
+      if (input.selectionStart === 0 && input.selectionEnd === 0 && e.key !== '@' && e.key !== 'Backspace' && e.key !== 'Delete' && e.key !== 'ArrowLeft' && e.key !== 'ArrowRight' && e.key !== 'Home' && e.key !== 'End') {
+        e.preventDefault();
+        hapticImpact('soft');
+        return;
+      }
+    }
+    
+    function handleChannelInput() {
+      const input = elements.channelInput;
+      let value = input.value;
+    
+      // Jika value kosong, set jadi @
+      if (!value) {
+        input.value = '@';
+        input.setSelectionRange(1, 1);
+        return;
+      }
+    
+      // Jika karakter pertama bukan @, tambahkan @ di depan
+      if (value[0] !== '@') {
+        input.value = '@' + value.replace(/@/g, ''); // Hapus semua @ lalu tambah 1 di depan
+        hapticImpact('soft');
+      }
+    
+      // Jika hanya berisi @, biarkan
+      if (value === '@') {
+        return;
+      }
+    }
+    
+    function addChannelFromInput() {
+      let value = elements.channelInput.value.trim();
+    
+      // Hapus koma di akhir
+      if (value.endsWith(',')) {
+        value = value.slice(0, -1).trim();
+      }
+    
+      // Jika hanya @ atau kosong, return
+      if (!value || value === '@') {
+        elements.channelInput.value = '@';
+        hapticNotification('error');
+        return;
+      }
+    
+      // Pastikan format @username
+      if (!value.startsWith('@')) {
+        value = '@' + value;
+      }
+    
+      // Validasi: hanya boleh huruf, angka, underscore (format username Telegram)
+      const usernameRegex = /^@[a-zA-Z0-9_]+$/;
+      if (!usernameRegex.test(value)) {
+        hapticNotification('error');
+        alert('Format username tidak valid! Hanya boleh huruf, angka, dan underscore.');
+        return;
+      }
+    
+      hapticImpact('light');
+    
+      // Split dengan koma
+      const newChannels = value.split(',').map(c => c.trim()).filter(c => c && c !== '@');
+    
+      newChannels.forEach(channel => {
+        // Pastikan format @
+        let cleanChannel = channel;
+        if (!cleanChannel.startsWith('@')) {
+          cleanChannel = '@' + cleanChannel;
+        }
+    
+        // Validasi lagi
+        if (usernameRegex.test(cleanChannel) && !channels.includes(cleanChannel)) {
+          channels.push(cleanChannel);
+        }
+      });
+    
+      updateChannelsTags();
+      elements.channelInput.value = '@'; // Reset ke @
+    
+      // Set cursor setelah @
+      setTimeout(() => {
+        elements.channelInput.setSelectionRange(1, 1);
+      }, 10);
+    }
+    
+    function removeChannel(channel) {
+      channels = channels.filter(c => c !== channel);
+      updateChannelsTags();
+      hapticNotification('success');
+    }
+    
+    function updateChannelsTags() {
+      if (!elements.channelTags) return;
+    
+      let html = '';
+      channels.forEach((channel, index) => {
+        const bgColor = getRandomColor(index);
+        html += `<span class="channel-tag">
+                    <span class="prize-number" style="background: ${bgColor};">${index + 1}</span>
+                    ${channel} 
+                    <span class="tag-remove" data-channel="${channel}">×</span>
+                </span>`;
+      });
+    
+      elements.channelTags.innerHTML = html;
+    
+      // Auto scroll ke kanan
+      setTimeout(() => {
+        const scrollContainer = document.querySelector('.channel-tags-scroll');
+        if (scrollContainer) {
+          scrollContainer.scrollLeft = scrollContainer.scrollWidth;
+        }
+      }, 50);
+    }
+
+    function init() {
+      console.log('🚀 Initializing create giveaway form...');
+    
+      if (window.Telegram?.WebApp) {
+        const tg = window.Telegram.WebApp;
+        tg.expand();
+        tg.ready();
+        telegramUser = tg.initDataUnsafe?.user;
+      }
+    
+      // Load links dari localStorage dulu
+      loadSavedLinks();
+    
+      // Restore form state (dari sessionStorage)
+      const restored = restoreFormState();
+    
+      // Setup foldable sections - SEMUA TERTUTUP AWALNYA
+      setupFoldableSections();
+    
+      setupLinkManager();
+      setupDurationManager();
+      setupEventListeners();
+    
+      if (!restored) {
+        durationDays = 10;
+        durationHours = 2;
+        durationMinutes = 30;
+        durationSeconds = 0;
+    
+        if (elements.daysDisplay) elements.daysDisplay.textContent = durationDays;
+        if (elements.hoursDisplay) elements.hoursDisplay.textContent = durationHours;
+        if (elements.minutesDisplay) elements.minutesDisplay.textContent = durationMinutes;
+        if (elements.secondsDisplay) elements.secondsDisplay.textContent = durationSeconds;
+    
+        updateDurationDisplay();
+      }
+    
+      updateSelectedTags();
+      updateChannelsTags(); // TAMBAH INI
+      initSelectedOptions();
+    
+      // Listen for messages from link manager
+      window.addEventListener('message', (event) => {
+        console.log('📨 Received message:', event.data);
+        if (event.data && event.data.type === 'linksUpdated') {
+          savedLinks = event.data.links || [];
+          saveLinksToStorage();
+          updateLinkDisplay();
+          hapticNotification('success');
+        }
+      });
+    
+      setTimeout(() => {
+        if (elements.loading) elements.loading.style.display = 'none';
+        if (elements.formContent) elements.formContent.style.display = 'block';
+      }, 500);
     }
 
     // ==================== START ====================
