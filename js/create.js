@@ -2,6 +2,31 @@
 (function() {
     console.log('🎁 CREATE GIVEAWAY - Script started...');
 
+    // ==================== FUNGSI HAPTIC FEEDBACK TELEGRAM ====================
+    function hapticImpact(style = 'medium') {
+        if (window.Telegram?.WebApp?.HapticFeedback) {
+            try {
+                window.Telegram.WebApp.HapticFeedback.impactOccurred(style);
+            } catch (e) {}
+        }
+    }
+    
+    function hapticNotification(type = 'success') {
+        if (window.Telegram?.WebApp?.HapticFeedback) {
+            try {
+                window.Telegram.WebApp.HapticFeedback.notificationOccurred(type);
+            } catch (e) {}
+        }
+    }
+    
+    function hapticSelection() {
+        if (window.Telegram?.WebApp?.HapticFeedback) {
+            try {
+                window.Telegram.WebApp.HapticFeedback.selectionChanged();
+            } catch (e) {}
+        }
+    }
+
     // ==================== KONFIGURASI ====================
     const API_BASE_URL = 'https://individually-threaded-jokes-letting.trycloudflare.com';
     
@@ -46,14 +71,85 @@
         selectRequirementsBtn: document.getElementById('selectRequirementsBtn'),
         selectPanel: document.getElementById('selectPanel'),
         closePanelBtn: document.getElementById('closePanelBtn'),
-        selectedTags: document.getElementById('selectedTags')
+        selectedTags: document.getElementById('selectedTags'),
+        
+        // Add Link button
+        addLinkBtn: document.getElementById('addLinkBtn'),
+        savedLinksContainer: document.getElementById('savedLinksContainer')
     };
 
     // ==================== STATE ====================
     let prizes = ['Gaming Bundle']; // Default prize
     let selectedFile = null;
     let telegramUser = null;
-    let selectedRequirements = ['subscribe']; // Default Subscribe
+    let selectedRequirements = ['subscribe'];
+    let savedLinks = []; // STATE untuk menyimpan links
+
+    // ==================== FUNGSI LINK MANAGER ====================
+    function loadSavedLinks() {
+        console.log('📥 Loading saved links...');
+        const saved = localStorage.getItem('giftfreebies_links');
+        if (saved) {
+            try {
+                savedLinks = JSON.parse(saved);
+                console.log('✅ Loaded links:', savedLinks);
+                displaySavedLinks();
+            } catch (e) {
+                console.error('❌ Error parsing saved links:', e);
+                savedLinks = [];
+            }
+        } else {
+            console.log('ℹ️ No saved links found');
+            savedLinks = [];
+        }
+    }
+
+    function saveLinksToStorage() {
+        console.log('💾 Saving links to storage:', savedLinks);
+        localStorage.setItem('giftfreebies_links', JSON.stringify(savedLinks));
+    }
+
+    function displaySavedLinks() {
+        const container = elements.savedLinksContainer;
+        if (!container) {
+            console.warn('⚠️ Saved links container not found');
+            return;
+        }
+        
+        if (!savedLinks || savedLinks.length === 0) {
+            container.innerHTML = '';
+            return;
+        }
+        
+        let html = '';
+        // Tampilkan maksimal 3 link terbaru
+        const recentLinks = savedLinks.slice(-3);
+        
+        recentLinks.forEach(link => {
+            html += `
+                <div class="saved-link-preview">
+                    <div class="link-icon">🔗</div>
+                    <div class="link-info">
+                        <div class="link-title">${escapeHtml(link.title || 'Untitled')}</div>
+                        <div class="link-url">${escapeHtml(link.url || '#')}</div>
+                    </div>
+                </div>
+            `;
+        });
+        
+        if (savedLinks.length > 3) {
+            html += `<div class="saved-link-preview" style="justify-content: center; opacity: 0.7;">+${savedLinks.length - 3} tautan lainnya</div>`;
+        }
+        
+        container.innerHTML = html;
+    }
+
+    function escapeHtml(text) {
+        if (!text) return '';
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
 
     // ==================== INITIALIZATION ====================
     function init() {
@@ -67,7 +163,11 @@
             
             telegramUser = tg.initDataUnsafe?.user;
             console.log('👤 Telegram User:', telegramUser);
+            console.log('📱 HapticFeedback available:', !!tg.HapticFeedback);
         }
+        
+        // Load saved links
+        loadSavedLinks();
         
         // Setup event listeners
         setupEventListeners();
@@ -90,6 +190,8 @@
 
     // ==================== SETUP EVENT LISTENERS ====================
     function setupEventListeners() {
+        console.log('🔧 Setting up event listeners...');
+        
         // Prize input - handle comma separated values
         if (elements.prizeInput) {
             elements.prizeInput.addEventListener('keydown', handlePrizeInput);
@@ -100,16 +202,52 @@
         if (elements.prizesTags) {
             elements.prizesTags.addEventListener('click', (e) => {
                 if (e.target.classList.contains('tag-remove')) {
+                    hapticImpact('light');
                     const prize = e.target.dataset.prize;
                     removePrize(prize);
                 }
             });
         }
-        
-        // Duration tabs
-        elements.durationTabs.forEach(tab => {
-            tab.addEventListener('click', () => switchDurationTab(tab.dataset.type));
+
+        // Add Link button
+        if (elements.addLinkBtn) {
+            console.log('🔗 Add Link button found');
+            elements.addLinkBtn.addEventListener('click', () => {
+                hapticImpact('medium');
+                // Buka link manager dalam popup
+                const width = 450;
+                const height = 650;
+                const left = (window.screen.width - width) / 2;
+                const top = (window.screen.height - height) / 2;
+                
+                window.open('link-manager.html', 'Link Manager', 
+                    `width=${width},height=${height},left=${left},top=${top},resizable=yes,scrollbars=yes`);
+            });
+        } else {
+            console.warn('⚠️ Add Link button not found');
+        }
+    
+        // Listen for messages from link manager
+        window.addEventListener('message', (event) => {
+            console.log('📨 Received message:', event.data);
+            if (event.data && event.data.type === 'linksUpdated') {
+                savedLinks = event.data.links || [];
+                console.log('🔗 Links updated:', savedLinks);
+                saveLinksToStorage();
+                displaySavedLinks();
+                hapticNotification('success');
+            }
         });
+
+        // Duration tabs
+        if (elements.durationTabs) {
+            elements.durationTabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    hapticImpact('light');
+                    switchDurationTab(tab.dataset.type);
+                });
+            });
+        }
         
         // Media uploader
         if (elements.mediaInput) {
@@ -121,12 +259,16 @@
         
         // Media remove
         if (elements.mediaRemove) {
-            elements.mediaRemove.addEventListener('click', removeMedia);
+            elements.mediaRemove.addEventListener('click', () => {
+                hapticImpact('medium');
+                removeMedia();
+            });
         }
         
         // Toggle captcha
         if (elements.captchaToggle) {
             elements.captchaToggle.addEventListener('change', (e) => {
+                hapticImpact('soft');
                 if (elements.captchaLabel) {
                     elements.captchaLabel.textContent = e.target.checked ? 'Aktif' : 'Nonaktif';
                 }
@@ -141,6 +283,7 @@
         // Cancel button
         if (elements.cancelBtn) {
             elements.cancelBtn.addEventListener('click', () => {
+                hapticImpact('medium');
                 if (confirm('Batalkan pembuatan giveaway?')) {
                     window.location.href = 'index.html';
                 }
@@ -153,6 +296,7 @@
         if (elements.selectRequirementsBtn) {
             elements.selectRequirementsBtn.addEventListener('click', (e) => {
                 e.stopPropagation();
+                hapticImpact('light');
                 if (elements.selectPanel) {
                     if (elements.selectPanel.style.display === 'none' || !elements.selectPanel.style.display) {
                         elements.selectPanel.style.display = 'block';
@@ -166,6 +310,7 @@
         // Close panel button
         if (elements.closePanelBtn) {
             elements.closePanelBtn.addEventListener('click', () => {
+                hapticImpact('light');
                 if (elements.selectPanel) {
                     elements.selectPanel.style.display = 'none';
                 }
@@ -176,6 +321,7 @@
         document.querySelectorAll('.option-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 e.stopPropagation();
+                hapticSelection();
                 const value = btn.dataset.value;
                 const icon = btn.dataset.icon;
                 const text = btn.textContent.trim();
@@ -202,6 +348,7 @@
         if (elements.selectedTags) {
             elements.selectedTags.addEventListener('click', (e) => {
                 if (e.target.classList.contains('tag-remove')) {
+                    hapticImpact('light');
                     const reqValue = e.target.dataset.req;
                     removeRequirement(reqValue);
                     
@@ -220,6 +367,7 @@
     function handlePrizeInput(e) {
         if (e.key === ',' || e.key === 'Enter') {
             e.preventDefault();
+            hapticImpact('soft');
             addPrizeFromInput();
         }
     }
@@ -231,6 +379,7 @@
     function addPrizeFromInput() {
         const value = elements.prizeInput.value.trim();
         if (value) {
+            hapticImpact('light');
             const newPrizes = value.split(',').map(p => p.trim()).filter(p => p);
             newPrizes.forEach(prize => {
                 if (prize && !prizes.includes(prize)) {
@@ -299,6 +448,7 @@
                 case 'nonpremium': icon = '👤'; text = 'Non-Premium'; break;
                 case 'aktif': icon = '✅'; text = 'Aktif'; break;
                 case 'share': icon = '📤'; text = 'Share'; break;
+                default: icon = '🔘'; text = req;
             }
             
             html += `<span class="selected-tag">${icon} ${text} <span class="tag-remove" data-req="${req}">×</span></span>`;
@@ -360,7 +510,10 @@
     // ==================== MEDIA HANDLERS ====================
     function handleMediaSelect(e) {
         const file = e.target.files[0];
-        if (file) processMediaFile(file);
+        if (file) {
+            hapticImpact('medium');
+            processMediaFile(file);
+        }
     }
 
     function handleDragOver(e) {
@@ -379,6 +532,7 @@
         
         const file = e.dataTransfer.files[0];
         if (file) {
+            hapticImpact('medium');
             processMediaFile(file);
             elements.mediaInput.files = e.dataTransfer.files;
         }
@@ -386,6 +540,7 @@
 
     function processMediaFile(file) {
         if (file.size > 20 * 1024 * 1024) {
+            hapticNotification('error');
             alert('File terlalu besar! Maksimal 20MB');
             return;
         }
@@ -426,9 +581,12 @@
         e.preventDefault();
         
         if (prizes.length === 0) {
+            hapticNotification('error');
             alert('Minimal 1 hadiah harus diisi!');
             return;
         }
+        
+        hapticImpact('heavy');
         
         setButtonLoading(true);
         
@@ -441,6 +599,7 @@
             prizes: prizes,
             giveaway_text: elements.giveawayText.value || 'Ikuti giveaway ini dan menangkan hadiah menarik! 🎁',
             requirements: requirements,
+            links: savedLinks,
             duration_type: elements.durationMode.classList.contains('active') ? 'duration' : 'date',
             captcha_enabled: elements.captchaToggle.checked ? 1 : 0
         };
@@ -455,12 +614,14 @@
         console.log('📤 Submitting giveaway:', formData);
         
         try {
+            // Di sini nanti panggil API beneran
             await new Promise(resolve => setTimeout(resolve, 1500));
             const giveawayId = generateGiveawayId();
             setButtonLoading(false);
             showSuccess(giveawayId);
         } catch (error) {
             console.error('❌ Error:', error);
+            hapticNotification('error');
             setButtonLoading(false);
             alert('Gagal membuat giveaway. Silakan coba lagi.');
         }
@@ -494,6 +655,8 @@
     function showSuccess(giveawayId) {
         elements.submitBtn.classList.add('success');
         elements.submitBtn.querySelector('.btn-text').textContent = 'Berhasil!';
+        
+        hapticNotification('success');
         
         setTimeout(() => {
             alert(`✅ Giveaway berhasil dibuat!\n\nGiveaway ID: ${giveawayId}\n\nLink: ${API_BASE_URL}/giveaway/${giveawayId}`);
