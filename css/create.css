@@ -137,75 +137,65 @@
 /* ------------------------------------------------------------------
    INPUT FIELDS - SAMA PERSIS DENGAN REQUIREMENTS
    ------------------------------------------------------------------ */
-.input-wrapper,
 .textarea-wrapper {
-    position: relative;
-    width: 100%;
-}
-
-.form-input,
-.form-textarea {
-    width: 100%;
-    padding: 10px 16px 10px 40px; /* SAMA DENGAN selected-requirements (10px padding) */
-    background: rgba(10, 20, 30, 0.3);
-    border: 1.5px solid rgba(0, 170, 255, 0.15);
-    border-radius: 20px; /* SAMA DENGAN REQUIREMENTS CONTAINER */
-    color: var(--text-primary);
-    font-size: 14px;
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    transition: all var(--transition-normal);
-    box-shadow: 
-        inset 0 2px 4px rgba(0, 0, 0, 0.2),
-        0 4px 12px rgba(0, 0, 0, 0.1);
+  position: relative;
+  width: 100%;
 }
 
 .form-textarea {
-    padding: 10px 16px 10px 40px; /* SAMA DENGAN selected-requirements */
-    resize: vertical;
-    min-height: 40px; /* LEBIH KECIL DARI SEBELUMNYA */
-    line-height: 1.4;
-    max-height: 100px;
+  width: 100%;
+  padding: 10px 16px 10px 40px;
+  background: rgba(10, 20, 30, 0.3);
+  border: 1.5px solid rgba(0, 170, 255, 0.15);
+  border-radius: 20px;
+  color: var(--text-primary);
+  font-size: 14px;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  transition: all var(--transition-normal);
+  box-shadow:
+    inset 0 2px 4px rgba(0, 0, 0, 0.2),
+    0 4px 12px rgba(0, 0, 0, 0.1);
+  border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+  resize: vertical;
+  min-height: 40px;
+  line-height: 1.4;
+  max-height: 100px;
 }
 
-.form-input:focus,
 .form-textarea:focus {
-    outline: none;
-    border-color: var(--primary-blue);
-    box-shadow: 
-        0 0 0 3px rgba(0, 136, 255, 0.2),
-        inset 0 2px 4px rgba(0, 0, 0, 0.2);
-    background: rgba(15, 25, 40, 0.4);
+  outline: none;
+  border-color: var(--primary-blue);
+  border-bottom-color: var(--primary-blue);
+  box-shadow:
+    0 0 0 3px rgba(0, 136, 255, 0.2),
+    inset 0 2px 4px rgba(0, 0, 0, 0.2);
+  background: rgba(15, 25, 40, 0.4);
 }
 
-.form-input:hover,
-.form-textarea:hover {
-    border-color: rgba(0, 170, 255, 0.3);
-}
-
-.form-input::placeholder,
 .form-textarea::placeholder {
-    color: rgba(255, 255, 255, 0.2);
-    font-style: italic;
-    font-size: 12px; /* LEBIH KECIL */
-}
-
-.input-icon,
-.textarea-icon {
-    position: absolute;
-    left: 12px; /* DIGESER LEBIH KE KIRI */
-    top: 50%;
-    transform: translateY(-50%);
-    font-size: 16px; /* LEBIH KECIL */
-    color: var(--primary-blue);
-    opacity: 0.7;
-    transition: all var(--transition-normal);
-    filter: drop-shadow(0 0 8px rgba(0, 136, 255, 0.3));
+  color: rgba(255, 255, 255, 0.2);
+  font-style: italic;
+  font-size: 12px;
 }
 
 .textarea-icon {
-    top: 50%;
-    transform: translateY(-50%);
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 16px;
+  color: var(--primary-blue);
+  opacity: 0.7;
+  transition: all var(--transition-normal);
+  filter: drop-shadow(0 0 8px rgba(0, 136, 255, 0.3));
+  pointer-events: none;
+}
+
+.form-textarea:focus+.textarea-icon {
+  opacity: 1;
+  transform: translateY(-50%) scale(1.1);
+  filter: drop-shadow(0 0 12px rgba(0, 136, 255, 0.6));
 }
 
 .form-input:focus + .input-icon,
@@ -337,6 +327,7 @@
   position: relative;
   width: 100%;
   padding: 8px 16px 12px 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .channel-input-field {
@@ -344,9 +335,15 @@
   padding: 10px 16px 10px 40px;
   background: transparent;
   border: none;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   color: var(--text-primary);
   font-size: 15px;
   outline: none;
+  transition: border-color 0.2s ease;
+}
+
+.channel-input-field:focus {
+  border-bottom-color: var(--primary-blue);
 }
 
 .channel-input-field::placeholder {
@@ -363,6 +360,7 @@
   color: var(--primary-blue);
   opacity: 0.7;
   pointer-events: none;
+  transition: all 0.2s ease;
 }
 
 .channel-input-field:focus+.channel-input-icon {
@@ -375,6 +373,7 @@
   font-size: 11px;
   color: rgba(255, 255, 255, 0.3);
   font-style: italic;
+  border-top: 1px solid rgba(255, 255, 255, 0.02);
 }
 
 /* ------------------------------------------------------------------
@@ -512,42 +511,52 @@
     color: white;
 }
 
-/* Input field wrapper */
+/* ------------------------------------------------------------------
+   PRIZE INPUT CONTAINER - DENGAN GARIS BAWAH
+   ------------------------------------------------------------------ */
 .prize-input-wrapper {
-    position: relative;
-    width: 100%;
-    padding: 8px 16px 12px 16px;
+  position: relative;
+  width: 100%;
+  padding: 8px 16px 12px 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .prize-input-field {
-    width: 100%;
-    padding: 10px 16px 10px 40px;
-    background: transparent;
-    border: none;
-    color: var(--text-primary);
-    font-size: 15px;
-    outline: none;
+  width: 100%;
+  padding: 10px 16px 10px 40px;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--text-primary);
+  font-size: 15px;
+  outline: none;
+  transition: border-color 0.2s ease;
+}
+
+.prize-input-field:focus {
+  border-bottom-color: var(--primary-blue);
 }
 
 .prize-input-field::placeholder {
-    color: rgba(255, 255, 255, 0.3);
-    font-style: italic;
+  color: rgba(255, 255, 255, 0.3);
+  font-style: italic;
 }
 
 .prize-input-icon {
-    position: absolute;
-    left: 24px;
-    top: 50%;
-    transform: translateY(-50%);
-    font-size: 18px;
-    color: var(--primary-blue);
-    opacity: 0.7;
-    pointer-events: none;
+  position: absolute;
+  left: 24px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 18px;
+  color: var(--primary-blue);
+  opacity: 0.7;
+  pointer-events: none;
+  transition: all 0.2s ease;
 }
 
-.prize-input-field:focus + .prize-input-icon {
-    opacity: 1;
-    transform: translateY(-50%) scale(1.1);
+.prize-input-field:focus+.prize-input-icon {
+  opacity: 1;
+  transform: translateY(-50%) scale(1.1);
 }
 
 /* Hapus style lama */
@@ -906,9 +915,9 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 8px;
-  padding-bottom: 4px;
+  padding-bottom: 12px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  margin-bottom: 8px;
 }
 
 /* Style untuk data durasi di dalam border */
@@ -1032,17 +1041,23 @@
     text-shadow: 0 2px 5px rgba(0, 136, 255, 0.2);
 }
 
-/* Container untuk pengaturan durasi (saat expand) */
+/* Naikin border sedikit */
 .duration-settings-container {
-    margin-top: 8px;
-    padding-top: 8px;
-    border-top: 1px solid rgba(255, 255, 255, 0.05);
-    animation: fadeSlideDown 0.3s ease;
+  margin-top: 4px;
+  padding-top: 4px;
+  animation: fadeSlideDown 0.3s ease;
+}
+
+.duration-columns {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  margin-bottom: 16px;
+  padding: 0 2px;
 }
 
 .duration-settings-header {
-    margin-bottom: 16px;
-    text-align: center;
+    display: none;
 }
 
 .duration-settings-title {
@@ -1055,15 +1070,6 @@
     -webkit-background-clip: text;
     background-clip: text;
     -webkit-text-fill-color: transparent;
-}
-
-/* 4 Kolom input durasi - WHEEL PICKER */
-.duration-columns {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 8px;
-    margin-bottom: 20px;
-    padding: 0 4px;
 }
 
 .duration-column {
@@ -1168,56 +1174,95 @@
     -webkit-overflow-scrolling: touch;
 }
 
-/* Tombol Simpan */
 .duration-save-btn-container {
-    display: flex;
-    justify-content: flex-end;
-    margin-top: 16px;
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 12px;
 }
 
 .duration-save-btn {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 10px 28px;
-    background: rgba(30, 40, 50, 0.3);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    border: 1.5px solid rgba(255, 255, 255, 0.1);
-    border-radius: 30px;
-    color: white;
-    font-size: 14px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    letter-spacing: 0.5px;
-    position: relative;
-    overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 24px;
+  background: linear-gradient(135deg, #1e3a5f, #0a1a2f);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 30px;
+  color: #e0f0ff;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  letter-spacing: 0.5px;
+  position: relative;
+  overflow: hidden;
+  box-shadow:
+    0 6px 12px -4px rgba(0, 0, 0, 0.4),
+    inset 0 1px 1px rgba(255, 255, 255, 0.2),
+    inset 0 -2px 2px rgba(0, 0, 0, 0.3);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
+/* Efek glossy di atas */
 .duration-save-btn::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 50%;
-    background: linear-gradient(to bottom, 
-        rgba(255, 255, 255, 0.15), 
-        transparent);
-    border-radius: inherit;
-    pointer-events: none;
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 50%;
+  background: linear-gradient(to bottom,
+      rgba(255, 255, 255, 0.15),
+      transparent);
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+.duration-save-btn::after {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  padding: 2px;
+  background: linear-gradient(135deg,
+      rgba(100, 180, 255, 0.3),
+      rgba(50, 100, 200, 0.1));
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  opacity: 0.4;
+  pointer-events: none;
 }
 
 .duration-save-btn:hover {
-    background: rgba(40, 50, 60, 0.4);
-    border-color: rgba(255, 255, 255, 0.2);
-    transform: translateY(-2px);
-    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+  background: linear-gradient(135deg, #234a75, #0f2540);
+  transform: translateY(-2px);
+  box-shadow:
+    0 10px 18px -6px rgba(0, 0, 0, 0.5),
+    inset 0 1px 2px rgba(255, 255, 255, 0.2);
+  color: white;
 }
 
 .duration-save-btn:active {
     transform: translateY(0);
+}
+
+.duration-save-btn:hover::after {
+  opacity: 0.7;
+  background: linear-gradient(135deg,
+      rgba(120, 200, 255, 0.4),
+      rgba(70, 130, 230, 0.2));
+}
+
+.duration-save-btn:active {
+  transform: translateY(1px);
+  box-shadow:
+    0 2px 4px rgba(0, 0, 0, 0.3),
+    inset 0 1px 3px rgba(0, 0, 0, 0.3);
+  background: linear-gradient(135deg, #1a3455, #0a1a2f);
 }
 
 /* Animasi */
@@ -2548,28 +2593,71 @@ input:checked ~ .toggle-label {
 }
 
 /* ------------------------------------------------------------------
-   FOLDABLE SECTIONS - DESAIN BARU
+   FOLDABLE SECTIONS - DESAIN 3D GLOSSY (SEPERTI TOMBOL BATAL)
    ------------------------------------------------------------------ */
 .foldable-section {
   margin-bottom: 16px;
-  background: rgba(10, 20, 30, 0.3);
-  border: 1.5px solid rgba(0, 170, 255, 0.15);
-  border-radius: 20px;
+  background: rgba(30, 40, 50, 0.3);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
+  border: 1.5px solid rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
   transition: all var(--transition-normal);
   box-shadow:
-    inset 0 2px 4px rgba(0, 0, 0, 0.2),
-    0 4px 12px rgba(0, 0, 0, 0.1);
+    0 8px 16px -4px rgba(0, 0, 0, 0.3),
+    inset 0 1px 1px rgba(255, 255, 255, 0.1),
+    inset 0 -1px 1px rgba(0, 0, 0, 0.2);
+  position: relative;
   overflow: hidden;
+}
+
+/* Efek glossy di atas */
+.foldable-section::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 50%;
+  background: linear-gradient(to bottom,
+      rgba(255, 255, 255, 0.1),
+      transparent);
+  border-radius: inherit;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Efek border glow halus */
+.foldable-section::after {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  padding: 2px;
+  background: linear-gradient(135deg,
+      rgba(255, 255, 255, 0.2),
+      rgba(255, 255, 255, 0.05));
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  opacity: 0.3;
+  pointer-events: none;
+  z-index: 1;
 }
 
 .foldable-section:focus-within {
   border-color: var(--primary-blue);
   box-shadow:
-    0 0 0 3px rgba(0, 136, 255, 0.2),
-    inset 0 2px 4px rgba(0, 0, 0, 0.2);
-  background: rgba(15, 25, 40, 0.4);
+    0 8px 16px -4px rgba(0, 136, 255, 0.2),
+    inset 0 1px 1px rgba(255, 255, 255, 0.15);
+}
+
+.foldable-section:focus-within::after {
+  opacity: 0.6;
+  background: linear-gradient(135deg,
+      rgba(0, 170, 255, 0.3),
+      rgba(100, 100, 255, 0.1));
 }
 
 .foldable-header {
@@ -2581,6 +2669,8 @@ input:checked ~ .toggle-label {
   background: rgba(0, 0, 0, 0.1);
   border-bottom: 1px solid transparent;
   transition: all 0.2s ease;
+  position: relative;
+  z-index: 5;
 }
 
 .foldable-section.expanded .foldable-header {
@@ -2594,6 +2684,8 @@ input:checked ~ .toggle-label {
   font-size: 15px;
   font-weight: 600;
   color: var(--text-secondary);
+  position: relative;
+  z-index: 5;
 }
 
 .foldable-label {
@@ -2618,13 +2710,33 @@ input:checked ~ .toggle-label {
   align-items: center;
   justify-content: center;
   transition: all 0.2s ease;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  box-shadow:
+    0 4px 8px -2px rgba(0, 0, 0, 0.3),
+    inset 0 1px 1px rgba(255, 255, 255, 0.1);
+  position: relative;
+  overflow: hidden;
+  z-index: 5;
+}
+
+.foldable-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 50%;
+  background: linear-gradient(to bottom,
+      rgba(255, 255, 255, 0.2),
+      transparent);
+  border-radius: inherit;
+  pointer-events: none;
 }
 
 .foldable-btn:hover {
   background: rgba(40, 50, 60, 0.4);
   border-color: rgba(255, 255, 255, 0.2);
   transform: translateY(-1px);
+  box-shadow: 0 8px 12px -4px rgba(0, 0, 0, 0.4);
 }
 
 .foldable-btn.rotated {
@@ -2634,6 +2746,8 @@ input:checked ~ .toggle-label {
 .foldable-content {
   padding: 16px;
   transition: all 0.3s ease;
+  position: relative;
+  z-index: 5;
 }
 
 /* Hapus border container yang lama karena udah pake foldable-section */
