@@ -45,91 +45,93 @@
                             <p class="form-subtitle">Isi detail giveaway Anda di bawah ini</p>
                         </div>
                         
-                                                <!-- Jenis Hadiah -->
-                                                <div class="form-group">
-                                                  <label class="form-label">
-                                                    <span class="label-text">Jenis Hadiah</span>
-                                                    <span class="label-required">*</span>
-                                                  </label>
-                                                  <div class="prize-input-container">
-                                                    <div class="prize-tags-wrapper" id="prizeTagsWrapper">
-                                                      <div class="prize-tags-scroll" id="prizesTags">
-                                                        <span class="prize-tag">Gaming Bundle <span class="tag-remove" data-prize="Gaming Bundle">×</span></span>
-                                                      </div>
-                                                    </div>
-                                                    <div class="prize-input-wrapper">
-                                                      <input type="text" id="prizeInput" class="prize-input-field" placeholder="Ketik hadiah, tekan koma untuk menambah...">
-                                                      <div class="prize-input-icon">🎁</div>
-                                                    </div>
-                                                  </div>
-                                                  <div class="input-helper">Tekan koma (,) atau Enter untuk menambah hadiah</div>
-                                                </div>
-                                                
-                                                <!-- Text Giveaway -->
-                                                <div class="form-group">
-                                                    <label class="form-label">
-                                                        <span class="label-text">Text Giveaway</span>
-                                                    </label>
-                                                    <div class="textarea-wrapper">
-                                                        <textarea id="giveawayText" class="form-textarea" rows="4" placeholder="Tulis deskripsi giveaway...">Ikuti giveaway ini dan menangkan hadiah menarik! 🎁</textarea>
-                                                        <div class="textarea-icon">📝</div>
-                                                    </div>
-                                                    <div class="input-helper">Deskripsi giveaway, bisa dikosongi untuk menggunakan teks default</div>
-                                                </div>
-                                                
+                        <!-- Jenis Hadiah -->
+                        <div class="form-group">
+                            <label class="form-label">
+                                <span class="label-text">Jenis Hadiah</span>
+                                <span class="label-required">*</span>
+                            </label>
+                            <div class="prize-input-container">
+                                <div class="prize-tags-wrapper" id="prizeTagsWrapper">
+                                    <div class="prize-tags-scroll" id="prizesTags">
+                                        <span class="prize-tag">Gaming Bundle <span class="tag-remove" data-prize="Gaming Bundle">×</span></span>
+                                    </div>
+                                </div>
+                                <div class="prize-input-wrapper">
+                                    <input type="text" id="prizeInput" class="prize-input-field" placeholder="Ketik hadiah, tekan koma untuk menambah...">
+                                    <div class="prize-input-icon">🎁</div>
+                                </div>
+                            </div>
+                            <div class="input-helper">Tekan koma (,) atau Enter untuk menambah hadiah</div>
+                        </div>
+                        
+                        <!-- Text Giveaway -->
+                        <div class="form-group">
+                            <label class="form-label">
+                                <span class="label-text">Text Giveaway</span>
+                            </label>
+                            <div class="textarea-wrapper">
+                                <textarea id="giveawayText" class="form-textarea" rows="4" placeholder="Tulis deskripsi giveaway...">Ikuti giveaway ini dan menangkan hadiah menarik! 🎁</textarea>
+                                <div class="textarea-icon">📝</div>
+                            </div>
+                            <div class="input-helper">Deskripsi giveaway, bisa dikosongi untuk menggunakan teks default</div>
+                        </div>
+                        
                         <!-- Syarat Giveaway -->
                         <div class="form-group">
-                          <label class="form-label">
-                            <span class="info-icon">ℹ️</span>
-                            <span class="label-text">Syarat Giveaway</span>
-                          </label>
+                            <label class="form-label">
+                                <span class="info-icon">ℹ️</span>
+                                <span class="label-text">Syarat Giveaway</span>
+                            </label>
                         
-                          <div class="requirements-container">
-                            <!-- Border untuk syarat terpilih (rata kiri) -->
-                            <div class="selected-requirements" id="selectedRequirements">
-                              <div class="selected-tags-scroll" id="selectedTags">
-                                <span class="selected-tag">Subscribe <span class="tag-remove" data-req="subscribe">×</span></span>
-                              </div>
+                            <div class="requirements-container">
+                                <!-- Border untuk syarat terpilih (rata kiri) -->
+                                <div class="selected-requirements" id="selectedRequirements">
+                                    <div class="selected-tags-scroll" id="selectedTags">
+                                        <span class="selected-tag">Subscribe <span class="tag-remove" data-req="subscribe">×</span></span>
+                                    </div>
+                                </div>
+                        
+                                <!-- Tombol SELECT (rata kanan) -->
+                                <button type="button" class="select-btn" id="selectRequirementsBtn">
+                                    <span class="select-text">Select</span>
+                                    <span class="select-icon">▼</span>
+                                </button>
                             </div>
                         
-                            <!-- Tombol SELECT (rata kanan) -->
-                            <button type="button" class="select-btn" id="selectRequirementsBtn">
-                              <span class="select-text">Select</span>
-                              <span class="select-icon">▼</span>
-                            </button>
-                          </div>
-                        
-                          <!-- Panel Select (muncul saat tombol Select diklik) -->
-                          <div class="select-panel" id="selectPanel" style="display: none;">
-                            <div class="panel-header">
-                              <span class="panel-title">Pilih Syarat</span>
-                              <button type="button" class="panel-close" id="closePanelBtn">✕</button>
+                            <!-- Panel Select (muncul saat tombol Select diklik) -->
+                            <div class="select-panel" id="selectPanel" style="display: none;">
+                                <div class="panel-header">
+                                    <span class="panel-title">Pilih Syarat</span>
+                                    <button type="button" class="panel-close" id="closePanelBtn">✕</button>
+                                </div>
+                                <div class="panel-options">
+                                    <button type="button" class="option-btn" data-value="subscribe" data-icon="🔔">Subscribe</button>
+                                    <button type="button" class="option-btn" data-value="premium" data-icon="⭐">Premium</button>
+                                    <button type="button" class="option-btn" data-value="nonpremium" data-icon="👤">Non-Premium</button>
+                                    <button type="button" class="option-btn" data-value="aktif" data-icon="✅">Aktif</button>
+                                    <button type="button" class="option-btn" data-value="share" data-icon="📤">Share</button>
+                                </div>
                             </div>
-                            <div class="panel-options">
-                              <button type="button" class="option-btn" data-value="subscribe" data-icon="🔔">Subscribe</button>
-                              <button type="button" class="option-btn" data-value="premium" data-icon="⭐">Premium</button>
-                              <button type="button" class="option-btn" data-value="nonpremium" data-icon="👤">Non-Premium</button>
-                              <button type="button" class="option-btn" data-value="aktif" data-icon="✅">Aktif</button>
-                              <button type="button" class="option-btn" data-value="share" data-icon="📤">Share</button>
-                            </div>
-                          </div>
                         </div>
 
-                        <!-- ADD LINK BUTTON - Tambahkan sebelum form-actions -->
+                        <!-- ADD LINK BUTTON -->
                         <div class="form-group">
-                          <label class="form-label">
-                            <span class="info-icon">🔗</span>
-                            <span class="label-text">Tautan/Link</span>
-                            <span class="label-optional">(opsional)</span>
-                          </label>
-                          <button type="button" class="add-link-btn" id="addLinkBtn">
-                            <span class="btn-icon">➕</span>
-                            <span class="btn-text">ADD LINK</span>
-                            <span class="btn-icon">→</span>
-                          </button>
+                            <label class="form-label">
+                                <span class="info-icon">🔗</span>
+                                <span class="label-text">Tautan/Link</span>
+                                <span class="label-optional">(opsional)</span>
+                            </label>
+                            
+                            <!-- Tombol ADD LINK - seperti tombol BATAL & BUAT GIVEAWAY -->
+                            <button type="button" class="add-link-btn" id="addLinkBtn">
+                                <span class="btn-icon">➕</span>
+                                <span class="btn-text">KELOLA TAUTAN</span>
+                                <span class="btn-icon">→</span>
+                            </button>
                         
-                          <!-- Container untuk link yang sudah disimpan -->
-                          <div class="saved-links-container" id="savedLinksContainer"></div>
+                            <!-- Container untuk link yang sudah disimpan -->
+                            <div class="saved-links-container" id="savedLinksContainer"></div>
                         </div>
                         
                         <!-- Durasi Giveaway -->
@@ -207,11 +209,11 @@
                         
                         <!-- Submit Buttons - 2 tombol per baris -->
                         <div class="form-actions">
-                          <button type="button" class="btn btn-secondary" id="cancelBtn">Batal</button>
-                          <button type="submit" class="btn btn-primary" id="submitBtn">
-                            <span class="btn-text">Buat Giveaway</span>
-                            <span class="btn-loader" style="display: none;"></span>
-                          </button>
+                            <button type="button" class="btn btn-secondary" id="cancelBtn">Batal</button>
+                            <button type="submit" class="btn btn-primary" id="submitBtn">
+                                <span class="btn-text">Buat Giveaway</span>
+                                <span class="btn-loader" style="display: none;"></span>
+                            </button>
                         </div>
                         
                     </form>
