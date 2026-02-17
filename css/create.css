@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
-   FORM CONTAINER CSS
+   FORM CONTAINER
    ------------------------------------------------------------------ */
 .form-container {
     background: rgba(15, 25, 40, 0.2);
@@ -135,7 +135,7 @@
 }
 
 /* ------------------------------------------------------------------
-   INPUT FIELDS
+   INPUT FIELDS - SAMA PERSIS DENGAN REQUIREMENTS
    ------------------------------------------------------------------ */
 .input-wrapper,
 .textarea-wrapper {
@@ -146,12 +146,12 @@
 .form-input,
 .form-textarea {
     width: 100%;
-    padding: 16px 20px 16px 50px;
+    padding: 10px 16px 10px 40px; /* SAMA DENGAN selected-requirements (10px padding) */
     background: rgba(10, 20, 30, 0.3);
     border: 1.5px solid rgba(0, 170, 255, 0.15);
-    border-radius: 20px;
+    border-radius: 20px; /* SAMA DENGAN REQUIREMENTS CONTAINER */
     color: var(--text-primary);
-    font-size: 15px;
+    font-size: 14px;
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
     transition: all var(--transition-normal);
@@ -161,10 +161,11 @@
 }
 
 .form-textarea {
-    padding: 16px 20px 16px 50px;
+    padding: 10px 16px 10px 40px; /* SAMA DENGAN selected-requirements */
     resize: vertical;
-    min-height: 100px;
-    line-height: 1.5;
+    min-height: 40px; /* LEBIH KECIL DARI SEBELUMNYA */
+    line-height: 1.4;
+    max-height: 100px;
 }
 
 .form-input:focus,
@@ -186,15 +187,16 @@
 .form-textarea::placeholder {
     color: rgba(255, 255, 255, 0.2);
     font-style: italic;
+    font-size: 12px; /* LEBIH KECIL */
 }
 
 .input-icon,
 .textarea-icon {
     position: absolute;
-    left: 18px;
+    left: 12px; /* DIGESER LEBIH KE KIRI */
     top: 50%;
     transform: translateY(-50%);
-    font-size: 20px;
+    font-size: 16px; /* LEBIH KECIL */
     color: var(--primary-blue);
     opacity: 0.7;
     transition: all var(--transition-normal);
@@ -202,8 +204,8 @@
 }
 
 .textarea-icon {
-    top: 24px;
-    transform: none;
+    top: 50%;
+    transform: translateY(-50%);
 }
 
 .form-input:focus + .input-icon,
@@ -229,6 +231,150 @@
 @keyframes fadeIn {
     from { opacity: 0; transform: translateY(-5px); }
     to { opacity: 1; transform: translateY(0); }
+}
+
+/* ------------------------------------------------------------------
+   CHANNEL/GROUP INPUT - SAMA PERSIS DENGAN PRIZE
+   ------------------------------------------------------------------ */
+.channel-input-container {
+  background: rgba(10, 20, 30, 0.3);
+  border: 1.5px solid rgba(0, 170, 255, 0.15);
+  border-radius: 20px;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  transition: all var(--transition-normal);
+  box-shadow:
+    inset 0 2px 4px rgba(0, 0, 0, 0.2),
+    0 4px 12px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+.channel-input-container:focus-within {
+  border-color: var(--primary-blue);
+  box-shadow:
+    0 0 0 3px rgba(0, 136, 255, 0.2),
+    inset 0 2px 4px rgba(0, 0, 0, 0.2);
+  background: rgba(15, 25, 40, 0.4);
+}
+
+.channel-tags-wrapper {
+  width: 100%;
+  padding: 12px 16px 4px 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.channel-tags-scroll {
+  display: flex;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  overflow-y: hidden;
+  gap: 8px;
+  padding-bottom: 8px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--primary-blue) rgba(255, 255, 255, 0.05);
+  -webkit-overflow-scrolling: touch;
+}
+
+.channel-tags-scroll::-webkit-scrollbar {
+  height: 4px;
+}
+
+.channel-tags-scroll::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 4px;
+}
+
+.channel-tags-scroll::-webkit-scrollbar-thumb {
+  background: var(--primary-blue);
+  border-radius: 4px;
+}
+
+.channel-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px 4px 6px;
+  background: rgba(0, 136, 255, 0.2);
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+  border: 1px solid rgba(0, 136, 255, 0.4);
+  border-radius: 30px;
+  color: white;
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+  animation: tagAppear 0.3s ease;
+  box-shadow: 0 2px 8px rgba(0, 136, 255, 0.2);
+}
+
+.channel-tag:hover {
+  background: rgba(0, 136, 255, 0.3);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 136, 255, 0.3);
+}
+
+.channel-tag .tag-remove {
+  cursor: pointer;
+  width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 50%;
+  font-size: 14px;
+  transition: all 0.2s ease;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.channel-tag .tag-remove:hover {
+  background: rgba(255, 107, 107, 0.8);
+  transform: rotate(90deg) scale(1.1);
+  color: white;
+}
+
+.channel-input-wrapper {
+  position: relative;
+  width: 100%;
+  padding: 8px 16px 12px 16px;
+}
+
+.channel-input-field {
+  width: 100%;
+  padding: 10px 16px 10px 40px;
+  background: transparent;
+  border: none;
+  color: var(--text-primary);
+  font-size: 15px;
+  outline: none;
+}
+
+.channel-input-field::placeholder {
+  color: rgba(255, 255, 255, 0.3);
+  font-style: italic;
+}
+
+.channel-input-icon {
+  position: absolute;
+  left: 24px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 18px;
+  color: var(--primary-blue);
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+.channel-input-field:focus+.channel-input-icon {
+  opacity: 1;
+  transform: translateY(-50%) scale(1.1);
+}
+
+.channel-hint {
+  padding: 0 16px 12px 16px;
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.3);
+  font-style: italic;
 }
 
 /* ------------------------------------------------------------------
@@ -296,12 +442,36 @@
     background: var(--primary-blue-light);
 }
 
-/* Tags/bubbles */
+/* Nomor urut pada prize tag - RANDOM VIA JS */
+.prize-number {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  font-size: 11px;
+  font-weight: 600;
+  color: white;
+  margin-right: 4px;
+  padding: 0 2px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+  transition: all 0.2s ease;
+}
+
+/* Efek hover */
+.prize-tag:hover .prize-number {
+  transform: scale(1.1);
+  filter: brightness(1.2);
+}
+
+/* Sesuaikan padding prize tag untuk mengakomodasi nomor */
 .prize-tag {
     display: inline-flex;
     align-items: center;
-    gap: 8px;
-    padding: 6px 12px;
+    gap: 6px;
+    padding: 4px 10px 4px 6px; /* Kurangi padding kiri karena sudah ada nomor */
     background: rgba(0, 136, 255, 0.2);
     backdrop-filter: blur(5px);
     -webkit-backdrop-filter: blur(5px);
@@ -729,164 +899,337 @@
 }
 
 /* ------------------------------------------------------------------
-   DURATION SELECTOR
+   DURASI GIVEAWAY - WHEEL PICKER FINAL (TANPA GLOW) - DIPERBAIKI
    ------------------------------------------------------------------ */
-.duration-selector {
-    background: rgba(10, 20, 30, 0.2);
-    border-radius: 24px;
-    padding: 16px;
-    border: 1px solid rgba(255, 255, 255, 0.05);
+/* Style untuk border header yang baru */
+.duration-border-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
 }
 
-.duration-tabs {
+/* Style untuk data durasi di dalam border */
+.duration-value {
+  color: white;
+  font-size: 15px;
+  font-weight: 500;
+  background: linear-gradient(135deg, #fff, #aaddff);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  letter-spacing: 0.3px;
+  text-shadow: 0 2px 5px rgba(0, 136, 255, 0.2);
+}
+
+.duration-label {
+    color: var(--text-secondary);
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 0.3px;
+    background: linear-gradient(135deg, #aaddff, #88ccff);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+/* Tombol jam - style seperti tombol BATAL */
+.duration-add-btn {
     display: flex;
-    gap: 8px;
-    margin-bottom: 20px;
-    padding: 4px;
-    background: rgba(0, 0, 0, 0.2);
-    border-radius: 40px;
-}
-
-.duration-tab {
-    flex: 1;
-    padding: 10px 16px;
-    background: transparent;
-    border: none;
-    border-radius: 40px;
-    color: var(--text-tertiary);
-    font-size: 14px;
-    font-weight: 600;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 32px;
+    background: rgba(30, 40, 50, 0.3);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1.5px solid rgba(255, 255, 255, 0.1);
+    border-radius: 16px;
+    color: white;
     cursor: pointer;
-    transition: all var(--transition-normal);
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    padding: 0;
     position: relative;
     overflow: hidden;
 }
 
-.duration-tab::before {
+/* Efek glossy */
+.duration-add-btn::before {
     content: '';
     position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 0;
-    height: 0;
-    background: radial-gradient(circle, rgba(0, 136, 255, 0.2), transparent);
-    transform: translate(-50%, -50%);
-    transition: width 0.3s, height 0.3s;
-    border-radius: 50%;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 50%;
+    background: linear-gradient(to bottom,
+        rgba(255, 255, 255, 0.15),
+        transparent);
+    border-radius: inherit;
+    pointer-events: none;
 }
 
-.duration-tab:hover::before {
-    width: 150px;
-    height: 150px;
+.duration-add-btn:hover {
+    background: rgba(40, 50, 60, 0.4);
+    border-color: rgba(255, 255, 255, 0.2);
+    transform: translateY(-1px);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
 }
 
-.duration-tab.active {
-    background: rgba(0, 136, 255, 0.2);
+.duration-add-btn:active {
+    transform: translateY(0);
+}
+
+.duration-add-btn svg {
+    width: 18px;
+    height: 18px;
     color: white;
-    box-shadow: 0 4px 12px rgba(0, 136, 255, 0.2);
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
 }
 
-.duration-tab.active::after {
+/* Border Container untuk Durasi */
+.duration-border-container {
+    background: rgba(10, 20, 30, 0.3);
+    border: 1.5px solid rgba(0, 170, 255, 0.15);
+    border-radius: 20px;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    transition: all var(--transition-normal);
+    box-shadow: 
+        inset 0 2px 4px rgba(0, 0, 0, 0.2),
+        0 4px 12px rgba(0, 0, 0, 0.1);
+    position: relative;
+    min-height: 56px;
+    width: 100%;
+    padding: 12px 16px;
+    margin-bottom: 8px;
+}
+
+.duration-border-container:focus-within {
+    border-color: var(--primary-blue);
+    box-shadow: 
+        0 0 0 3px rgba(0, 136, 255, 0.2),
+        inset 0 2px 4px rgba(0, 0, 0, 0.2);
+    background: rgba(15, 25, 40, 0.4);
+}
+
+/* Tampilan durasi yang dipilih */
+.duration-display {
+    display: none;
+}
+
+.duration-text {
+    color: white;
+    font-size: 15px;
+    font-weight: 500;
+    background: linear-gradient(135deg, #fff, #aaddff);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    letter-spacing: 0.3px;
+    text-shadow: 0 2px 5px rgba(0, 136, 255, 0.2);
+}
+
+/* Container untuk pengaturan durasi (saat expand) */
+.duration-settings-container {
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+    animation: fadeSlideDown 0.3s ease;
+}
+
+.duration-settings-header {
+    margin-bottom: 16px;
+    text-align: center;
+}
+
+.duration-settings-title {
+    color: var(--text-secondary);
+    font-size: 14px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    background: linear-gradient(135deg, #fff, #aaddff);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+/* 4 Kolom input durasi - WHEEL PICKER */
+.duration-columns {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    margin-bottom: 20px;
+    padding: 0 4px;
+}
+
+.duration-column {
+    position: relative;
+}
+
+.duration-column-label {
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    text-align: center;
+    width: 100%;
+    margin-bottom: 8px;
+}
+
+.duration-value-display {
+    display: none;
+}
+
+/* WHEEL SELECTOR */
+.duration-selector {
+    width: 100%;
+    height: 100px;
+    overflow-y: scroll;
+    background: rgba(25, 35, 45, 0.3);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border-radius: 24px;
+    padding: 0;
+    scrollbar-width: none;
+    position: relative;
+    border: 1.5px solid rgba(255, 255, 255, 0.05);
+    box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.duration-selector::-webkit-scrollbar {
+    display: none;
+}
+
+.selector-options {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    padding: 76px 0; /* Padding untuk membuat item pertama di tengah */
+    box-sizing: border-box;
+}
+
+.selector-option {
+    height: 48px;
+    min-height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: rgba(255, 255, 255, 0.35);
+    font-size: 20px;
+    font-weight: 500;
+    width: 100%;
+    line-height: 48px;
+    transition: all 0.1s ease;
+    box-sizing: border-box;
+    scroll-snap-align: center;
+    scroll-snap-stop: always;
+}
+
+.selector-option.selected {
+    color: white;
+    font-size: 26px;
+    font-weight: 700;
+}
+
+/* PERBAIKAN: HIGHLIGHT TENGAH - GARIS HALUS DENGAN POSISI YANG TEPAT */
+.duration-column .duration-selector::before {
+    display: none;
+}
+
+.duration-column::after {
     content: '';
     position: absolute;
-    bottom: 0;
-    left: 25%;
-    width: 50%;
-    height: 2px;
-    background: var(--primary-blue);
-    border-radius: 2px;
-    animation: slideIn 0.3s ease;
+    left: 8%;
+    right: 8%;
+    top: 60%;
+    height: 48px;
+    transform: translateY(-50%);
+    background: rgba(255, 255, 255, 0.03);
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    pointer-events: none;
+    z-index: 20; /* LEBIH TINGGI DARI SELECTOR */
+    box-shadow: none;
+    /* FIXED POSITION - RELATIVE TO COLUMN */
+    position: absolute;
+    /* GAK IKUT SCROLL KARENA DI LUAR SELECTOR */
 }
 
-@keyframes slideIn {
-    from { width: 0; left: 50%; }
-    to { width: 50%; left: 25%; }
+/* PERBAIKAN: Pastikan scroll behavior halus */
+.duration-selector {
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
 }
 
-.duration-mode {
-    display: none;
-    animation: fadeSlide 0.4s ease;
-}
-
-.duration-mode.active {
-    display: block;
-}
-
-@keyframes fadeSlide {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-
-.duration-input-group {
+/* Tombol Simpan */
+.duration-save-btn-container {
     display: flex;
-    gap: 12px;
-    margin-bottom: 12px;
+    justify-content: flex-end;
+    margin-top: 16px;
 }
 
-.duration-input {
-    flex: 2;
-    padding: 14px 18px;
-    background: rgba(10, 20, 30, 0.4);
-    border: 1.5px solid rgba(0, 170, 255, 0.15);
-    border-radius: 18px;
-    color: var(--text-primary);
-    font-size: 16px;
-    font-weight: 600;
-    transition: all var(--transition-normal);
-}
-
-.duration-input:focus {
-    outline: none;
-    border-color: var(--primary-blue);
-    box-shadow: 0 0 0 3px rgba(0, 136, 255, 0.2);
-}
-
-.duration-select {
-    flex: 1;
-    padding: 14px 18px;
-    background: rgba(10, 20, 30, 0.4);
-    border: 1.5px solid rgba(0, 170, 255, 0.15);
-    border-radius: 18px;
-    color: var(--text-primary);
+.duration-save-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px 28px;
+    background: rgba(30, 40, 50, 0.3);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1.5px solid rgba(255, 255, 255, 0.1);
+    border-radius: 30px;
+    color: white;
     font-size: 14px;
-    font-weight: 500;
+    font-weight: 600;
     cursor: pointer;
-    transition: all var(--transition-normal);
-    appearance: none;
-    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%230088ff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
-    background-repeat: no-repeat;
-    background-position: right 15px center;
-    background-size: 16px;
+    transition: all 0.2s ease;
+    letter-spacing: 0.5px;
+    position: relative;
+    overflow: hidden;
 }
 
-.duration-select:hover {
-    border-color: rgba(0, 170, 255, 0.3);
+.duration-save-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 50%;
+    background: linear-gradient(to bottom, 
+        rgba(255, 255, 255, 0.15), 
+        transparent);
+    border-radius: inherit;
+    pointer-events: none;
 }
 
-.duration-select:focus {
-    outline: none;
-    border-color: var(--primary-blue);
+.duration-save-btn:hover {
+    background: rgba(40, 50, 60, 0.4);
+    border-color: rgba(255, 255, 255, 0.2);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
 }
 
-.date-input-group {
-    width: 100%;
+.duration-save-btn:active {
+    transform: translateY(0);
 }
 
-.date-input {
-    width: 100%;
-    padding: 14px 18px;
-    background: rgba(10, 20, 30, 0.4);
-    border: 1.5px solid rgba(0, 170, 255, 0.15);
-    border-radius: 18px;
-    color: var(--text-primary);
-    font-size: 15px;
-    transition: all var(--transition-normal);
-}
-
-.date-input:focus {
-    outline: none;
-    border-color: var(--primary-blue);
-    box-shadow: 0 0 0 3px rgba(0, 136, 255, 0.2);
+/* Animasi */
+@keyframes fadeSlideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 /* ------------------------------------------------------------------
@@ -1334,6 +1677,105 @@ input:checked ~ .toggle-label {
 }
 
 /* ------------------------------------------------------------------
+   FOLDABLE SECTIONS - SEMUA TERTUTUP AWALNYA
+   ------------------------------------------------------------------ */
+.foldable-section .foldable-content {
+    display: none; /* SEMUA TERTUTUP default */
+}
+
+.foldable-section.expanded .foldable-content {
+    display: block; /* Yang dibuka aja yang tampil */
+}
+
+.foldable-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 16px;
+    cursor: pointer;
+    background: rgba(0, 0, 0, 0.1);
+    border-bottom: 1px solid transparent;
+    transition: all 0.2s ease;
+}
+
+.foldable-section.expanded .foldable-header {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.foldable-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text-secondary);
+}
+
+.foldable-label {
+    background: linear-gradient(135deg, #fff, #b0e0ff);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.foldable-btn {
+    width: 32px;
+    height: 32px;
+    background: rgba(30, 40, 50, 0.3);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1.5px solid rgba(255, 255, 255, 0.1);
+    border-radius: 16px;
+    color: white;
+    font-size: 14px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.foldable-btn.rotated {
+    transform: rotate(180deg); /* Panah ke atas saat expanded */
+}
+
+/* ------------------------------------------------------------------
+   LINK INNER HEADER (DI DALAM BORDER)
+   ------------------------------------------------------------------ */
+.link-inner-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.link-inner-title {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+}
+
+.link-inner-controls {
+  display: flex;
+  align-items: center;
+}
+
+/* Hapus style link-header lama yang gak dipake */
+.link-header {
+  display: none;
+}
+
+/* Sesuaikan margin bottom */
+.link-border-container {
+    margin-bottom: 0;
+}
+
+/* ------------------------------------------------------------------
    SAVED LINKS CONTAINER (DI CREATE.HTML)
    ------------------------------------------------------------------ */
 .saved-links-container {
@@ -1676,15 +2118,6 @@ input:checked ~ .toggle-label {
 /* ------------------------------------------------------------------
    TAUTAN/LINK - DESAIN BARU (REVISI FINAL)
    ------------------------------------------------------------------ */
-
-/* Header Link dengan kontrol di kanan */
-.link-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 10px;
-}
-
 .link-header .form-label {
     margin-bottom: 0;
 }
@@ -1719,8 +2152,8 @@ input:checked ~ .toggle-label {
 
 /* Tombol + dalam border yang sama */
 .link-add-btn {
-    width: 36px;
-    height: 36px;
+    width: 32px;
+    height: 32px;
     background: transparent;
     border: none;
     color: white;
@@ -2112,6 +2545,123 @@ input:checked ~ .toggle-label {
 /* Sembunyikan container lama */
 .saved-links-container {
     display: none;
+}
+
+/* ------------------------------------------------------------------
+   FOLDABLE SECTIONS - DESAIN BARU
+   ------------------------------------------------------------------ */
+.foldable-section {
+  margin-bottom: 16px;
+  background: rgba(10, 20, 30, 0.3);
+  border: 1.5px solid rgba(0, 170, 255, 0.15);
+  border-radius: 20px;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  transition: all var(--transition-normal);
+  box-shadow:
+    inset 0 2px 4px rgba(0, 0, 0, 0.2),
+    0 4px 12px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+.foldable-section:focus-within {
+  border-color: var(--primary-blue);
+  box-shadow:
+    0 0 0 3px rgba(0, 136, 255, 0.2),
+    inset 0 2px 4px rgba(0, 0, 0, 0.2);
+  background: rgba(15, 25, 40, 0.4);
+}
+
+.foldable-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  cursor: pointer;
+  background: rgba(0, 0, 0, 0.1);
+  border-bottom: 1px solid transparent;
+  transition: all 0.2s ease;
+}
+
+.foldable-section.expanded .foldable-header {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.foldable-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.foldable-label {
+  background: linear-gradient(135deg, #fff, #b0e0ff);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.foldable-btn {
+  width: 32px;
+  height: 32px;
+  background: rgba(30, 40, 50, 0.3);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1.5px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  color: white;
+  font-size: 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.foldable-btn:hover {
+  background: rgba(40, 50, 60, 0.4);
+  border-color: rgba(255, 255, 255, 0.2);
+  transform: translateY(-1px);
+}
+
+.foldable-btn.rotated {
+  transform: rotate(180deg);
+}
+
+.foldable-content {
+  padding: 16px;
+  transition: all 0.3s ease;
+}
+
+/* Hapus border container yang lama karena udah pake foldable-section */
+.prize-input-container,
+.requirements-container,
+.link-border-container,
+.duration-border-container,
+.media-uploader,
+.toggle-container {
+  margin-bottom: 0;
+}
+
+/* Sesuaikan padding untuk konten tertentu */
+.duration-border-container {
+  padding: 0;
+  border: none;
+  background: transparent;
+  box-shadow: none;
+  margin-bottom: 0;
+}
+
+.duration-border-container:focus-within {
+  box-shadow: none;
+}
+
+/* Header khusus untuk link */
+.foldable-header .link-controls {
+  margin-left: auto;
 }
 
 /* ------------------------------------------------------------------
