@@ -102,6 +102,18 @@
     let isLinkExpanded = false;
     let isDurationExpanded = false;
     
+    // Foldable sections state
+    let foldableStates = {
+      prize: false,
+      text: false,
+      channel: false,
+      requirements: false,
+      link: false,
+      duration: false,
+      media: false,
+      captcha: false
+    };
+    
     // Duration values
     let durationDays = 10;
     let durationHours = 2;
@@ -542,6 +554,19 @@
     }
 
     function saveFormState() {
+      // Collect foldable states
+      const sections = [
+            'prize', 'text', 'channel', 'requirements',
+            'link', 'duration', 'media', 'captcha'
+        ];
+    
+      sections.forEach(section => {
+        const content = document.getElementById(`${section}Content`);
+        if (content) {
+          foldableStates[section] = content.style.display === 'block';
+        }
+      });
+    
       const formState = {
         prizes: prizes,
         channels: channels,
@@ -551,7 +576,8 @@
         durationHours: durationHours,
         durationMinutes: durationMinutes,
         durationSeconds: durationSeconds,
-        captchaEnabled: elements.captchaToggle?.checked || true
+        captchaEnabled: elements.captchaToggle?.checked || true,
+        foldableStates: foldableStates // Simpan state foldable
       };
     
       sessionStorage.setItem('giftfreebies_form_state', JSON.stringify(formState));
@@ -572,16 +598,10 @@
           updatePrizesTags();
         }
     
-        // Restore channels - TAMBAH INI
+        // Restore channels
         if (state.channels && state.channels.length > 0) {
           channels = state.channels;
           updateChannelsTags();
-        }
-    
-        // Restore prizes
-        if (state.prizes && state.prizes.length > 0) {
-          prizes = state.prizes;
-          updatePrizesTags();
         }
     
         // Restore requirements
@@ -626,9 +646,11 @@
           }
         }
     
-        // HAPUS: Restore links - karena links pake localStorage, bukan sessionStorage
+        // Restore foldable states
+        if (state.foldableStates) {
+          foldableStates = state.foldableStates;
+        }
     
-        sessionStorage.removeItem('giftfreebies_form_state');
         return true;
       } catch (e) {
         console.error('❌ Error restoring form state:', e);
@@ -642,10 +664,8 @@
       // ==================== CHANNEL INPUT ====================
       if (elements.channelInput) {
         elements.channelInput.addEventListener('focus', handleChannelInputFocus);
-        elements.channelInput.addEventListener('keydown', handleChannelInputKeydown); // PENTING: untuk cegah hapus @
-        elements.channelInput.addEventListener('input', handleChannelInput); // untuk maintain @
-        elements.channelInput.addEventListener('keydown', handleChannelInput); // untuk deteksi koma/enter
-        elements.channelInput.addEventListener('blur', handleChannelBlur);
+        elements.channelInput.addEventListener('keydown', handleChannelInputKeydown);
+        elements.channelInput.addEventListener('input', handleChannelInput);
       }
     
       // Channel tags remove
@@ -658,12 +678,12 @@
           }
         });
       }
-
-        // Prize input
-        if (elements.prizeInput) {
-            elements.prizeInput.addEventListener('keydown', handlePrizeInput);
-            elements.prizeInput.addEventListener('blur', handlePrizeBlur);
-        }
+    
+      // Prize input
+      if (elements.prizeInput) {
+        elements.prizeInput.addEventListener('keydown', handlePrizeInput);
+        elements.prizeInput.addEventListener('blur', handlePrizeBlur);
+      }
         
         // Prize tags remove
         if (elements.prizesTags) {
@@ -1063,14 +1083,14 @@
       console.log('🔧 Setting up foldable sections...');
     
       const sections = [
-        { header: 'prizeHeader', content: 'prizeContent', btn: 'prizeToggleBtn' },
-        { header: 'textHeader', content: 'textContent', btn: 'textToggleBtn' },
-        { header: 'channelHeader', content: 'channelContent', btn: 'channelToggleBtn' }, // SECTION BARU
-        { header: 'requirementsHeader', content: 'requirementsContent', btn: 'requirementsToggleBtn' },
-        { header: 'linkHeader', content: 'linkContent', btn: 'linkToggleBtn' },
-        { header: 'durationHeader', content: 'durationContent', btn: 'durationToggleBtn' },
-        { header: 'mediaHeader', content: 'mediaContent', btn: 'mediaToggleBtn' },
-        { header: 'captchaHeader', content: 'captchaContent', btn: 'captchaToggleBtn' }
+        { id: 'prize', header: 'prizeHeader', content: 'prizeContent', btn: 'prizeToggleBtn' },
+        { id: 'text', header: 'textHeader', content: 'textContent', btn: 'textToggleBtn' },
+        { id: 'channel', header: 'channelHeader', content: 'channelContent', btn: 'channelToggleBtn' },
+        { id: 'requirements', header: 'requirementsHeader', content: 'requirementsContent', btn: 'requirementsToggleBtn' },
+        { id: 'link', header: 'linkHeader', content: 'linkContent', btn: 'linkToggleBtn' },
+        { id: 'duration', header: 'durationHeader', content: 'durationContent', btn: 'durationToggleBtn' },
+        { id: 'media', header: 'mediaHeader', content: 'mediaContent', btn: 'mediaToggleBtn' },
+        { id: 'captcha', header: 'captchaHeader', content: 'captchaContent', btn: 'captchaToggleBtn' }
         ];
     
       sections.forEach(section => {
@@ -1080,12 +1100,22 @@
         const foldableSection = header?.closest('.foldable-section');
     
         if (header && content) {
-          // Set initial state: SEMUA TERTUTUP
-          content.style.display = 'none';
-          foldableSection?.classList.remove('expanded');
-          if (btn) {
-            btn.classList.remove('rotated');
-            btn.textContent = '▼'; // Panah bawah
+          // Set initial state berdasarkan yang direstore atau default (false)
+          const isExpanded = foldableStates[section.id] || false;
+          content.style.display = isExpanded ? 'block' : 'none';
+    
+          if (isExpanded) {
+            foldableSection?.classList.add('expanded');
+            if (btn) {
+              btn.classList.add('rotated');
+              btn.textContent = '▲';
+            }
+          } else {
+            foldableSection?.classList.remove('expanded');
+            if (btn) {
+              btn.classList.remove('rotated');
+              btn.textContent = '▼';
+            }
           }
     
           // Toggle function
@@ -1095,6 +1125,9 @@
     
             // Toggle content
             content.style.display = isHidden ? 'block' : 'none';
+    
+            // Update state
+            foldableStates[section.id] = !isHidden;
     
             // Toggle class pada section
             if (isHidden) {
@@ -1107,17 +1140,16 @@
             if (btn) {
               if (isHidden) {
                 btn.classList.add('rotated');
-                btn.textContent = '▲'; // Panah atas saat terbuka
+                btn.textContent = '▲';
               } else {
                 btn.classList.remove('rotated');
-                btn.textContent = '▼'; // Panah bawah saat tertutup
+                btn.textContent = '▼';
               }
             }
           };
     
           // Add click listener to header
           header.addEventListener('click', (e) => {
-            // Don't toggle if clicking on button inside header (except the toggle btn)
             if (e.target.closest('button') && e.target.closest('button') !== btn) {
               return;
             }
@@ -1185,24 +1217,78 @@
       }
     }
     
+    // ==================== CHANNEL HANDLERS ====================
+    function handleChannelInput(e) {
+      // Cek apakah pengguna mencoba menghapus karakter pertama (@)
+      if (e.key === 'Backspace' && e.target.selectionStart === 1 && e.target.selectionEnd === 1) {
+        e.preventDefault();
+        hapticImpact('medium');
+        return;
+      }
+    
+      // Deteksi koma, enter, atau tombol "Done/Return" di mobile (key = 'Enter' atau 'Go')
+      if (e.key === ',' || e.key === 'Enter' || e.key === 'Go' || e.key === 'Done') {
+        e.preventDefault();
+        hapticImpact('soft');
+        addChannelFromInput();
+      }
+    }
+    
+    function handleChannelBlur() {
+      // JANGAN panggil addChannelFromInput() di blur
+      // Biar gak otomatis nambah kalo klik di luar
+    }
+    
+    function handleChannelInputFocus() {
+      const input = elements.channelInput;
+      if (!input.value) {
+        input.value = '@';
+        setTimeout(() => {
+          input.setSelectionRange(1, 1);
+        }, 10);
+      }
+    }
+    
+    function handleChannelInputKeydown(e) {
+      const input = e.target;
+    
+      // Cegah penghapusan karakter @ pertama
+      if (e.key === 'Backspace' && input.selectionStart === 1 && input.selectionEnd === 1) {
+        e.preventDefault();
+        hapticImpact('medium');
+        return;
+      }
+    
+      // Cegah karakter pertama selain @
+      if (input.selectionStart === 0 && input.selectionEnd === 0 && e.key !== '@' && e.key !== 'Backspace' && e.key !== 'Delete' && e.key !== 'ArrowLeft' && e.key !== 'ArrowRight' && e.key !== 'Home' && e.key !== 'End') {
+        e.preventDefault();
+        hapticImpact('soft');
+        return;
+      }
+    
+      // Deteksi tombol Done/Return di mobile
+      if (e.key === 'Enter' || e.key === 'Go' || e.key === 'Done') {
+        e.preventDefault();
+        hapticImpact('soft');
+        addChannelFromInput();
+      }
+    }
+    
     function handleChannelInput() {
       const input = elements.channelInput;
       let value = input.value;
     
-      // Jika value kosong, set jadi @
       if (!value) {
         input.value = '@';
         input.setSelectionRange(1, 1);
         return;
       }
     
-      // Jika karakter pertama bukan @, tambahkan @ di depan
       if (value[0] !== '@') {
-        input.value = '@' + value.replace(/@/g, ''); // Hapus semua @ lalu tambah 1 di depan
+        input.value = '@' + value.replace(/@/g, '');
         hapticImpact('soft');
       }
     
-      // Jika hanya berisi @, biarkan
       if (value === '@') {
         return;
       }
@@ -1211,24 +1297,20 @@
     function addChannelFromInput() {
       let value = elements.channelInput.value.trim();
     
-      // Hapus koma di akhir
       if (value.endsWith(',')) {
         value = value.slice(0, -1).trim();
       }
     
-      // Jika hanya @ atau kosong, return
       if (!value || value === '@') {
         elements.channelInput.value = '@';
         hapticNotification('error');
         return;
       }
     
-      // Pastikan format @username
       if (!value.startsWith('@')) {
         value = '@' + value;
       }
     
-      // Validasi: hanya boleh huruf, angka, underscore (format username Telegram)
       const usernameRegex = /^@[a-zA-Z0-9_]+$/;
       if (!usernameRegex.test(value)) {
         hapticNotification('error');
@@ -1238,26 +1320,22 @@
     
       hapticImpact('light');
     
-      // Split dengan koma
       const newChannels = value.split(',').map(c => c.trim()).filter(c => c && c !== '@');
     
       newChannels.forEach(channel => {
-        // Pastikan format @
         let cleanChannel = channel;
         if (!cleanChannel.startsWith('@')) {
           cleanChannel = '@' + cleanChannel;
         }
     
-        // Validasi lagi
         if (usernameRegex.test(cleanChannel) && !channels.includes(cleanChannel)) {
           channels.push(cleanChannel);
         }
       });
     
       updateChannelsTags();
-      elements.channelInput.value = '@'; // Reset ke @
+      elements.channelInput.value = '@';
     
-      // Set cursor setelah @
       setTimeout(() => {
         elements.channelInput.setSelectionRange(1, 1);
       }, 10);
@@ -1284,7 +1362,6 @@
     
       elements.channelTags.innerHTML = html;
     
-      // Auto scroll ke kanan
       setTimeout(() => {
         const scrollContainer = document.querySelector('.channel-tags-scroll');
         if (scrollContainer) {
