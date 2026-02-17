@@ -232,36 +232,94 @@
 }
 
 /* ------------------------------------------------------------------
-   PRIZES TAGS
+   PRIZE INPUT CONTAINER - DENGAN BUBBLE DI DALAM
    ------------------------------------------------------------------ */
-.prizes-tags {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    margin-top: 12px;
-    padding: 0 4px;
+.prize-input-container {
+    background: rgba(10, 20, 30, 0.3);
+    border: 1.5px solid rgba(0, 170, 255, 0.15);
+    border-radius: 20px;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    transition: all var(--transition-normal);
+    box-shadow: 
+        inset 0 2px 4px rgba(0, 0, 0, 0.2),
+        0 4px 12px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
 }
 
+.prize-input-container:focus-within {
+    border-color: var(--primary-blue);
+    box-shadow: 
+        0 0 0 3px rgba(0, 136, 255, 0.2),
+        inset 0 2px 4px rgba(0, 0, 0, 0.2);
+    background: rgba(15, 25, 40, 0.4);
+}
+
+.prize-input-container:hover {
+    border-color: rgba(0, 170, 255, 0.3);
+}
+
+/* Wrapper untuk tags dengan scroll horizontal */
+.prize-tags-wrapper {
+    width: 100%;
+    padding: 12px 16px 4px 16px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.prize-tags-scroll {
+    display: flex;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    overflow-y: hidden;
+    gap: 8px;
+    padding-bottom: 8px;
+    scrollbar-width: thin;
+    scrollbar-color: var(--primary-blue) rgba(255, 255, 255, 0.05);
+    -webkit-overflow-scrolling: touch;
+}
+
+.prize-tags-scroll::-webkit-scrollbar {
+    height: 4px;
+}
+
+.prize-tags-scroll::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 4px;
+}
+
+.prize-tags-scroll::-webkit-scrollbar-thumb {
+    background: var(--primary-blue);
+    border-radius: 4px;
+}
+
+.prize-tags-scroll::-webkit-scrollbar-thumb:hover {
+    background: var(--primary-blue-light);
+}
+
+/* Tags/bubbles */
 .prize-tag {
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    padding: 8px 14px;
-    background: rgba(0, 136, 255, 0.15);
+    padding: 6px 12px;
+    background: rgba(0, 136, 255, 0.2);
     backdrop-filter: blur(5px);
     -webkit-backdrop-filter: blur(5px);
-    border: 1px solid rgba(0, 136, 255, 0.3);
-    border-radius: 40px;
+    border: 1px solid rgba(0, 136, 255, 0.4);
+    border-radius: 30px;
     color: white;
     font-size: 13px;
     font-weight: 500;
+    white-space: nowrap;
     animation: tagAppear 0.3s ease;
-    box-shadow: 0 4px 12px rgba(0, 136, 255, 0.2);
+    box-shadow: 0 2px 8px rgba(0, 136, 255, 0.2);
+    transition: all 0.2s ease;
 }
 
-@keyframes tagAppear {
-    from { opacity: 0; transform: scale(0.8); }
-    to { opacity: 1; transform: scale(1); }
+.prize-tag:hover {
+    background: rgba(0, 136, 255, 0.3);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 136, 255, 0.3);
 }
 
 .tag-remove {
@@ -271,95 +329,403 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    background: rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.15);
     border-radius: 50%;
     font-size: 14px;
-    transition: all var(--transition-fast);
+    transition: all 0.2s ease;
+    color: rgba(255, 255, 255, 0.8);
 }
 
 .tag-remove:hover {
-    background: rgba(255, 107, 107, 0.3);
-    transform: rotate(90deg);
+    background: rgba(255, 107, 107, 0.8);
+    transform: rotate(90deg) scale(1.1);
+    color: white;
+}
+
+/* Input field wrapper */
+.prize-input-wrapper {
+    position: relative;
+    width: 100%;
+    padding: 8px 16px 12px 16px;
+}
+
+.prize-input-field {
+    width: 100%;
+    padding: 10px 16px 10px 40px;
+    background: transparent;
+    border: none;
+    color: var(--text-primary);
+    font-size: 15px;
+    outline: none;
+}
+
+.prize-input-field::placeholder {
+    color: rgba(255, 255, 255, 0.3);
+    font-style: italic;
+}
+
+.prize-input-icon {
+    position: absolute;
+    left: 24px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 18px;
+    color: var(--primary-blue);
+    opacity: 0.7;
+    pointer-events: none;
+}
+
+.prize-input-field:focus + .prize-input-icon {
+    opacity: 1;
+    transform: translateY(-50%) scale(1.1);
+}
+
+/* Hapus style lama */
+.prizes-tags {
+    display: none; /* Menyembunyikan yang lama */
+}
+
+/* Animasi untuk tag baru */
+@keyframes tagAppear {
+    from {
+        opacity: 0;
+        transform: scale(0.8) translateX(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1) translateX(0);
+    }
 }
 
 /* ------------------------------------------------------------------
-   REQUIREMENTS GRID
+   REQUIREMENTS CONTAINER - Dengan border dan tombol Select FULL
    ------------------------------------------------------------------ */
-.requirements-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-    gap: 12px;
-    margin-top: 8px;
-}
-
-.requirement-item {
-    position: relative;
-    cursor: pointer;
-    user-select: none;
-}
-
-.requirement-checkbox {
-    position: absolute;
-    opacity: 0;
-    width: 0;
-    height: 0;
-}
-
-.requirement-content {
+.requirements-container {
     display: flex;
     align-items: center;
-    gap: 12px;
-    padding: 14px 16px;
-    background: rgba(15, 25, 40, 0.2);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
-    border: 1.5px solid rgba(255, 255, 255, 0.05);
+    background: rgba(10, 20, 30, 0.3);
+    border: 1.5px solid rgba(0, 170, 255, 0.15);
     border-radius: 20px;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
     transition: all var(--transition-normal);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    box-shadow: 
+        inset 0 2px 4px rgba(0, 0, 0, 0.2),
+        0 4px 12px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    min-height: 56px;
+    width: 100%;
+    position: relative;
 }
 
-.requirement-checkbox:checked + .requirement-content {
-    background: rgba(0, 136, 255, 0.2);
+.requirements-container:focus-within {
     border-color: var(--primary-blue);
     box-shadow: 
-        0 8px 20px rgba(0, 136, 255, 0.2),
-        inset 0 1px 2px rgba(255, 255, 255, 0.1);
-    transform: translateY(-2px);
+        0 0 0 3px rgba(0, 136, 255, 0.2),
+        inset 0 2px 4px rgba(0, 0, 0, 0.2);
+    background: rgba(15, 25, 40, 0.4);
 }
 
-.requirement-checkbox:checked + .requirement-content .requirement-icon {
-    animation: iconPop 0.3s ease;
-}
-
-@keyframes iconPop {
-    0%, 100% { transform: scale(1); }
-    50% { transform: scale(1.2); }
-}
-
-.requirement-item:hover .requirement-content {
-    background: rgba(255, 255, 255, 0.05);
-    border-color: rgba(0, 170, 255, 0.2);
-}
-
-.requirement-icon {
-    font-size: 22px;
-    filter: drop-shadow(0 0 8px rgba(0, 136, 255, 0.3));
-}
-
-.requirement-text {
-    color: var(--text-secondary);
-    font-size: 14px;
-    font-weight: 500;
+/* Border untuk syarat terpilih (rata kiri) - FULL WIDTH */
+.selected-requirements {
     flex: 1;
+    padding: 10px 100px 10px 12px; /* Memberi ruang untuk tombol select di kanan */
+    min-width: 0;
+    width: 100%;
 }
 
-.requirement-checkbox:checked + .requirement-content .requirement-text {
+.selected-tags-scroll {
+    display: flex;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    overflow-y: hidden;
+    gap: 8px;
+    padding-bottom: 4px;
+    scrollbar-width: thin;
+    scrollbar-color: var(--primary-blue) rgba(255, 255, 255, 0.05);
+    -webkit-overflow-scrolling: touch;
+}
+
+.selected-tags-scroll::-webkit-scrollbar {
+    height: 3px;
+}
+
+.selected-tags-scroll::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 3px;
+}
+
+.selected-tags-scroll::-webkit-scrollbar-thumb {
+    background: var(--primary-blue);
+    border-radius: 3px;
+}
+
+/* Tag syarat terpilih */
+.selected-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 10px;
+    background: rgba(0, 136, 255, 0.2);
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
+    border: 1px solid rgba(0, 136, 255, 0.4);
+    border-radius: 30px;
+    color: white;
+    font-size: 13px;
+    font-weight: 500;
+    white-space: nowrap;
+    animation: tagAppear 0.3s ease;
+}
+
+.selected-tag .tag-remove {
+    cursor: pointer;
+    width: 16px;
+    height: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 50%;
+    font-size: 12px;
+    transition: all 0.2s ease;
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.selected-tag .tag-remove:hover {
+    background: rgba(255, 107, 107, 0.8);
+    transform: rotate(90deg);
+    color: white;
+}
+
+/* Tombol SELECT - FULL MEMENUHI BORDER KANAN */
+.select-btn {
+    position: absolute;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0 24px;
+    background: rgba(0, 136, 255, 0.2);
+    border: none;
+    border-left: 1.5px solid rgba(0, 170, 255, 0.3);
+    color: white;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
+    white-space: nowrap;
+    height: 100%;
+    box-shadow: -5px 0 15px rgba(0, 0, 0, 0.1);
+}
+
+.select-btn:hover {
+    background: rgba(0, 136, 255, 0.3);
+    border-left-color: var(--primary-blue);
+    padding-right: 28px;
+}
+
+.select-btn:active {
+    transform: scale(0.98);
+}
+
+.select-icon {
+    font-size: 12px;
+    transition: transform 0.2s ease;
+}
+
+.select-btn:hover .select-icon {
+    transform: translateY(2px);
+}
+
+/* Panel Select */
+.select-panel {
+    margin-top: 8px;
+    background: rgba(15, 25, 40, 0.4);
+    backdrop-filter: blur(20px) saturate(200%);
+    -webkit-backdrop-filter: blur(20px) saturate(200%);
+    border: 1.5px solid rgba(0, 170, 255, 0.25);
+    border-radius: 24px;
+    overflow: hidden;
+    animation: panelSlide 0.3s ease;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+}
+
+@keyframes panelSlide {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    background: rgba(0, 0, 0, 0.2);
+}
+
+.panel-title {
+    font-size: 16px;
+    font-weight: 600;
     color: white;
     background: linear-gradient(135deg, #fff, #aaddff);
     -webkit-background-clip: text;
     background-clip: text;
     -webkit-text-fill-color: transparent;
+}
+
+.panel-close {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 16px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
+}
+
+.panel-close:hover {
+    background: rgba(255, 107, 107, 0.3);
+    color: white;
+    transform: rotate(90deg);
+    border-color: rgba(255, 107, 107, 0.5);
+}
+
+.panel-options {
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+/* Tombol option - 3D Transparan seperti tombol BATAL */
+.option-btn {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 16px 20px;
+    background: rgba(30, 40, 50, 0.3);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1.5px solid rgba(255, 255, 255, 0.08);
+    border-radius: 20px;
+    color: var(--text-secondary);
+    font-size: 15px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    width: 100%;
+    text-align: left;
+    box-shadow: 
+        0 8px 16px -4px rgba(0, 0, 0, 0.3),
+        inset 0 1px 1px rgba(255, 255, 255, 0.1),
+        inset 0 -1px 1px rgba(0, 0, 0, 0.2);
+    position: relative;
+    overflow: hidden;
+}
+
+/* Efek glossy di atas */
+.option-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 50%;
+    background: linear-gradient(to bottom, 
+        rgba(255, 255, 255, 0.1), 
+        transparent);
+    border-radius: inherit;
+    pointer-events: none;
+}
+
+.option-btn::after {
+    content: attr(data-icon);
+    font-size: 22px;
+    filter: drop-shadow(0 0 8px rgba(0, 136, 255, 0.3));
+}
+
+.option-btn:hover {
+    background: rgba(0, 136, 255, 0.15);
+    border-color: rgba(0, 136, 255, 0.3);
+    transform: translateY(-2px);
+    color: white;
+    box-shadow: 
+        0 12px 24px -8px rgba(0, 136, 255, 0.3),
+        inset 0 1px 2px rgba(255, 255, 255, 0.15);
+}
+
+.option-btn:active {
+    transform: translateY(1px);
+    box-shadow: 
+        0 4px 8px -2px rgba(0, 0, 0, 0.3),
+        inset 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+/* Active state untuk option yang sudah dipilih */
+.option-btn.selected {
+    background: rgba(0, 136, 255, 0.2);
+    border-color: var(--primary-blue);
+    color: white;
+    box-shadow: 
+        0 8px 16px rgba(0, 136, 255, 0.2),
+        inset 0 1px 2px rgba(255, 255, 255, 0.15);
+}
+
+/* Hapus style lama requirements-grid */
+.requirements-grid {
+    display: none;
+}
+
+/* ------------------------------------------------------------------
+   INFO ICON UNTUK SEMUA LABEL
+   ------------------------------------------------------------------ */
+.form-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 10px;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    letter-spacing: 0.3px;
+}
+
+.info-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    background: rgba(0, 136, 255, 0.15);
+    border-radius: 50%;
+    font-size: 12px;
+    color: var(--primary-blue);
+    box-shadow: 0 0 10px rgba(0, 136, 255, 0.3);
+    cursor: help;
+}
+
+/* Hapus input-helper */
+.input-helper {
+    display: none;
 }
 
 /* ------------------------------------------------------------------
@@ -711,28 +1077,31 @@ input:checked ~ .toggle-label {
 }
 
 /* ------------------------------------------------------------------
-   FORM ACTIONS
+   FORM ACTIONS - 2 TOMBOL PER BARIS (SAMPINGAN)
    ------------------------------------------------------------------ */
 .form-actions {
     display: flex;
-    gap: 16px;
+    flex-direction: row; /* Horizontal, bukan column */
+    gap: 12px;
     margin-top: 32px;
     padding-top: 16px;
     border-top: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .btn {
-    flex: 1;
-    padding: 16px 24px;
+    flex: 1; /* Membagi rata lebar */
+    padding: 14px 20px; /* Sedikit dikurangi dari 16px */
     border: none;
     border-radius: 30px;
-    font-size: 16px;
+    font-size: 15px;
     font-weight: 700;
     cursor: pointer;
     transition: all var(--transition-normal);
     position: relative;
     overflow: hidden;
     letter-spacing: 0.5px;
+    text-align: center;
+    white-space: nowrap; /* Mencegah text wrap */
 }
 
 .btn::before {
@@ -782,6 +1151,10 @@ input:checked ~ .toggle-label {
     transform: translateY(-2px);
 }
 
+.btn-secondary:active {
+    transform: translateY(0);
+}
+
 .btn-loader {
     display: inline-block;
     width: 20px;
@@ -791,6 +1164,27 @@ input:checked ~ .toggle-label {
     border-radius: 50%;
     animation: spin 0.8s linear infinite;
     margin-left: 8px;
+}
+
+/* Loading state for button */
+.btn-primary.loading .btn-text {
+    opacity: 0.7;
+}
+
+.btn-primary.loading .btn-loader {
+    display: inline-block;
+}
+
+/* Success animation */
+@keyframes successPop {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
+.btn-primary.success {
+    animation: successPop 0.3s ease;
+    background: linear-gradient(135deg, #00c853, #009624);
 }
 
 /* ------------------------------------------------------------------
@@ -814,7 +1208,8 @@ input:checked ~ .toggle-label {
     }
     
     .form-actions {
-        flex-direction: column;
+        padding: 12px 16px;
+        flex-direction: row;
     }
     
     .btn {
