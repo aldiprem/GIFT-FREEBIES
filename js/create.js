@@ -40,13 +40,20 @@
         // Buttons
         cancelBtn: document.getElementById('cancelBtn'),
         submitBtn: document.getElementById('submitBtn'),
-        form: document.getElementById('giveawayForm')
+        form: document.getElementById('giveawayForm'),
+        
+        // New elements untuk Syarat Giveaway
+        selectRequirementsBtn: document.getElementById('selectRequirementsBtn'),
+        selectPanel: document.getElementById('selectPanel'),
+        closePanelBtn: document.getElementById('closePanelBtn'),
+        selectedTags: document.getElementById('selectedTags')
     };
 
     // ==================== STATE ====================
     let prizes = ['Gaming Bundle']; // Default prize
     let selectedFile = null;
     let telegramUser = null;
+    let selectedRequirements = ['subscribe']; // Default Subscribe
 
     // ==================== INITIALIZATION ====================
     function init() {
@@ -67,6 +74,12 @@
         
         // Set default date (2 days from now)
         setDefaultDate();
+        
+        // Update selected tags untuk syarat (default Subscribe)
+        updateSelectedTags();
+        
+        // Inisialisasi status selected option button
+        initSelectedOptions();
         
         // Show form
         setTimeout(() => {
@@ -133,6 +146,74 @@
                 }
             });
         }
+        
+        // ==================== SYARAT GIVEAWAY EVENT LISTENERS ====================
+        
+        // Select button untuk membuka/tutup panel
+        if (elements.selectRequirementsBtn) {
+            elements.selectRequirementsBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                if (elements.selectPanel) {
+                    if (elements.selectPanel.style.display === 'none' || !elements.selectPanel.style.display) {
+                        elements.selectPanel.style.display = 'block';
+                    } else {
+                        elements.selectPanel.style.display = 'none';
+                    }
+                }
+            });
+        }
+        
+        // Close panel button
+        if (elements.closePanelBtn) {
+            elements.closePanelBtn.addEventListener('click', () => {
+                if (elements.selectPanel) {
+                    elements.selectPanel.style.display = 'none';
+                }
+            });
+        }
+        
+        // Option buttons di panel
+        document.querySelectorAll('.option-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const value = btn.dataset.value;
+                const icon = btn.dataset.icon;
+                const text = btn.textContent.trim();
+                
+                // Toggle selection
+                toggleRequirement(value, icon, text);
+                
+                // Toggle class selected pada button
+                btn.classList.toggle('selected');
+            });
+        });
+        
+        // Close panel saat klik di luar
+        document.addEventListener('click', (e) => {
+            if (elements.selectPanel && elements.selectRequirementsBtn) {
+                if (!elements.selectPanel.contains(e.target) && 
+                    !elements.selectRequirementsBtn.contains(e.target)) {
+                    elements.selectPanel.style.display = 'none';
+                }
+            }
+        });
+        
+        // Remove tag dari selected requirements
+        if (elements.selectedTags) {
+            elements.selectedTags.addEventListener('click', (e) => {
+                if (e.target.classList.contains('tag-remove')) {
+                    const reqValue = e.target.dataset.req;
+                    removeRequirement(reqValue);
+                    
+                    // Update class selected pada option button
+                    document.querySelectorAll('.option-btn').forEach(btn => {
+                        if (btn.dataset.value === reqValue) {
+                            btn.classList.remove('selected');
+                        }
+                    });
+                }
+            });
+        }
     }
 
     // ==================== PRIZE HANDLERS ====================
@@ -150,7 +231,6 @@
     function addPrizeFromInput() {
         const value = elements.prizeInput.value.trim();
         if (value) {
-            // Split by comma and process each prize
             const newPrizes = value.split(',').map(p => p.trim()).filter(p => p);
             newPrizes.forEach(prize => {
                 if (prize && !prizes.includes(prize)) {
@@ -169,17 +249,81 @@
 
     function updatePrizesTags() {
         if (!elements.prizesTags) return;
-        
+
         let html = '';
         prizes.forEach(prize => {
             html += `<span class="prize-tag">${prize} <span class="tag-remove" data-prize="${prize}">×</span></span>`;
         });
         elements.prizesTags.innerHTML = html;
+
+        setTimeout(() => {
+            const scrollContainer = document.querySelector('.prize-tags-scroll');
+            if (scrollContainer) {
+                scrollContainer.scrollLeft = scrollContainer.scrollWidth;
+            }
+        }, 50);
+    }
+
+    // ==================== REQUIREMENTS HANDLERS ====================
+    function toggleRequirement(value, icon, text) {
+        if (selectedRequirements.includes(value)) {
+            selectedRequirements = selectedRequirements.filter(req => req !== value);
+            const checkbox = document.querySelector(`input[name="requirements"][value="${value}"]`);
+            if (checkbox) checkbox.checked = false;
+        } else {
+            selectedRequirements.push(value);
+            const checkbox = document.querySelector(`input[name="requirements"][value="${value}"]`);
+            if (checkbox) checkbox.checked = true;
+        }
+        updateSelectedTags();
+    }
+
+    function removeRequirement(value) {
+        selectedRequirements = selectedRequirements.filter(req => req !== value);
+        updateSelectedTags();
+        const checkbox = document.querySelector(`input[name="requirements"][value="${value}"]`);
+        if (checkbox) checkbox.checked = false;
+    }
+
+    function updateSelectedTags() {
+        if (!elements.selectedTags) return;
+        
+        let html = '';
+        selectedRequirements.forEach(req => {
+            let icon = '';
+            let text = '';
+            
+            switch(req) {
+                case 'subscribe': icon = '🔔'; text = 'Subscribe'; break;
+                case 'premium': icon = '⭐'; text = 'Premium'; break;
+                case 'nonpremium': icon = '👤'; text = 'Non-Premium'; break;
+                case 'aktif': icon = '✅'; text = 'Aktif'; break;
+                case 'share': icon = '📤'; text = 'Share'; break;
+            }
+            
+            html += `<span class="selected-tag">${icon} ${text} <span class="tag-remove" data-req="${req}">×</span></span>`;
+        });
+        
+        elements.selectedTags.innerHTML = html;
+        
+        setTimeout(() => {
+            if (elements.selectedTags) {
+                elements.selectedTags.scrollLeft = elements.selectedTags.scrollWidth;
+            }
+        }, 50);
+    }
+
+    function initSelectedOptions() {
+        document.querySelectorAll('.option-btn').forEach(btn => {
+            const value = btn.dataset.value;
+            if (selectedRequirements.includes(value)) {
+                btn.classList.add('selected');
+            }
+        });
     }
 
     // ==================== DURATION HANDLERS ====================
     function switchDurationTab(type) {
-        // Update tabs
         elements.durationTabs.forEach(tab => {
             if (tab.dataset.type === type) {
                 tab.classList.add('active');
@@ -188,7 +332,6 @@
             }
         });
         
-        // Show/hide modes
         if (type === 'duration') {
             elements.durationMode.classList.add('active');
             elements.dateMode.classList.remove('active');
@@ -217,9 +360,7 @@
     // ==================== MEDIA HANDLERS ====================
     function handleMediaSelect(e) {
         const file = e.target.files[0];
-        if (file) {
-            processMediaFile(file);
-        }
+        if (file) processMediaFile(file);
     }
 
     function handleDragOver(e) {
@@ -239,13 +380,11 @@
         const file = e.dataTransfer.files[0];
         if (file) {
             processMediaFile(file);
-            // Update input files
             elements.mediaInput.files = e.dataTransfer.files;
         }
     }
 
     function processMediaFile(file) {
-        // Check file size (max 20MB)
         if (file.size > 20 * 1024 * 1024) {
             alert('File terlalu besar! Maksimal 20MB');
             return;
@@ -253,7 +392,6 @@
 
         selectedFile = file;
         
-        // Check if it's image or video
         if (file.type.startsWith('image/')) {
             const reader = new FileReader();
             reader.onload = (e) => {
@@ -287,22 +425,15 @@
     async function handleSubmit(e) {
         e.preventDefault();
         
-        // Validate
         if (prizes.length === 0) {
             alert('Minimal 1 hadiah harus diisi!');
             return;
         }
         
-        // Show loading
         setButtonLoading(true);
         
-        // Get selected requirements
-        const requirements = [];
-        elements.requirementCheckboxes.forEach(cb => {
-            if (cb.checked) requirements.push(cb.value);
-        });
+        const requirements = selectedRequirements;
         
-        // Prepare data
         const formData = {
             creator_user_id: telegramUser?.id || 123456789,
             fullname: telegramUser ? [telegramUser.first_name, telegramUser.last_name].filter(Boolean).join(' ') : 'Test User',
@@ -311,10 +442,9 @@
             giveaway_text: elements.giveawayText.value || 'Ikuti giveaway ini dan menangkan hadiah menarik! 🎁',
             requirements: requirements,
             duration_type: elements.durationMode.classList.contains('active') ? 'duration' : 'date',
-            captcha_enabled: elements.captchaToggle.checked
+            captcha_enabled: elements.captchaToggle.checked ? 1 : 0
         };
         
-        // Add duration data
         if (formData.duration_type === 'duration') {
             formData.duration_value = parseInt(elements.durationValue.value) || 2;
             formData.duration_unit = elements.durationUnit.value;
@@ -322,20 +452,13 @@
             formData.end_date = elements.endDate.value;
         }
         
-        // Simulate API call
         console.log('📤 Submitting giveaway:', formData);
         
         try {
-            // Simulate network delay
             await new Promise(resolve => setTimeout(resolve, 1500));
-            
-            // Generate random giveaway ID
             const giveawayId = generateGiveawayId();
-            
-            // Success
             setButtonLoading(false);
             showSuccess(giveawayId);
-            
         } catch (error) {
             console.error('❌ Error:', error);
             setButtonLoading(false);
@@ -369,15 +492,11 @@
     }
 
     function showSuccess(giveawayId) {
-        // Show success message
         elements.submitBtn.classList.add('success');
         elements.submitBtn.querySelector('.btn-text').textContent = 'Berhasil!';
         
-        // Show alert with giveaway ID
         setTimeout(() => {
             alert(`✅ Giveaway berhasil dibuat!\n\nGiveaway ID: ${giveawayId}\n\nLink: ${API_BASE_URL}/giveaway/${giveawayId}`);
-            
-            // Redirect to index
             window.location.href = 'index.html';
         }, 500);
     }
