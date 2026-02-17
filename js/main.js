@@ -4,11 +4,8 @@
 
   // ==================== FUNGSI GETARAN ====================
   function vibrate(duration = 20) {
-    // Cek apakah vibration API didukung
     if (window.navigator && window.navigator.vibrate) {
       window.navigator.vibrate(duration);
-    } else {
-      console.log('Vibration API tidak didukung di browser ini');
     }
   }
 
@@ -53,13 +50,26 @@
         ]
   };
 
+  // ==================== GUEST USER DATA ====================
+  const guestUser = {
+    id: 999999999,
+    first_name: 'Guest',
+    last_name: 'User',
+    username: 'guest',
+    language_code: 'id',
+    is_premium: false,
+    total_participations: 0,
+    total_wins: 0
+  };
+
   // ==================== FUNGSI UTILITY ====================
   function showError(msg) {
-    vibrate(30); // Getar lebih panjang untuk error
+    vibrate(30);
     if (elements.loading) elements.loading.style.display = 'none';
     if (elements.error) {
       elements.error.style.display = 'flex';
-      elements.error.querySelector('div').textContent = `❌ ${msg}`;
+      const errorDiv = elements.error.querySelector('div');
+      if (errorDiv) errorDiv.textContent = `❌ ${msg}`;
     }
   }
 
@@ -74,13 +84,10 @@
     return `https://ui-avatars.com/api/?name=${encodeURIComponent(name.charAt(0).toUpperCase())}&size=120&background=1e88e5&color=fff`;
   }
 
-  // Fungsi untuk menambahkan indicator premium/free di foto
   function addPremiumIndicator(isPremium) {
     if (!elements.profilePhotoWrapper) return;
-
     const oldIndicator = elements.profilePhotoWrapper.querySelector('.premium-indicator, .free-indicator');
     if (oldIndicator) oldIndicator.remove();
-
     const indicator = document.createElement('div');
     indicator.className = isPremium ? 'premium-indicator' : 'free-indicator';
     elements.profilePhotoWrapper.appendChild(indicator);
@@ -96,12 +103,12 @@
       if (!res.ok) return null;
       const data = await res.json();
       return data.success ? data.user : (data.user || null);
-    } catch {
+    } catch (error) {
+      console.log('API fetch error:', error);
       return null;
     }
   }
 
-  // Fetch user's giveaway count
   async function fetchUserGiveawayCount(userId) {
     try {
       const res = await fetch(`${API_BASE_URL}/api/giveaways/user/${userId}?limit=1`, {
@@ -111,7 +118,8 @@
       if (!res.ok) return 0;
       const data = await res.json();
       return data.count || 0;
-    } catch {
+    } catch (error) {
+      console.log('Giveaway count fetch error:', error);
       return 0;
     }
   }
@@ -144,47 +152,35 @@
 
   // ==================== INIT ====================
   async function init() {
-    if (!window.Telegram?.WebApp) {
-      return showMockData();
+    let user = null;
+
+    // Cek apakah di dalam Telegram
+    if (!window.Telegram || !window.Telegram.WebApp) {
+      console.log('⚠️ Not in Telegram, using guest mode');
+      user = guestUser;
+      await updateUI(user);
+      return;
     }
 
     const tg = window.Telegram.WebApp;
     tg.expand();
     tg.ready();
 
-    const user = tg.initDataUnsafe?.user;
-    if (!user) {
-      return showError('Tidak ada data user');
-    }
-
-    const apiUser = await fetchUserFromApi(user.id);
-
-    if (apiUser) {
-      await updateUI({ ...user, ...apiUser });
+    const telegramUser = tg.initDataUnsafe?.user;
+    if (!telegramUser) {
+      console.log('⚠️ No Telegram user data, using guest mode');
+      user = guestUser;
     } else {
-      await updateUI(user);
+      const apiUser = await fetchUserFromApi(telegramUser.id);
+      user = apiUser ? { ...telegramUser, ...apiUser } : telegramUser;
     }
-  }
 
-  // ==================== MOCK DATA ====================
-  function showMockData() {
-    setTimeout(async () => {
-      await updateUI({
-        id: 7998861975,
-        first_name: 'Al',
-        last_name: 'wayss',
-        username: 'fTamous',
-        language_code: 'id',
-        is_premium: false,
-        total_participations: 5,
-        total_wins: 1
-      });
-    }, 800);
+    await updateUI(user);
   }
 
   // ==================== GIVEAWAY ====================
   function displayGiveaways(type) {
-    vibrate(15); // Getar saat ganti tab giveaway
+    vibrate(15);
     const data = giveaways[type];
     let html = '';
     data.forEach(item => {
@@ -194,7 +190,7 @@
         html += `<div class="giveaway-item"><h3>${item.title}</h3><p>🏆 Winners: ${item.winners}</p></div>`;
       }
     });
-    elements.giveawayContent.innerHTML = html;
+    if (elements.giveawayContent) elements.giveawayContent.innerHTML = html;
   }
 
   // ==================== EVENT LISTENERS ====================
@@ -216,7 +212,7 @@
     elements.activeBtn.addEventListener('click', () => {
       vibrate(10);
       elements.activeBtn.classList.add('active');
-      elements.endedBtn.classList.remove('active');
+      if (elements.endedBtn) elements.endedBtn.classList.remove('active');
       displayGiveaways('active');
     });
   }
@@ -225,7 +221,7 @@
     elements.endedBtn.addEventListener('click', () => {
       vibrate(10);
       elements.endedBtn.classList.add('active');
-      elements.activeBtn.classList.remove('active');
+      if (elements.activeBtn) elements.activeBtn.classList.remove('active');
       displayGiveaways('ended');
     });
   }
