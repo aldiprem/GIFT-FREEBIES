@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Link Manager - GiftFreebies</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/create.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #0f0f1a, #1a1a2f);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+        }
+        .link-manager-container {
+            width: 100%;
+            max-width: 500px;
+        }
+    </style>
+</head>
+<body>
+    <div class="link-manager-container">
+        <div class="top-container">
+            <!-- BORDER 1 : LOGO -->
+            <div class="logo-box">
+                <img src="img/logo.png" class="logo-img" alt="logo" onerror="this.style.display='none'">
+                <span class="logo-text">🔗 LINK MANAGER</span>
+            </div>
+            
+            <!-- LINK MANAGER CONTENT -->
+            <div class="form-container">
+                <div class="form-header">
+                    <h2 class="form-title">Kelola Tautan</h2>
+                    <p class="form-subtitle">Tambahkan atau hapus tautan untuk giveaway</p>
+                </div>
+                
+                <!-- Action Buttons -->
+                <div class="link-actions">
+                    <button class="link-action-btn" id="createNewLinkBtn">
+                        <span class="btn-icon">➕</span>
+                        <span class="btn-text">BUAT LINK BARU</span>
+                    </button>
+                    <button class="link-action-btn delete" id="deleteSelectedBtn">
+                        <span class="btn-icon">🗑️</span>
+                        <span class="btn-text">HAPUS</span>
+                    </button>
+                    <button class="link-action-btn save" id="saveAndCloseBtn">
+                        <span class="btn-icon">✅</span>
+                        <span class="btn-text">SIMPAN & KEMBALI</span>
+                    </button>
+                </div>
+                
+                <!-- Saved Links List -->
+                <div class="saved-links-full" id="savedLinksFull">
+                    <!-- Akan diisi oleh JavaScript -->
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal for Creating New Link -->
+    <div class="modal-overlay" id="createLinkModal" style="display: none;">
+        <div class="modal-container">
+            <div class="modal-header">
+                <h3 class="modal-title">Buat Tautan Baru</h3>
+                <button class="modal-close" id="closeModalBtn">✕</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label">
+                        <span class="label-text">Judul Tautan</span>
+                        <span class="label-required">*</span>
+                    </label>
+                    <div class="input-wrapper">
+                        <input type="text" id="linkTitleInput" class="form-input" placeholder="Contoh: Channel Telegram" value="">
+                        <div class="input-icon">📝</div>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">
+                        <span class="label-text">URL Tautan</span>
+                        <span class="label-required">*</span>
+                    </label>
+                    <div class="input-wrapper">
+                        <input type="url" id="linkUrlInput" class="form-input" placeholder="https://t.me/username" value="https://">
+                        <div class="input-icon">🔗</div>
+                    </div>
+                    <div class="input-helper">Harus diawali https:// atau http://</div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="modalCancelBtn">Batal</button>
+                <button class="btn btn-primary" id="modalSaveBtn">Simpan</button>
+            </div>
+        </div>
+    </div>
+    
+    <script src="js/link-manager.js"></script>
+</body>
+</html>
