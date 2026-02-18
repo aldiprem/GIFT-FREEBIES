@@ -41,7 +41,7 @@
         giveawayText: document.getElementById('giveawayText'),
         requirementCheckboxes: document.querySelectorAll('input[name="requirements"]'),
     
-        // Channel elements - TAMBAHKAN INI
+        // Channel elements
         channelInput: document.getElementById('channelInput'),
         channelTags: document.getElementById('channelTags'),
         
@@ -104,14 +104,14 @@
     
     // Foldable sections state
     let foldableStates = {
-      prize: false,
-      text: false,
-      channel: false,
-      requirements: false,
-      link: false,
-      duration: false,
-      media: false,
-      captcha: false
+        prize: false,
+        text: false,
+        channel: false,
+        requirements: false,
+        link: false,
+        duration: false,
+        media: false,
+        captcha: false
     };
     
     // Duration values
@@ -145,29 +145,27 @@
     }
 
     function setupLinkManager() {
-      console.log('🔧 Setting up Link Manager...');
-    
-      if (elements.linkManagerBtn) {
-        // Hapus event listener lama biar gak dobel
-        elements.linkManagerBtn.replaceWith(elements.linkManagerBtn.cloneNode(true));
-        elements.linkManagerBtn = document.getElementById('linkManagerBtn');
-    
-        elements.linkManagerBtn.addEventListener('click', () => {
-          hapticImpact('medium');
-          // Simpan state ke sessionStorage sebelum pindah halaman
-          saveFormState();
-          window.location.href = 'link-manager.html';
-        });
-      }
-    
-      if (elements.linkExpandBtn) {
-        elements.linkExpandBtn.addEventListener('click', () => {
-          hapticImpact('light');
-          toggleLinkExpand();
-        });
-      }
-    
-      updateLinkDisplay();
+        console.log('🔧 Setting up Link Manager...');
+        
+        if (elements.linkManagerBtn) {
+            elements.linkManagerBtn.replaceWith(elements.linkManagerBtn.cloneNode(true));
+            elements.linkManagerBtn = document.getElementById('linkManagerBtn');
+            
+            elements.linkManagerBtn.addEventListener('click', () => {
+                hapticImpact('medium');
+                saveFormState();
+                window.location.href = 'link-manager.html';
+            });
+        }
+        
+        if (elements.linkExpandBtn) {
+            elements.linkExpandBtn.addEventListener('click', () => {
+                hapticImpact('light');
+                toggleLinkExpand();
+            });
+        }
+        
+        updateLinkDisplay();
     }
     
     function toggleLinkExpand() {
@@ -283,52 +281,48 @@
         return div.innerHTML;
     }
 
-    // ==================== FUNGSI DURASI GIVEAWAY (IPHONE STYLE) ====================
+    // ==================== FUNGSI DURASI GIVEAWAY ====================
     function setupDurationManager() {
-        console.log('⏰ Setting up Duration Manager (iPhone style)...');
+        console.log('⏰ Setting up Duration Manager...');
         
-        // Set nilai default
         if (durationDays === undefined) durationDays = 10;
         if (durationHours === undefined) durationHours = 2;
         if (durationMinutes === undefined) durationMinutes = 30;
         if (durationSeconds === undefined) durationSeconds = 0;
         
-        // Generate options untuk setiap kolom
         generateWheelOptions('days', 0, 31, durationDays);
         generateWheelOptions('hours', 0, 23, durationHours);
         generateWheelOptions('minutes', 0, 59, durationMinutes);
         generateWheelOptions('seconds', 0, 59, durationSeconds);
         
-        // Setup wheel scroll listeners
-        setupWheelScroll('days', 0, 31, (value) => { // UBAH min dari 1 jadi 0
-          durationDays = value;
-          if (elements.daysDisplay) elements.daysDisplay.textContent = value;
-          hapticSelection();
-          updateDurationDisplay();
+        setupWheelScroll('days', 0, 31, (value) => {
+            durationDays = value;
+            if (elements.daysDisplay) elements.daysDisplay.textContent = value;
+            hapticSelection();
+            updateDurationDisplay();
         });
         
         setupWheelScroll('hours', 0, 23, (value) => {
-          durationHours = value;
-          if (elements.hoursDisplay) elements.hoursDisplay.textContent = value;
-          hapticSelection();
-          updateDurationDisplay();
+            durationHours = value;
+            if (elements.hoursDisplay) elements.hoursDisplay.textContent = value;
+            hapticSelection();
+            updateDurationDisplay();
         });
         
         setupWheelScroll('minutes', 0, 59, (value) => {
-          durationMinutes = value;
-          if (elements.minutesDisplay) elements.minutesDisplay.textContent = value;
-          hapticSelection();
-          updateDurationDisplay();
+            durationMinutes = value;
+            if (elements.minutesDisplay) elements.minutesDisplay.textContent = value;
+            hapticSelection();
+            updateDurationDisplay();
         });
         
         setupWheelScroll('seconds', 0, 59, (value) => {
-          durationSeconds = value;
-          if (elements.secondsDisplay) elements.secondsDisplay.textContent = value;
-          hapticSelection();
-          updateDurationDisplay();
+            durationSeconds = value;
+            if (elements.secondsDisplay) elements.secondsDisplay.textContent = value;
+            hapticSelection();
+            updateDurationDisplay();
         });
         
-        // Tombol + untuk expand/collapse
         if (elements.durationAddBtn) {
             elements.durationAddBtn.addEventListener('click', () => {
                 hapticImpact('light');
@@ -336,7 +330,6 @@
             });
         }
         
-        // Tombol simpan
         if (elements.durationSaveBtn) {
             elements.durationSaveBtn.addEventListener('click', () => {
                 hapticImpact('medium');
@@ -344,7 +337,6 @@
             });
         }
         
-        // Update tampilan durasi
         updateDurationDisplay();
     }
     
@@ -359,175 +351,151 @@
         }
         optionsContainer.innerHTML = html;
         
-        // Scroll ke nilai yang dipilih dengan posisi tengah yang PRESISI
         setTimeout(() => {
             const selector = document.getElementById(`${unit}Selector`);
             if (selector) {
                 const selectedIndex = selectedValue - min;
-                
-                // PERBAIKAN: Hitung scroll position dengan tepat
-                // Tinggi item: 48px, padding-top: 76px, setengah item: 24px
-                // Rumus yang benar: (selectedIndex * 48) + (paddingTop - halfItem)
-                // paddingTop - halfItem = 76 - 24 = 52
                 const scrollPosition = (selectedIndex * 48) + 52;
-                
                 selector.scrollTop = scrollPosition;
             }
         }, 100);
     }
     
-  function setupWheelScroll(unit, min, max, onChange) {
-    const selector = document.getElementById(`${unit}Selector`);
-    if (!selector) return;
-  
-    let snapTimeout;
-    let lastValue = -1;
-    let isScrolling = false; // TAMBAHKAN FLAG INI
-    const itemHeight = 48;
-    const paddingTop = 76;
-    const halfItem = 24;
-    const offset = paddingTop - halfItem; // 52
-  
-    // Fungsi untuk mendapatkan nilai berdasarkan posisi scroll
-    function getValueFromScroll(scrollTop) {
-      const adjustedScroll = scrollTop - offset;
-      let index = Math.floor(adjustedScroll / itemHeight);
-  
-      if (adjustedScroll < 0) index = 0;
-      index = Math.max(0, Math.min(max - min, Math.floor(index)));
-  
-      return min + index;
-    }
-  
-    // Fungsi untuk mendapatkan posisi scroll dari nilai
-    function getScrollFromValue(value) {
-      const index = value - min;
-      return (index * itemHeight) + offset;
-    }
-  
-    // Fungsi untuk snap ke posisi terdekat
-    function snapToNearest() {
-      // HANYA SNAP JIKA TIDAK SEDANG DISCROLL
-      if (!isScrolling) {
-        const currentValue = getValueFromScroll(selector.scrollTop);
-        const targetScroll = getScrollFromValue(currentValue);
-  
-        if (Math.abs(selector.scrollTop - targetScroll) > 1) {
-          selector.scrollTop = targetScroll;
+    function setupWheelScroll(unit, min, max, onChange) {
+        const selector = document.getElementById(`${unit}Selector`);
+        if (!selector) return;
+        
+        let snapTimeout;
+        let lastValue = -1;
+        let isScrolling = false;
+        const itemHeight = 48;
+        const paddingTop = 76;
+        const halfItem = 24;
+        const offset = paddingTop - halfItem;
+        
+        function getValueFromScroll(scrollTop) {
+            const adjustedScroll = scrollTop - offset;
+            let index = Math.floor(adjustedScroll / itemHeight);
+            if (adjustedScroll < 0) index = 0;
+            index = Math.max(0, Math.min(max - min, Math.floor(index)));
+            return min + index;
         }
-  
-        if (currentValue !== lastValue) {
-          lastValue = currentValue;
-          onChange(currentValue);
-  
-          const options = selector.querySelectorAll('.selector-option');
-          options.forEach((opt, idx) => {
-            const optValue = min + idx;
-            if (optValue === currentValue) {
-              opt.classList.add('selected');
-            } else {
-              opt.classList.remove('selected');
+        
+        function getScrollFromValue(value) {
+            const index = value - min;
+            return (index * itemHeight) + offset;
+        }
+        
+        function snapToNearest() {
+            if (!isScrolling) {
+                const currentValue = getValueFromScroll(selector.scrollTop);
+                const targetScroll = getScrollFromValue(currentValue);
+                
+                if (Math.abs(selector.scrollTop - targetScroll) > 1) {
+                    selector.scrollTop = targetScroll;
+                }
+                
+                if (currentValue !== lastValue) {
+                    lastValue = currentValue;
+                    onChange(currentValue);
+                    
+                    const options = selector.querySelectorAll('.selector-option');
+                    options.forEach((opt, idx) => {
+                        const optValue = min + idx;
+                        if (optValue === currentValue) {
+                            opt.classList.add('selected');
+                        } else {
+                            opt.classList.remove('selected');
+                        }
+                    });
+                    
+                    hapticSelection();
+                }
             }
-          });
-  
-          hapticSelection();
         }
-      }
-    }
-  
-    selector.addEventListener('touchstart', () => {
-      isScrolling = true; // SET FLAG SAAT MULAI SCROLL
-      clearTimeout(snapTimeout);
-    }, { passive: true });
-  
-    selector.addEventListener('touchend', () => {
-      isScrolling = false; // RESET FLAG SAAT SCROLL SELESAI
-      snapTimeout = setTimeout(snapToNearest, 100);
-    });
-  
-    selector.addEventListener('touchcancel', () => {
-      isScrolling = false; // RESET FLAG KALO DISCROLL DIBATALKAN
-      snapTimeout = setTimeout(snapToNearest, 100);
-    });
-  
-    selector.addEventListener('scroll', () => {
-      const currentValue = getValueFromScroll(selector.scrollTop);
-  
-      if (currentValue !== lastValue) {
-        lastValue = currentValue;
-        onChange(currentValue);
-  
-        const options = selector.querySelectorAll('.selector-option');
-        options.forEach((opt, idx) => {
-          const optValue = min + idx;
-          if (optValue === currentValue) {
-            opt.classList.add('selected');
-          } else {
-            opt.classList.remove('selected');
-          }
+        
+        selector.addEventListener('touchstart', () => {
+            isScrolling = true;
+            clearTimeout(snapTimeout);
+        }, { passive: true });
+        
+        selector.addEventListener('touchend', () => {
+            isScrolling = false;
+            snapTimeout = setTimeout(snapToNearest, 100);
         });
-      }
-  
-      // HANYA SET TIMEOUT KALAU TIDAK SEDANG DISCROLL
-      if (!isScrolling) {
-        clearTimeout(snapTimeout);
-        snapTimeout = setTimeout(snapToNearest, 150);
-      }
-    });
-  
-    selector.addEventListener('mouseup', () => {
-      isScrolling = false; // UNTUK MOUSE
-      clearTimeout(snapTimeout);
-      snapTimeout = setTimeout(snapToNearest, 80);
-    });
-  
-    selector.addEventListener('mousedown', () => {
-      isScrolling = true; // UNTUK MOUSE
-      clearTimeout(snapTimeout);
-    });
-  
-    // Set initial scroll position
-    setTimeout(() => {
-      const initialValue = unit === 'days' ? durationDays :
-        unit === 'hours' ? durationHours :
-        unit === 'minutes' ? durationMinutes : durationSeconds;
-      selector.scrollTop = getScrollFromValue(initialValue);
-      lastValue = initialValue;
-    }, 100);
-  }
+        
+        selector.addEventListener('touchcancel', () => {
+            isScrolling = false;
+            snapTimeout = setTimeout(snapToNearest, 100);
+        });
+        
+        selector.addEventListener('scroll', () => {
+            const currentValue = getValueFromScroll(selector.scrollTop);
+            
+            if (currentValue !== lastValue) {
+                lastValue = currentValue;
+                onChange(currentValue);
+                
+                const options = selector.querySelectorAll('.selector-option');
+                options.forEach((opt, idx) => {
+                    const optValue = min + idx;
+                    if (optValue === currentValue) {
+                        opt.classList.add('selected');
+                    } else {
+                        opt.classList.remove('selected');
+                    }
+                });
+            }
+            
+            if (!isScrolling) {
+                clearTimeout(snapTimeout);
+                snapTimeout = setTimeout(snapToNearest, 150);
+            }
+        });
+        
+        selector.addEventListener('mouseup', () => {
+            isScrolling = false;
+            clearTimeout(snapTimeout);
+            snapTimeout = setTimeout(snapToNearest, 80);
+        });
+        
+        selector.addEventListener('mousedown', () => {
+            isScrolling = true;
+            clearTimeout(snapTimeout);
+        });
+        
+        setTimeout(() => {
+            const initialValue = unit === 'days' ? durationDays :
+                unit === 'hours' ? durationHours :
+                unit === 'minutes' ? durationMinutes : durationSeconds;
+            selector.scrollTop = getScrollFromValue(initialValue);
+            lastValue = initialValue;
+        }, 100);
+    }
     
     function toggleDurationExpand() {
-      isDurationExpanded = !isDurationExpanded;
-    
-      if (elements.durationSettingsContainer) {
-        elements.durationSettingsContainer.style.display = isDurationExpanded ? 'block' : 'none';
-    
-        // Reset scroll positions saat expand
-        if (isDurationExpanded) {
-          setTimeout(() => {
+        isDurationExpanded = !isDurationExpanded;
+        
+        if (elements.durationSettingsContainer) {
+            elements.durationSettingsContainer.style.display = isDurationExpanded ? 'block' : 'none';
+            
+            if (isDurationExpanded) {
+                setTimeout(() => {
                     ['days', 'hours', 'minutes', 'seconds'].forEach(unit => {
-              const selector = document.getElementById(`${unit}Selector`);
-              if (selector) {
-                const value = unit === 'days' ? durationDays :
-                  unit === 'hours' ? durationHours :
-                  unit === 'minutes' ? durationMinutes : durationSeconds;
-    
-                // SEMUA UNIT PAKAI min = 0
-                const min = 0;
-    
-                // Gunakan rumus yang sama
-                const index = value - min;
-                const itemHeight = 48;
-                const offset = 52;
-    
-                const scrollPosition = (index * itemHeight) + offset;
-    
-                selector.scrollTop = scrollPosition;
-              }
-            });
-          }, 100);
+                        const selector = document.getElementById(`${unit}Selector`);
+                        if (selector) {
+                            const value = unit === 'days' ? durationDays :
+                                unit === 'hours' ? durationHours :
+                                unit === 'minutes' ? durationMinutes : durationSeconds;
+                            const min = 0;
+                            const index = value - min;
+                            const scrollPosition = (index * 48) + 52;
+                            selector.scrollTop = scrollPosition;
+                        }
+                    });
+                }, 100);
+            }
         }
-      }
     }
     
     function saveDurationSettings() {
@@ -549,168 +517,183 @@
         if (durationSeconds > 0) parts.push(`${durationSeconds} detik`);
         
         let text = parts.join(' ') || '0 detik';
-        
         elements.durationDisplay.innerHTML = `<span class="duration-text">${text}</span>`;
     }
 
     function saveFormState() {
-      // Collect foldable states
-      const sections = [
-            'prize', 'text', 'channel', 'requirements',
-            'link', 'duration', 'media', 'captcha'
-        ];
-    
-      sections.forEach(section => {
-        const content = document.getElementById(`${section}Content`);
-        if (content) {
-          foldableStates[section] = content.style.display === 'block';
-        }
-      });
-    
-      const formState = {
-        prizes: prizes,
-        channels: channels,
-        selectedRequirements: selectedRequirements,
-        giveawayText: elements.giveawayText?.value || '',
-        durationDays: durationDays,
-        durationHours: durationHours,
-        durationMinutes: durationMinutes,
-        durationSeconds: durationSeconds,
-        captchaEnabled: elements.captchaToggle?.checked || true,
-        foldableStates: foldableStates // Simpan state foldable
-      };
-    
-      sessionStorage.setItem('giftfreebies_form_state', JSON.stringify(formState));
-      console.log('💾 Form state saved:', formState);
+        const sections = ['prize', 'text', 'channel', 'requirements', 'link', 'duration', 'media', 'captcha'];
+        
+        sections.forEach(section => {
+            const content = document.getElementById(`${section}Content`);
+            if (content) {
+                foldableStates[section] = content.style.display === 'block';
+            }
+        });
+        
+        const formState = {
+            prizes: prizes,
+            channels: channels,
+            selectedRequirements: selectedRequirements,
+            giveawayText: elements.giveawayText?.value || '',
+            durationDays: durationDays,
+            durationHours: durationHours,
+            durationMinutes: durationMinutes,
+            durationSeconds: durationSeconds,
+            captchaEnabled: elements.captchaToggle?.checked || true,
+            foldableStates: foldableStates
+        };
+        
+        sessionStorage.setItem('giftfreebies_form_state', JSON.stringify(formState));
+        console.log('💾 Form state saved:', formState);
     }
     
     function restoreFormState() {
-      const savedState = sessionStorage.getItem('giftfreebies_form_state');
-      if (!savedState) return false;
-    
-      try {
-        const state = JSON.parse(savedState);
-        console.log('📥 Restoring form state:', state);
-    
-        // Restore prizes
-        if (state.prizes && state.prizes.length > 0) {
-          prizes = state.prizes;
-          updatePrizesTags();
+        const savedState = sessionStorage.getItem('giftfreebies_form_state');
+        if (!savedState) return false;
+        
+        try {
+            const state = JSON.parse(savedState);
+            console.log('📥 Restoring form state:', state);
+            
+            if (state.prizes && state.prizes.length > 0) {
+                prizes = state.prizes;
+                updatePrizesTags();
+            }
+            
+            if (state.channels && state.channels.length > 0) {
+                channels = state.channels;
+                updateChannelsTags();
+            }
+            
+            if (state.selectedRequirements && state.selectedRequirements.length > 0) {
+                selectedRequirements = state.selectedRequirements;
+                document.querySelectorAll('input[name="requirements"]').forEach(cb => {
+                    cb.checked = selectedRequirements.includes(cb.value);
+                });
+                updateSelectedTags();
+                initSelectedOptions();
+            }
+            
+            if (state.giveawayText && elements.giveawayText) {
+                elements.giveawayText.value = state.giveawayText;
+            }
+            
+            if (state.durationDays !== undefined) durationDays = state.durationDays;
+            if (state.durationHours !== undefined) durationHours = state.durationHours;
+            if (state.durationMinutes !== undefined) durationMinutes = state.durationMinutes;
+            if (state.durationSeconds !== undefined) durationSeconds = state.durationSeconds;
+            
+            if (elements.daysDisplay) elements.daysDisplay.textContent = durationDays;
+            if (elements.hoursDisplay) elements.hoursDisplay.textContent = durationHours;
+            if (elements.minutesDisplay) elements.minutesDisplay.textContent = durationMinutes;
+            if (elements.secondsDisplay) elements.secondsDisplay.textContent = durationSeconds;
+            
+            generateWheelOptions('days', 0, 31, durationDays);
+            generateWheelOptions('hours', 0, 23, durationHours);
+            generateWheelOptions('minutes', 0, 59, durationMinutes);
+            generateWheelOptions('seconds', 0, 59, durationSeconds);
+            updateDurationDisplay();
+            
+            if (elements.captchaToggle && state.captchaEnabled !== undefined) {
+                elements.captchaToggle.checked = state.captchaEnabled;
+                if (elements.captchaLabel) {
+                    elements.captchaLabel.textContent = state.captchaEnabled ? 'Aktif' : 'Nonaktif';
+                }
+            }
+            
+            if (state.foldableStates) {
+                foldableStates = state.foldableStates;
+            }
+            
+            return true;
+        } catch (e) {
+            console.error('❌ Error restoring form state:', e);
+            return false;
         }
-    
-        // Restore channels
-        if (state.channels && state.channels.length > 0) {
-          channels = state.channels;
-          updateChannelsTags();
-        }
-    
-        // Restore requirements
-        if (state.selectedRequirements && state.selectedRequirements.length > 0) {
-          selectedRequirements = state.selectedRequirements;
-          document.querySelectorAll('input[name="requirements"]').forEach(cb => {
-            cb.checked = selectedRequirements.includes(cb.value);
-          });
-          updateSelectedTags();
-          initSelectedOptions();
-        }
-    
-        // Restore giveaway text
-        if (state.giveawayText && elements.giveawayText) {
-          elements.giveawayText.value = state.giveawayText;
-        }
-    
-        // Restore duration
-        if (state.durationDays !== undefined) durationDays = state.durationDays;
-        if (state.durationHours !== undefined) durationHours = state.durationHours;
-        if (state.durationMinutes !== undefined) durationMinutes = state.durationMinutes;
-        if (state.durationSeconds !== undefined) durationSeconds = state.durationSeconds;
-    
-        // Update displays
-        if (elements.daysDisplay) elements.daysDisplay.textContent = durationDays;
-        if (elements.hoursDisplay) elements.hoursDisplay.textContent = durationHours;
-        if (elements.minutesDisplay) elements.minutesDisplay.textContent = durationMinutes;
-        if (elements.secondsDisplay) elements.secondsDisplay.textContent = durationSeconds;
-    
-        // Regenerate wheel options
-        generateWheelOptions('days', 0, 31, durationDays);
-        generateWheelOptions('hours', 0, 23, durationHours);
-        generateWheelOptions('minutes', 0, 59, durationMinutes);
-        generateWheelOptions('seconds', 0, 59, durationSeconds);
-        updateDurationDisplay();
-    
-        // Restore captcha
-        if (elements.captchaToggle && state.captchaEnabled !== undefined) {
-          elements.captchaToggle.checked = state.captchaEnabled;
-          if (elements.captchaLabel) {
-            elements.captchaLabel.textContent = state.captchaEnabled ? 'Aktif' : 'Nonaktif';
-          }
-        }
-    
-        // Restore foldable states
-        if (state.foldableStates) {
-          foldableStates = state.foldableStates;
-        }
-    
-        return true;
-      } catch (e) {
-        console.error('❌ Error restoring form state:', e);
-        return false;
-      }
     }
 
+    // ==================== SETUP EVENT LISTENERS ====================
     function setupEventListeners() {
-      console.log('🔧 Setting up event listeners...');
-    
-      // ==================== CHANNEL INPUT ====================
-      if (elements.channelInput) {
-        elements.channelInput.addEventListener('focus', handleChannelInputFocus);
-        elements.channelInput.addEventListener('keydown', handleChannelInputKeydown);
-        elements.channelInput.addEventListener('input', handleChannelInput);
-      }
-    
-      // Channel tags remove - Perbaikan dengan event delegation yang lebih spesifik
-      if (elements.channelTags) {
-        const newChannelTags = elements.channelTags.cloneNode(true);
-        elements.channelTags.parentNode.replaceChild(newChannelTags, elements.channelTags);
-        elements.channelTags = newChannelTags;
-      
-        // Tambahkan event listener baru
-        elements.channelTags.addEventListener('click', function(e) {
-          // Cari elemen dengan class tag-remove
-          const removeBtn = e.target.closest('.tag-remove');
-      
-          if (removeBtn) {
-            e.preventDefault();
-            e.stopPropagation();
-            e.stopImmediatePropagation(); // Tambahkan ini untuk mencegah event lain
-      
-            hapticImpact('light');
-      
-            // Ambil channelId dari dataset
-            const channelId = removeBtn.dataset.channel;
-            console.log('🗑️ Remove button clicked for channel:', channelId);
-      
-            if (channelId) {
-              removeChannel(channelId);
+        console.log('🔧 Setting up event listeners...');
+        
+        // Channel input
+        if (elements.channelInput) {
+            elements.channelInput.addEventListener('focus', handleChannelInputFocus);
+            elements.channelInput.addEventListener('keydown', handleChannelInputKeydown);
+            elements.channelInput.addEventListener('input', handleChannelInput);
+        }
+        
+        // Channel tags remove - PERBAIKAN UTAMA
+        if (elements.channelTags) {
+            // Hapus semua event listener lama dengan clone
+            const newChannelTags = elements.channelTags.cloneNode(false);
+            while (elements.channelTags.firstChild) {
+                newChannelTags.appendChild(elements.channelTags.firstChild);
             }
-      
-            return false;
-          }
-        }, { capture: true }); // Gunakan capture phase untuk memastikan event tertangkap
-      }
-    
-      // Prize input
-      if (elements.prizeInput) {
-        elements.prizeInput.addEventListener('keydown', handlePrizeInput);
-        elements.prizeInput.addEventListener('blur', handlePrizeBlur);
-      }
+            elements.channelTags.parentNode.replaceChild(newChannelTags, elements.channelTags);
+            elements.channelTags = newChannelTags;
+            
+            // Tambahkan event listener baru dengan event delegation
+            elements.channelTags.addEventListener('click', function(e) {
+                const removeBtn = e.target.closest('.tag-remove');
+                if (removeBtn) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    hapticImpact('light');
+                    
+                    const channelId = removeBtn.dataset.channel;
+                    console.log('🗑️ Remove button clicked for channel:', channelId);
+                    
+                    if (channelId) {
+                        removeChannel(channelId);
+                    }
+                    
+                    return false;
+                }
+            });
+            
+            // Tambahkan event listener langsung ke setiap tombol remove sebagai cadangan
+            const attachDirectListeners = () => {
+                const removeButtons = elements.channelTags.querySelectorAll('.tag-remove');
+                removeButtons.forEach(btn => {
+                    // Hapus event listener lama
+                    const newBtn = btn.cloneNode(true);
+                    btn.parentNode.replaceChild(newBtn, btn);
+                    
+                    newBtn.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        
+                        hapticImpact('light');
+                        
+                        const channelId = newBtn.dataset.channel;
+                        console.log('🗑️ Direct remove click:', channelId);
+                        
+                        if (channelId) {
+                            removeChannel(channelId);
+                        }
+                    });
+                });
+            };
+            
+            // Panggil setelah render
+            setTimeout(attachDirectListeners, 100);
+        }
+        
+        // Prize input
+        if (elements.prizeInput) {
+            elements.prizeInput.addEventListener('keydown', handlePrizeInput);
+            elements.prizeInput.addEventListener('blur', handlePrizeBlur);
+        }
         
         // Prize tags remove
         if (elements.prizesTags) {
             elements.prizesTags.addEventListener('click', (e) => {
-                if (e.target.classList.contains('tag-remove')) {
+                const removeBtn = e.target.closest('.tag-remove');
+                if (removeBtn) {
                     hapticImpact('light');
-                    const prize = e.target.dataset.prize;
+                    const prize = removeBtn.dataset.prize;
                     removePrize(prize);
                 }
             });
@@ -757,7 +740,7 @@
             });
         }
         
-        // ==================== SYARAT GIVEAWAY ====================
+        // Syarat Giveaway
         if (elements.selectRequirementsBtn) {
             elements.selectRequirementsBtn.addEventListener('click', (e) => {
                 e.stopPropagation();
@@ -799,9 +782,10 @@
         
         if (elements.selectedTags) {
             elements.selectedTags.addEventListener('click', (e) => {
-                if (e.target.classList.contains('tag-remove')) {
+                const removeBtn = e.target.closest('.tag-remove');
+                if (removeBtn) {
                     hapticImpact('light');
-                    const reqValue = e.target.dataset.req;
+                    const reqValue = removeBtn.dataset.req;
                     removeRequirement(reqValue);
                     
                     document.querySelectorAll('.option-btn').forEach(btn => {
@@ -833,7 +817,7 @@
             hapticImpact('light');
             const newPrizes = value.split(',').map(p => p.trim()).filter(p => p);
             newPrizes.forEach(prize => {
-                if (prize) {
+                if (prize && !prizes.includes(prize)) {
                     prizes.push(prize);
                 }
             });
@@ -866,7 +850,7 @@
             const bgColor = getRandomColor(index);
             html += `<span class="prize-tag">
                 <span class="prize-number" style="background: ${bgColor}; box-shadow: 0 0 10px ${bgColor}80;">${index + 1}</span>
-                ${prize} 
+                ${escapeHtml(prize)} 
                 <span class="tag-remove" data-prize="${prize}">×</span>
             </span>`;
         });
@@ -1023,7 +1007,6 @@
         
         const requirements = selectedRequirements;
         
-        // Hitung total detik
         const totalSeconds = (durationDays * 24 * 3600) + 
                             (durationHours * 3600) + 
                             (durationMinutes * 60) + 
@@ -1099,306 +1082,235 @@
         }, 500);
     }
 
+    // ==================== FOLDABLE SECTIONS ====================
     function setupFoldableSections() {
-      console.log('🔧 Setting up foldable sections...');
-    
-      const sections = [
-        { id: 'prize', header: 'prizeHeader', content: 'prizeContent', btn: 'prizeToggleBtn' },
-        { id: 'text', header: 'textHeader', content: 'textContent', btn: 'textToggleBtn' },
-        { id: 'channel', header: 'channelHeader', content: 'channelContent', btn: 'channelToggleBtn' },
-        { id: 'requirements', header: 'requirementsHeader', content: 'requirementsContent', btn: 'requirementsToggleBtn' },
-        { id: 'link', header: 'linkHeader', content: 'linkContent', btn: 'linkToggleBtn' },
-        { id: 'duration', header: 'durationHeader', content: 'durationContent', btn: 'durationToggleBtn' },
-        { id: 'media', header: 'mediaHeader', content: 'mediaContent', btn: 'mediaToggleBtn' },
-        { id: 'captcha', header: 'captchaHeader', content: 'captchaContent', btn: 'captchaToggleBtn' }
+        console.log('🔧 Setting up foldable sections...');
+        
+        const sections = [
+            { id: 'prize', header: 'prizeHeader', content: 'prizeContent', btn: 'prizeToggleBtn' },
+            { id: 'text', header: 'textHeader', content: 'textContent', btn: 'textToggleBtn' },
+            { id: 'channel', header: 'channelHeader', content: 'channelContent', btn: 'channelToggleBtn' },
+            { id: 'requirements', header: 'requirementsHeader', content: 'requirementsContent', btn: 'requirementsToggleBtn' },
+            { id: 'link', header: 'linkHeader', content: 'linkContent', btn: 'linkToggleBtn' },
+            { id: 'duration', header: 'durationHeader', content: 'durationContent', btn: 'durationToggleBtn' },
+            { id: 'media', header: 'mediaHeader', content: 'mediaContent', btn: 'mediaToggleBtn' },
+            { id: 'captcha', header: 'captchaHeader', content: 'captchaContent', btn: 'captchaToggleBtn' }
         ];
-    
-      sections.forEach(section => {
-        const header = document.getElementById(section.header);
-        const content = document.getElementById(section.content);
-        const btn = document.getElementById(section.btn);
-        const foldableSection = header?.closest('.foldable-section');
-    
-        if (header && content) {
-          // Set initial state berdasarkan yang direstore atau default (false)
-          const isExpanded = foldableStates[section.id] || false;
-          content.style.display = isExpanded ? 'block' : 'none';
-    
-          if (isExpanded) {
-            foldableSection?.classList.add('expanded');
-            if (btn) {
-              btn.classList.add('rotated');
-              btn.textContent = '▲';
+        
+        sections.forEach(section => {
+            const header = document.getElementById(section.header);
+            const content = document.getElementById(section.content);
+            const btn = document.getElementById(section.btn);
+            const foldableSection = header?.closest('.foldable-section');
+            
+            if (header && content) {
+                const isExpanded = foldableStates[section.id] || false;
+                content.style.display = isExpanded ? 'block' : 'none';
+                
+                if (isExpanded) {
+                    foldableSection?.classList.add('expanded');
+                    if (btn) {
+                        btn.classList.add('rotated');
+                        btn.textContent = '▲';
+                    }
+                } else {
+                    foldableSection?.classList.remove('expanded');
+                    if (btn) {
+                        btn.classList.remove('rotated');
+                        btn.textContent = '▼';
+                    }
+                }
+                
+                const toggleSection = () => {
+                    hapticImpact('light');
+                    const isHidden = content.style.display === 'none';
+                    
+                    content.style.display = isHidden ? 'block' : 'none';
+                    foldableStates[section.id] = !isHidden;
+                    
+                    if (isHidden) {
+                        foldableSection?.classList.add('expanded');
+                    } else {
+                        foldableSection?.classList.remove('expanded');
+                    }
+                    
+                    if (btn) {
+                        if (isHidden) {
+                            btn.classList.add('rotated');
+                            btn.textContent = '▲';
+                        } else {
+                            btn.classList.remove('rotated');
+                            btn.textContent = '▼';
+                        }
+                    }
+                };
+                
+                header.addEventListener('click', (e) => {
+                    if (e.target.closest('button') && e.target.closest('button') !== btn) {
+                        return;
+                    }
+                    toggleSection();
+                });
+                
+                if (btn) {
+                    btn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        toggleSection();
+                    });
+                }
             }
-          } else {
-            foldableSection?.classList.remove('expanded');
-            if (btn) {
-              btn.classList.remove('rotated');
-              btn.textContent = '▼';
-            }
-          }
-    
-          // Toggle function
-          const toggleSection = () => {
-            hapticImpact('light');
-            const isHidden = content.style.display === 'none';
-    
-            // Toggle content
-            content.style.display = isHidden ? 'block' : 'none';
-    
-            // Update state
-            foldableStates[section.id] = !isHidden;
-    
-            // Toggle class pada section
-            if (isHidden) {
-              foldableSection?.classList.add('expanded');
-            } else {
-              foldableSection?.classList.remove('expanded');
-            }
-    
-            // Toggle tombol panah
-            if (btn) {
-              if (isHidden) {
-                btn.classList.add('rotated');
-                btn.textContent = '▲';
-              } else {
-                btn.classList.remove('rotated');
-                btn.textContent = '▼';
-              }
-            }
-          };
-    
-          // Add click listener to header
-          header.addEventListener('click', (e) => {
-            if (e.target.closest('button') && e.target.closest('button') !== btn) {
-              return;
-            }
-            toggleSection();
-          });
-    
-          // Add click listener to toggle button
-          if (btn) {
-            btn.addEventListener('click', (e) => {
-              e.stopPropagation();
-              toggleSection();
-            });
-          }
-        }
-      });
+        });
     }
 
     // ==================== CHANNEL HANDLERS ====================
     function handleChannelInput(e) {
-      // Cek apakah pengguna mencoba menghapus karakter pertama (@)
-      if (e.key === 'Backspace' && e.target.selectionStart === 1 && e.target.selectionEnd === 1) {
-        e.preventDefault();
-        hapticImpact('medium'); // Getar haptic
-        return;
-      }
-    
-      if (e.key === ',' || e.key === 'Enter') {
-        e.preventDefault();
-        hapticImpact('soft');
-        addChannelFromInput();
-      }
+        if (e.key === 'Backspace' && e.target.selectionStart === 1 && e.target.selectionEnd === 1) {
+            e.preventDefault();
+            hapticImpact('medium');
+            return;
+        }
+        
+        if (e.key === ',' || e.key === 'Enter' || e.key === 'Go' || e.key === 'Done') {
+            e.preventDefault();
+            hapticImpact('soft');
+            addChannelFromInput();
+        }
     }
     
     function handleChannelBlur() {
-      addChannelFromInput();
+        // JANGAN panggil addChannelFromInput() di blur
     }
     
     function handleChannelInputFocus() {
-      const input = elements.channelInput;
-      // Jika input kosong, set value dengan @
-      if (!input.value) {
-        input.value = '@';
-        // Set cursor setelah @
-        setTimeout(() => {
-          input.setSelectionRange(1, 1);
-        }, 10);
-      }
+        const input = elements.channelInput;
+        if (!input.value) {
+            input.value = '@';
+            setTimeout(() => {
+                input.setSelectionRange(1, 1);
+            }, 10);
+        }
     }
     
     function handleChannelInputKeydown(e) {
-      const input = e.target;
-    
-      // Cegah penghapusan karakter @ pertama
-      if (e.key === 'Backspace' && input.selectionStart === 1 && input.selectionEnd === 1) {
-        e.preventDefault();
-        hapticImpact('medium'); // Getar haptic
-        return;
-      }
-    
-      // Cegah karakter pertama selain @
-      if (input.selectionStart === 0 && input.selectionEnd === 0 && e.key !== '@' && e.key !== 'Backspace' && e.key !== 'Delete' && e.key !== 'ArrowLeft' && e.key !== 'ArrowRight' && e.key !== 'Home' && e.key !== 'End') {
-        e.preventDefault();
-        hapticImpact('soft');
-        return;
-      }
-    }
-    
-    // ==================== CHANNEL HANDLERS ====================
-    function handleChannelInput(e) {
-      // Cek apakah pengguna mencoba menghapus karakter pertama (@)
-      if (e.key === 'Backspace' && e.target.selectionStart === 1 && e.target.selectionEnd === 1) {
-        e.preventDefault();
-        hapticImpact('medium');
-        return;
-      }
-    
-      // Deteksi koma, enter, atau tombol "Done/Return" di mobile (key = 'Enter' atau 'Go')
-      if (e.key === ',' || e.key === 'Enter' || e.key === 'Go' || e.key === 'Done') {
-        e.preventDefault();
-        hapticImpact('soft');
-        addChannelFromInput();
-      }
-    }
-    
-    function handleChannelBlur() {
-      // JANGAN panggil addChannelFromInput() di blur
-      // Biar gak otomatis nambah kalo klik di luar
-    }
-    
-    function handleChannelInputFocus() {
-      const input = elements.channelInput;
-      if (!input.value) {
-        input.value = '@';
-        setTimeout(() => {
-          input.setSelectionRange(1, 1);
-        }, 10);
-      }
-    }
-    
-    function handleChannelInputKeydown(e) {
-      const input = e.target;
-    
-      // Cegah penghapusan karakter @ pertama
-      if (e.key === 'Backspace' && input.selectionStart === 1 && input.selectionEnd === 1) {
-        e.preventDefault();
-        hapticImpact('medium');
-        return;
-      }
-    
-      // Cegah karakter pertama selain @
-      if (input.selectionStart === 0 && input.selectionEnd === 0 && e.key !== '@' && e.key !== 'Backspace' && e.key !== 'Delete' && e.key !== 'ArrowLeft' && e.key !== 'ArrowRight' && e.key !== 'Home' && e.key !== 'End') {
-        e.preventDefault();
-        hapticImpact('soft');
-        return;
-      }
-    
-      // Deteksi tombol Done/Return di mobile
-      if (e.key === 'Enter' || e.key === 'Go' || e.key === 'Done') {
-        e.preventDefault();
-        hapticImpact('soft');
-        addChannelFromInput();
-      }
+        const input = e.target;
+        
+        if (e.key === 'Backspace' && input.selectionStart === 1 && input.selectionEnd === 1) {
+            e.preventDefault();
+            hapticImpact('medium');
+            return;
+        }
+        
+        if (input.selectionStart === 0 && input.selectionEnd === 0 && 
+            e.key !== '@' && e.key !== 'Backspace' && e.key !== 'Delete' && 
+            e.key !== 'ArrowLeft' && e.key !== 'ArrowRight' && e.key !== 'Home' && e.key !== 'End') {
+            e.preventDefault();
+            hapticImpact('soft');
+            return;
+        }
+        
+        if (e.key === 'Enter' || e.key === 'Go' || e.key === 'Done') {
+            e.preventDefault();
+            hapticImpact('soft');
+            addChannelFromInput();
+        }
     }
     
     function handleChannelInput() {
-      const input = elements.channelInput;
-      let value = input.value;
-    
-      if (!value) {
-        input.value = '@';
-        input.setSelectionRange(1, 1);
-        return;
-      }
-    
-      if (value[0] !== '@') {
-        input.value = '@' + value.replace(/@/g, '');
-        hapticImpact('soft');
-      }
-    
-      if (value === '@') {
-        return;
-      }
+        const input = elements.channelInput;
+        let value = input.value;
+        
+        if (!value) {
+            input.value = '@';
+            input.setSelectionRange(1, 1);
+            return;
+        }
+        
+        if (value[0] !== '@') {
+            input.value = '@' + value.replace(/@/g, '');
+            hapticImpact('soft');
+        }
+        
+        if (value === '@') {
+            return;
+        }
     }
     
     // ==================== FUNGSI GET CHAT DATA DARI API ====================
     async function getChatData(username) {
-      try {
-        const cleanUsername = username.replace('@', '');
-    
-        // Coba dulu dari database
-        let response = await fetch(`${API_BASE_URL}/api/chatid/username/${cleanUsername}`);
-    
-        // Kalau tidak ditemukan, minta bot untuk fetch data LANGSUNG
-        if (response.status === 404) {
-          console.log('📡 Data tidak ditemukan, memanggil bot untuk sync...');
-    
-          // Panggil endpoint fetch yang akan langsung ambil data
-          const fetchResponse = await fetch(`${API_BASE_URL}/api/chatid/fetch/${cleanUsername}`);
-    
-          if (fetchResponse.ok) {
-            const result = await fetchResponse.json();
-    
-            if (result.success) {
-              // Data berhasil diambil, tampilkan notifikasi sukses
-              hapticNotification('success');
-    
-              // Coba lagi ambil data yang baru saja disimpan
-              response = await fetch(`${API_BASE_URL}/api/chatid/username/${cleanUsername}`);
-    
-              if (response.ok) {
-                const data = await response.json();
+        try {
+            const cleanUsername = username.replace('@', '');
+            let response = await fetch(`${API_BASE_URL}/api/chatid/username/${cleanUsername}`);
+            
+            if (response.status === 404) {
+                console.log('📡 Data tidak ditemukan, memanggil bot untuk sync...');
+                const fetchResponse = await fetch(`${API_BASE_URL}/api/chatid/fetch/${cleanUsername}`);
+                
+                if (fetchResponse.ok) {
+                    const result = await fetchResponse.json();
+                    
+                    if (result.success) {
+                        hapticNotification('success');
+                        response = await fetch(`${API_BASE_URL}/api/chatid/username/${cleanUsername}`);
+                        
+                        if (response.ok) {
+                            const data = await response.json();
+                            return {
+                                valid: true,
+                                chat_id: data.chat_id,
+                                title: data.chat_title,
+                                username: data.chat_username,
+                                type: data.chat_type,
+                                invite_link: data.invite_link,
+                                admin_count: data.admin_count,
+                                participants_count: data.participants_count,
+                                is_verified: data.is_verified,
+                                admins: data.admins || []
+                            };
+                        }
+                    } else {
+                        alert(`Gagal mengambil data untuk @${cleanUsername}: ${result.error || 'Unknown error'}`);
+                        return {
+                            valid: false,
+                            error: result.error || 'Gagal mengambil data'
+                        };
+                    }
+                }
+                
                 return {
-                  valid: true,
-                  chat_id: data.chat_id,
-                  title: data.chat_title,
-                  username: data.chat_username,
-                  type: data.chat_type,
-                  invite_link: data.invite_link,
-                  admin_count: data.admin_count,
-                  participants_count: data.participants_count,
-                  is_verified: data.is_verified,
-                  admins: data.admins || []
+                    valid: false,
+                    error: 'Channel/group tidak ditemukan'
                 };
-              }
-            } else {
-              // Gagal mengambil data
-              alert(`Gagal mengambil data untuk @${cleanUsername}: ${result.error || 'Unknown error'}`);
-              return {
-                valid: false,
-                error: result.error || 'Gagal mengambil data'
-              };
             }
-          }
-    
-          return {
-            valid: false,
-            error: 'Channel/group tidak ditemukan'
-          };
+            
+            if (!response.ok) {
+                return {
+                    valid: false,
+                    error: 'Channel/group tidak valid'
+                };
+            }
+            
+            const data = await response.json();
+            
+            return {
+                valid: true,
+                chat_id: data.chat_id,
+                title: data.chat_title,
+                username: data.chat_username,
+                type: data.chat_type,
+                invite_link: data.invite_link,
+                admin_count: data.admin_count,
+                participants_count: data.participants_count,
+                is_verified: data.is_verified,
+                admins: data.admins || []
+            };
+            
+        } catch (error) {
+            console.error('❌ Error getting chat data:', error);
+            return {
+                valid: false,
+                error: 'Gagal terhubung ke server'
+            };
         }
-    
-        if (!response.ok) {
-          return {
-            valid: false,
-            error: 'Channel/group tidak valid'
-          };
-        }
-    
-        const data = await response.json();
-    
-        return {
-          valid: true,
-          chat_id: data.chat_id,
-          title: data.chat_title,
-          username: data.chat_username,
-          type: data.chat_type,
-          invite_link: data.invite_link,
-          admin_count: data.admin_count,
-          participants_count: data.participants_count,
-          is_verified: data.is_verified,
-          admins: data.admins || []
-        };
-    
-      } catch (error) {
-        console.error('❌ Error getting chat data:', error);
-        return {
-          valid: false,
-          error: 'Gagal terhubung ke server'
-        };
-      }
     }
 
     // ==================== FUNGSI LOADING MODAL ====================
@@ -1409,30 +1321,25 @@
     let modal = null;
     
     function showLoadingModal(username) {
-        // Hapus modal yang sudah ada
         const existingModal = document.querySelector('.sync-loading-modal');
         if (existingModal) {
             existingModal.remove();
         }
         
-        // Hentikan typing interval jika ada
         if (typingInterval) {
             clearInterval(typingInterval);
             typingInterval = null;
         }
         
-        // Reset state
         currentTypingIndex = 0;
         startTime = Date.now();
         
-        // Lines awal - hanya 3 baris sederhana
         typingLines = [
             { text: `📡 Menghubungi server untuk @${username}...`, delay: 300 },
             { text: `🔍 Mengambil data dari Telegram...`, delay: 400 },
             { text: `⏳ Mohon tunggu sebentar...`, delay: 500 }
         ];
         
-        // Buat modal
         modal = document.createElement('div');
         modal.className = 'sync-loading-modal';
         modal.innerHTML = `
@@ -1455,12 +1362,10 @@
         
         document.body.appendChild(modal);
         
-        // Animasi masuk
         setTimeout(() => {
             modal.classList.add('active');
         }, 10);
         
-        // Mulai typing effect sederhana
         startTypingEffect();
         
         return modal;
@@ -1475,7 +1380,6 @@
         
         function typeNextLine() {
             if (currentTypingIndex >= typingLines.length) {
-                // Update status
                 updateSyncStatus('Menyimpan data...');
                 updateProgressBar(50);
                 return;
@@ -1485,21 +1389,16 @@
             const lineElement = document.createElement('div');
             lineElement.className = 'sync-typing-line';
             lineElement.style.opacity = '0';
+            lineElement.textContent = line.text;
             typingContent.appendChild(lineElement);
             
-            // Animasi fade in
             setTimeout(() => {
                 lineElement.style.opacity = '1';
             }, 50);
             
-            // Tampilkan langsung tanpa typing per karakter (lebih cepat)
-            lineElement.textContent = line.text;
-            
-            // Update progress bar
             const progress = ((currentTypingIndex + 1) / typingLines.length) * 40;
             updateProgressBar(progress);
             
-            // Update status
             if (currentTypingIndex === 0) {
                 updateSyncStatus('Menghubungi server...');
             } else if (currentTypingIndex === 1) {
@@ -1508,7 +1407,6 @@
             
             currentTypingIndex++;
             
-            // Lanjut ke line berikutnya setelah delay
             setTimeout(typeNextLine, line.delay || 400);
         }
         
@@ -1533,10 +1431,6 @@
         const typingContent = document.getElementById('typingContent');
         if (!typingContent) return;
         
-        // Hitung waktu yang telah berlalu
-        const elapsedTime = Math.round((Date.now() - startTime) / 1000);
-        
-        // Tambahkan line-line data real
         const dataLines = [
             { text: `✅ Chat ID: ${data.chat_id}`, delay: 200 },
             { text: `📢 Nama: ${data.chat_title}`, delay: 200 },
@@ -1544,7 +1438,6 @@
             { text: `👥 Anggota: ${data.participants_count || 'Tidak diketahui'}`, delay: 200 }
         ];
         
-        // Tambahkan satu per satu dengan cepat
         let dataIndex = 0;
         
         function addNextDataLine() {
@@ -1560,23 +1453,18 @@
                     lineElement.style.opacity = '1';
                 }, 50);
                 
-                // Scroll otomatis
                 typingContent.scrollTop = typingContent.scrollHeight;
                 
-                // Update progress
                 const progress = 50 + ((dataIndex + 1) / dataLines.length) * 30;
                 updateProgressBar(progress);
                 
                 dataIndex++;
                 
-                // Line berikutnya setelah delay singkat
                 setTimeout(addNextDataLine, line.delay || 150);
             } else {
-                // Selesai semua data
                 updateProgressBar(90);
                 updateSyncStatus('Data berhasil diambil!');
                 
-                // Tambahkan line selesai
                 setTimeout(() => {
                     const completeLine = document.createElement('div');
                     completeLine.className = 'sync-typing-line success';
@@ -1590,14 +1478,12 @@
             }
         }
         
-        // Mulai menambahkan data lines
         addNextDataLine();
     }
     
     function completeLoadingModal(success = true) {
         if (!modal) return;
         
-        // Update progress bar ke 100%
         updateProgressBar(100);
         
         if (success) {
@@ -1606,7 +1492,6 @@
             updateSyncStatus('❌ Gagal memuat data');
         }
         
-        // Tutup modal setelah 1.5 detik
         setTimeout(() => {
             modal.classList.remove('active');
             setTimeout(() => {
@@ -1620,35 +1505,32 @@
 
     // ==================== FUNGSI ADD CHANNEL DENGAN LOADING MODAL ====================
     async function pollSyncStatus(username, displayName) {
-        const maxAttempts = 15; // Turunkan jadi 15 kali (30 detik max)
+        const maxAttempts = 15;
         let attempts = 0;
         let pollInterval;
-    
+        
         return new Promise((resolve) => {
             pollInterval = setInterval(async () => {
                 attempts++;
                 
                 console.log(`🔍 Polling for @${username} (${attempts}/${maxAttempts})`);
-    
+                
                 try {
                     const response = await fetch(`${API_BASE_URL}/api/chatid/username/${username}`);
-    
+                    
                     if (response.ok) {
                         const data = await response.json();
                         
                         clearInterval(pollInterval);
                         
-                        // Update modal dengan data real
                         if (modal) {
                             updateLoadingModalWithData(data);
                             
-                            // Tunggu sebentar lalu tutup
                             setTimeout(() => {
                                 completeLoadingModal(true);
                             }, 1500);
                         }
                         
-                        // Tambahkan ke channels
                         const verifiedIcon = data.is_verified ? '✅' : '';
                         const typeIcon = data.chat_type === 'channel' ? '📢' : '👥';
                         const displayName = `${typeIcon} ${data.chat_title} ${verifiedIcon} (${data.chat_id})`;
@@ -1679,7 +1561,6 @@
                     if (attempts >= maxAttempts) {
                         clearInterval(pollInterval);
                         if (modal) {
-                            // Tambahkan line error
                             const typingContent = document.getElementById('typingContent');
                             if (typingContent) {
                                 const errorLine = document.createElement('div');
@@ -1706,76 +1587,72 @@
                         resolve(false);
                     }
                 }
-            }, 2000); // Poll setiap 2 detik
+            }, 2000);
         });
     }
     
     async function addChannelFromInput() {
         let value = elements.channelInput.value.trim();
-    
+        
         if (value.endsWith(',')) {
             value = value.slice(0, -1).trim();
         }
-    
+        
         if (!value || value === '@') {
             elements.channelInput.value = '@';
             hapticNotification('error');
             return;
         }
-    
+        
         if (!value.startsWith('@')) {
             value = '@' + value;
         }
-    
+        
         const usernameRegex = /^@[a-zA-Z0-9_]+$/;
         if (!usernameRegex.test(value)) {
             hapticNotification('error');
             alert('Format username tidak valid! Hanya boleh huruf, angka, dan underscore.');
             return;
         }
-    
+        
         hapticImpact('light');
-    
+        
         const newChannels = value.split(',').map(c => c.trim()).filter(c => c && c !== '@');
-    
+        
         elements.channelInput.disabled = true;
         elements.channelInput.placeholder = 'Memvalidasi...';
-    
+        
         let validChannels = [];
         let invalidChannels = [];
         let syncStarted = false;
-    
+        
         for (const channel of newChannels) {
             let cleanChannel = channel;
             if (!cleanChannel.startsWith('@')) {
                 cleanChannel = '@' + cleanChannel;
             }
-    
+            
             const cleanUsername = cleanChannel.replace('@', '');
-    
+            
             try {
-                // Cek apakah data sudah ada
                 let response = await fetch(`${API_BASE_URL}/api/chatid/username/${cleanUsername}`);
-    
+                
                 if (response.status === 404) {
                     console.log(`📡 Data for @${cleanUsername} not found, triggering sync...`);
-    
-                    // Tampilkan loading modal
+                    
                     showLoadingModal(cleanUsername);
-    
+                    
                     const syncResponse = await fetch(`${API_BASE_URL}/api/chatid/sync/${cleanUsername}`, {
                         method: 'POST'
                     });
-    
+                    
                     if (syncResponse.status === 202) {
                         syncStarted = true;
                         invalidChannels.push(`${cleanChannel} (⏳ sync...)`);
                         
-                        // Polling status - TUNGGU SAMPAI SELESAI
                         const success = await pollSyncStatus(cleanUsername, cleanChannel);
                         
                         if (success) {
-                            // Data sudah ditambahkan oleh pollSyncStatus
                             console.log(`✅ Data for @${cleanUsername} loaded successfully`);
                         }
                     } else {
@@ -1786,18 +1663,18 @@
                     }
                     continue;
                 }
-    
+                
                 if (!response.ok) {
                     invalidChannels.push(cleanChannel);
                     continue;
                 }
-    
+                
                 const result = await response.json();
-    
+                
                 const verifiedIcon = result.is_verified ? '✅' : '';
                 const typeIcon = result.chat_type === 'channel' ? '📢' : '👥';
                 const displayName = `${typeIcon} ${result.chat_title} ${verifiedIcon} (${result.chat_id})`;
-    
+                
                 const channelData = {
                     chat_id: result.chat_id,
                     username: cleanChannel,
@@ -1809,12 +1686,12 @@
                     is_verified: result.is_verified,
                     displayName: displayName
                 };
-    
+                
                 if (!channels.some(c => c.chat_id === result.chat_id)) {
                     channels.push(channelData);
                     validChannels.push(displayName);
                 }
-    
+                
             } catch (error) {
                 console.error('Error checking channel:', error);
                 invalidChannels.push(cleanChannel);
@@ -1823,31 +1700,30 @@
                 }
             }
         }
-    
+        
         elements.channelInput.disabled = false;
         elements.channelInput.placeholder = "Ketik username, tekan koma untuk menambah... (contoh: @channel1)";
-    
+        
         if (validChannels.length > 0) {
             updateChannelsTags();
             hapticNotification('success');
         }
-    
+        
         if (invalidChannels.length > 0) {
             hapticNotification('error');
-    
+            
             let message = `Channel/group tidak valid: ${invalidChannels.join(', ')}`;
             if (syncStarted) {
                 message += '\n\nBeberapa channel sedang di-sync.';
             }
-            // Tampilkan alert hanya jika ada channel yang benar-benar gagal
             const failedChannels = invalidChannels.filter(c => !c.includes('sync'));
             if (failedChannels.length > 0) {
                 alert(message);
             }
         }
-    
+        
         elements.channelInput.value = '@';
-    
+        
         setTimeout(() => {
             elements.channelInput.setSelectionRange(1, 1);
         }, 10);
@@ -1855,9 +1731,8 @@
 
     // ==================== FUNGSI TOAST NOTIFICATION ====================
     function showToast(message, type = 'info') {
-        // Cek apakah sudah ada toast container
         let toastContainer = document.querySelector('.toast-container');
-      
+        
         if (!toastContainer) {
             toastContainer = document.createElement('div');
             toastContainer.className = 'toast-container';
@@ -1874,7 +1749,7 @@
             `;
             document.body.appendChild(toastContainer);
         }
-      
+        
         const toast = document.createElement('div');
         toast.className = `toast toast-${type}`;
         toast.style.cssText = `
@@ -1888,10 +1763,9 @@
             pointer-events: auto;
         `;
         toast.textContent = message;
-      
+        
         toastContainer.appendChild(toast);
-      
-        // Hapus setelah 3 detik
+        
         setTimeout(() => {
             toast.style.animation = 'fadeOut 0.3s ease';
             setTimeout(() => {
@@ -1926,132 +1800,139 @@
     `;
     document.head.appendChild(style);
 
+    // ==================== FUNGSI UPDATE CHANNELS TAGS ====================
     function updateChannelsTags() {
-      if (!elements.channelTags) return;
-    
-      console.log('Updating channel tags. Channels:', channels);
-    
-      let html = '';
-      channels.forEach((channel, index) => {
-        const bgColor = getRandomColor(index);
-    
-        if (typeof channel === 'string') {
-          // Format lama
-          const channelId = channel.replace('@', '');
-          html += `<span class="channel-tag" data-channel-id="${channelId}">
-                            <span class="prize-number" style="background: ${bgColor};">${index + 1}</span>
-                            ${escapeHtml(channel)}
-                            <span class="tag-remove" data-channel="${channelId}">×</span>
-                        </span>`;
-        } else {
-          // Format baru dengan data lengkap
-          const channelId = channel.chat_id;
-          const typeIcon = channel.type === 'channel' ? '📢' : '👥';
-          const verifiedIcon = channel.is_verified ? ' ✅' : '';
-          const displayName = channel.displayName || `${typeIcon} ${channel.title}${verifiedIcon}`;
-    
-          html += `<span class="channel-tag" data-channel-id="${channelId}">
-                            <span class="prize-number" style="background: ${bgColor};">${index + 1}</span>
-                            <div class="channel-info">
-                                <span class="channel-name">${displayName}</span>
-                                <span class="channel-details">
-                                    <span class="channel-id">${escapeHtml(channelId)}</span>
-                                    ${channel.participants_count ? `<span class="channel-members">👥 ${channel.participants_count}</span>` : ''}
-                                </span>
-                            </div>
-                            <span class="tag-remove" data-channel="${channelId}">×</span>
-                        </span>`;
-        }
-      });
-    
-      elements.channelTags.innerHTML = html;
-    
-      // Debug: cek apakah tombol remove terpasang dengan benar
-      const removeButtons = elements.channelTags.querySelectorAll('.tag-remove');
-      console.log(`Added ${removeButtons.length} remove buttons`);
-    
-      setTimeout(() => {
-        const scrollContainer = document.querySelector('.channel-tags-scroll');
-        if (scrollContainer) {
-          scrollContainer.scrollLeft = scrollContainer.scrollWidth;
-        }
-      }, 50);
+        if (!elements.channelTags) return;
+        
+        console.log('Updating channel tags. Channels:', channels);
+        
+        let html = '';
+        channels.forEach((channel, index) => {
+            const bgColor = getRandomColor(index);
+            
+            if (typeof channel === 'string') {
+                const channelId = channel.replace('@', '');
+                html += `<span class="channel-tag" data-channel-id="${channelId}">
+                    <span class="prize-number" style="background: ${bgColor};">${index + 1}</span>
+                    ${escapeHtml(channel)}
+                    <span class="tag-remove" data-channel="${channelId}">×</span>
+                </span>`;
+            } else {
+                const channelId = channel.chat_id;
+                const typeIcon = channel.type === 'channel' ? '📢' : '👥';
+                const verifiedIcon = channel.is_verified ? ' ✅' : '';
+                const displayName = channel.displayName || `${typeIcon} ${channel.title}${verifiedIcon}`;
+                
+                html += `<span class="channel-tag" data-channel-id="${channelId}">
+                    <span class="prize-number" style="background: ${bgColor};">${index + 1}</span>
+                    <div class="channel-info">
+                        <span class="channel-name">${displayName}</span>
+                        <span class="channel-details">
+                            <span class="channel-id">${escapeHtml(channelId)}</span>
+                            ${channel.participants_count ? `<span class="channel-members">👥 ${channel.participants_count}</span>` : ''}
+                        </span>
+                    </div>
+                    <span class="tag-remove" data-channel="${channelId}">×</span>
+                </span>`;
+            }
+        });
+        
+        elements.channelTags.innerHTML = html;
+        
+        const removeButtons = elements.channelTags.querySelectorAll('.tag-remove');
+        console.log(`Added ${removeButtons.length} remove buttons`);
+        
+        // Re-attach direct event listeners to new remove buttons
+        removeButtons.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                hapticImpact('light');
+                
+                const channelId = btn.dataset.channel;
+                console.log('🗑️ Direct remove click after update:', channelId);
+                
+                if (channelId) {
+                    removeChannel(channelId);
+                }
+            });
+        });
+        
+        setTimeout(() => {
+            const scrollContainer = document.querySelector('.channel-tags-scroll');
+            if (scrollContainer) {
+                scrollContainer.scrollLeft = scrollContainer.scrollWidth;
+            }
+        }, 50);
     }
 
+    // ==================== FUNGSI REMOVE CHANNEL ====================
     function removeChannel(channelId) {
-      console.log('🗑️ Removing channel:', channelId);
-      console.log('Current channels before removal:', channels);
-    
-      // Simpan panjang array sebelum filtering
-      const beforeLength = channels.length;
-    
-      // Hapus channel dari array
-      channels = channels.filter(channel => {
-        if (typeof channel === 'string') {
-          return channel !== channelId;
-        } else {
-          // Untuk channel object, bandingkan chat_id (sebagai number atau string)
-          const channelIdStr = String(channelId);
-          const chatIdStr = String(channel.chat_id);
-          const usernameStr = channel.username || '';
-    
-          return chatIdStr !== channelIdStr && usernameStr !== channelId && usernameStr !== `@${channelIdStr}`;
-        }
-      });
-    
-      console.log('Channels after removal:', channels);
-      console.log(`Removed ${beforeLength - channels.length} channel(s)`);
-    
-      // Update tampilan tags
-      updateChannelsTags();
-    
-      // Haptic feedback
-      hapticNotification('success');
+        console.log('🗑️ Removing channel:', channelId);
+        console.log('Current channels before removal:', channels);
+        
+        const beforeLength = channels.length;
+        
+        channels = channels.filter(channel => {
+            if (typeof channel === 'string') {
+                return channel !== channelId && channel !== `@${channelId}`;
+            } else {
+                const channelIdStr = String(channelId);
+                const chatIdStr = String(channel.chat_id);
+                const usernameStr = channel.username || '';
+                
+                return chatIdStr !== channelIdStr && 
+                       usernameStr !== channelId && 
+                       usernameStr !== `@${channelIdStr}`;
+            }
+        });
+        
+        console.log('Channels after removal:', channels);
+        console.log(`Removed ${beforeLength - channels.length} channel(s)`);
+        
+        updateChannelsTags();
+        hapticNotification('success');
     }
 
     // ==================== FUNGSI INIT ====================
     function init() {
         console.log('🚀 Initializing create giveaway form...');
-      
+        
         if (window.Telegram?.WebApp) {
             const tg = window.Telegram.WebApp;
             tg.expand();
             tg.ready();
             telegramUser = tg.initDataUnsafe?.user;
         }
-      
-        // Load links dari localStorage dulu
+        
         loadSavedLinks();
-      
-        // Restore form state (dari sessionStorage)
+        
         const restored = restoreFormState();
-      
-        // Setup foldable sections - SEMUA TERTUTUP AWALNYA
+        
         setupFoldableSections();
-      
         setupLinkManager();
         setupDurationManager();
         setupEventListeners();
-      
+        
         if (!restored) {
             durationDays = 10;
             durationHours = 2;
             durationMinutes = 30;
             durationSeconds = 0;
-      
+            
             if (elements.daysDisplay) elements.daysDisplay.textContent = durationDays;
             if (elements.hoursDisplay) elements.hoursDisplay.textContent = durationHours;
             if (elements.minutesDisplay) elements.minutesDisplay.textContent = durationMinutes;
             if (elements.secondsDisplay) elements.secondsDisplay.textContent = durationSeconds;
-      
+            
             updateDurationDisplay();
         }
-      
+        
         updateSelectedTags();
         updateChannelsTags();
         initSelectedOptions();
-      
-        // Listen for messages from link manager
+        
         window.addEventListener('message', (event) => {
             console.log('📨 Received message:', event.data);
             if (event.data && event.data.type === 'linksUpdated') {
@@ -2061,7 +1942,7 @@
                 hapticNotification('success');
             }
         });
-      
+        
         setTimeout(() => {
             if (elements.loading) elements.loading.style.display = 'none';
             if (elements.formContent) elements.formContent.style.display = 'block';
