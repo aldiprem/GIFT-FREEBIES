@@ -794,7 +794,7 @@ def get_chat_by_username(username):
         return jsonify({'error': str(e)}), 500
 
 
-# app.py - Update endpoint sync_chat_from_bot untuk memastikan username dibersihkan
+# app.py - Ganti endpoint sync_chat_from_bot
 
 @chatid_bp.route('/api/chatid/sync/<username>', methods=['POST'])
 def sync_chat_from_bot(username):
@@ -819,125 +819,29 @@ def sync_chat_from_bot(username):
                 'data': dict(existing)
             })
         
-        # Buat script sync sederhana dengan username yang sudah dibersihkan
-        script_content = f"""# sync_{clean_username}.py
-import asyncio
-import sys
-import os
-sys.path.append('{os.getcwd()}')
-
-from telethon import TelegramClient, functions, types
-import requests
-import logging
-
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
-
-API_ID = 24576633
-API_HASH = '29931cf620fad738ee7f69442c98e2ee'
-BOT_TOKEN = '8007647651:AAHrzy26yws4DaA3BWweQ8CM-oBxDzD308I'
-API_BASE_URL = 'https://individually-threaded-jokes-letting.trycloudflare.com'
-
-async def sync():
-    try:
-        logger.info("Starting sync for @{clean_username}")
-        
-        # Buat client baru (session terpisah)
-        client = TelegramClient('sync_session', API_ID, API_HASH)
-        await client.start(bot_token=BOT_TOKEN)
-        
-        # Dapatkan entity
-        entity = await client.get_entity('{clean_username}')
-        chat_id = entity.id
-        chat = await client.get_entity(chat_id)
-        
-        # Tentukan tipe
-        if isinstance(chat, types.Channel):
-            chat_type = "supergroup" if getattr(chat, "megagroup", False) else "channel"
-        else:
-            chat_type = "group"
-        
-        # Ambil data
-        c_title = getattr(chat, "title", "-")
-        c_username = getattr(chat, "username", None)
-        
-        # Dapatkan invite link
-        invite_link = None
+        # Panggil API internal bot untuk sync
         try:
-            if chat_type in ["channel", "supergroup"]:
-                full = await client(functions.channels.GetFullChannelRequest(chat_id))
-                invite = getattr(full.full_chat, "exported_invite", None)
-                if invite:
-                    invite_link = invite.link
-        except:
-            pass
-        
-        # Dapatkan participants count
-        participants_count = 0
-        try:
-            if chat_type in ["channel", "supergroup"]:
-                full = await client(functions.channels.GetFullChannelRequest(chat_id))
-                participants_count = getattr(full.full_chat, "participants_count", 0)
-        except:
-            pass
-        
-        # Payload - PASTIKAN USERNAME DISIMPAN TANPA @
-        payload = {{
-            'chat_id': chat_id,
-            'chat_title': c_title,
-            'chat_username': c_username,  # Ini akan tanpa @ dari Telegram
-            'chat_type': chat_type,
-            'invite_link': invite_link,
-            'admin_count': 0,
-            'participants_count': participants_count,
-            'is_verified': getattr(chat, 'verified', False),
-            'is_scam': getattr(chat, 'scam', False),
-            'is_fake': getattr(chat, 'fake', False),
-            'slow_mode_enabled': False,
-            'slow_mode_seconds': 0,
-            'admins': []
-        }}
-        
-        logger.info(f"Payload prepared: {{payload}}")
-        
-        # Kirim ke API
-        response = requests.post(f"{{API_BASE_URL}}/api/chatid", json=payload, timeout=10)
-        
-        if response.status_code == 200:
-            logger.info(f"✅ Data saved for @{clean_username}")
+            # Kirim perintah ke bot melalui HTTP (bot harus punya webhook atau endpoint)
+            # Alternatif: simpan request di database dan bot akan memprosesnya
+            # Untuk sementara, kita akan menggunakan file marker
+            marker_file = f"/tmp/sync_{clean_username}.request"
+            with open(marker_file, 'w') as f:
+                f.write(clean_username)
             
-            # Buat file marker
-            with open('/tmp/sync_{clean_username}.done', 'w') as f:
-                import json
-                f.write(json.dumps(payload))
-        else:
-            logger.error(f"API error: {{response.text}}")
-        
-        await client.disconnect()
-        
-    except Exception as e:
-        logger.error(f"Error: {{e}}")
-
-if __name__ == '__main__':
-    asyncio.run(sync())
-"""
-        
-        script_path = f"/tmp/sync_{clean_username}.py"
-        with open(script_path, 'w') as f:
-            f.write(script_content)
-        
-        log_info(f"Created sync script: {script_path}")
-        
-        # Jalankan di background
-        subprocess.Popen([sys.executable, script_path], 
-                        stdout=subprocess.DEVNULL, 
-                        stderr=subprocess.DEVNULL)
-        
-        return jsonify({
-            'success': True,
-            'message': f'Proses sinkronisasi untuk @{clean_username} dimulai',
-            'status': 'processing'
-        }), 202
+            log_info(f"✅ Sync request created for @{clean_username}")
+            
+            return jsonify({
+                'success': True,
+                'message': f'Proses sinkronisasi untuk @{clean_username} dimulai',
+                'status': 'processing'
+            }), 202
+            
+        except Exception as e:
+            log_error(f"Error creating sync request: {e}")
+            return jsonify({
+                'success': False,
+                'error': f'Gagal membuat request sync: {str(e)}'
+            }), 500
         
     except Exception as e:
         log_error(f"Error starting sync: {e}")
