@@ -1687,249 +1687,250 @@
                     displayName: displayName
                 };
 
-                // Cek apakah user adalah admin di channel ini
-                if (telegramUser && telegramUser.id) {
-                  const isAdmin = await checkUserIsAdmin(cleanChannel, telegramUser.id);
-                
-                  if (!isAdmin) {
-                    hapticNotification('error');
-                
-                    // Tampilkan notifikasi bahwa user harus menjadi admin
-                    if (window.Telegram?.WebApp) {
-                      window.Telegram.WebApp.showAlert(`❌ Anda harus menjadi admin di ${cleanChannel} untuk menambahkannya ke giveaway.`);
-                    } else {
-                      alert(`❌ Anda harus menjadi admin di ${cleanChannel} untuk menambahkannya ke giveaway.`);
+                    // Cek apakah user adalah admin atau owner di channel ini
+                    if (telegramUser && telegramUser.id) {
+                      const isAuthorized = await checkUserIsAdminOrOwner(cleanChannel, telegramUser.id);
+                    
+                      if (!isAuthorized) {
+                        hapticNotification('error');
+                    
+                        const errorMessage = `❌ Anda harus menjadi admin atau owner di ${cleanChannel} untuk menambahkannya ke giveaway.`;
+                    
+                        if (window.Telegram?.WebApp) {
+                          window.Telegram.WebApp.showAlert(errorMessage);
+                        } else {
+                          alert(errorMessage);
+                        }
+                    
+                        invalidChannels.push(`${cleanChannel} (bukan admin/owner)`);
+                        continue;
+                      }
                     }
-                
-                    invalidChannels.push(`${cleanChannel} (bukan admin)`);
-                    continue;
-                  }
-                }
-
-                if (!channels.some(c => c.chat_id === result.chat_id)) {
-                    channels.push(channelData);
-                    validChannels.push(displayName);
-                }
-                
-            } catch (error) {
-                console.error('Error checking channel:', error);
-                invalidChannels.push(cleanChannel);
-                if (modal) {
-                    completeLoadingModal(false);
+    
+                    if (!channels.some(c => c.chat_id === result.chat_id)) {
+                        channels.push(channelData);
+                        validChannels.push(displayName);
+                    }
+                    
+                } catch (error) {
+                    console.error('Error checking channel:', error);
+                    invalidChannels.push(cleanChannel);
+                    if (modal) {
+                        completeLoadingModal(false);
+                    }
                 }
             }
+            
+            elements.channelInput.disabled = false;
+            elements.channelInput.placeholder = "Ketik username, tekan koma untuk menambah... (contoh: @channel1)";
+            
+            if (validChannels.length > 0) {
+                updateChannelsTags();
+                hapticNotification('success');
+            }
+            
+            if (invalidChannels.length > 0) {
+                hapticNotification('error');
+                
+                let message = `Channel/group tidak valid: ${invalidChannels.join(', ')}`;
+                if (syncStarted) {
+                    message += '\n\nBeberapa channel sedang di-sync.';
+                }
+                const failedChannels = invalidChannels.filter(c => !c.includes('sync'));
+                if (failedChannels.length > 0) {
+                    alert(message);
+                }
+            }
+            
+            elements.channelInput.value = '@';
+            
+            setTimeout(() => {
+                elements.channelInput.setSelectionRange(1, 1);
+            }, 10);
+        }
+    
+        // ==================== FUNGSI TOAST NOTIFICATION ====================
+        function showToast(message, type = 'info') {
+            let toastContainer = document.querySelector('.toast-container');
+            
+            if (!toastContainer) {
+                toastContainer = document.createElement('div');
+                toastContainer.className = 'toast-container';
+                toastContainer.style.cssText = `
+                    position: fixed;
+                    bottom: 20px;
+                    left: 20px;
+                    right: 20px;
+                    z-index: 9999;
+                    display: flex;
+                    flex-direction: column;
+                    gap: 10px;
+                    pointer-events: none;
+                `;
+                document.body.appendChild(toastContainer);
+            }
+            
+            const toast = document.createElement('div');
+            toast.className = `toast toast-${type}`;
+            toast.style.cssText = `
+                background: ${type === 'success' ? '#10b981' : type === 'error' ? '#ef4444' : '#3b82f6'};
+                color: white;
+                padding: 12px 16px;
+                border-radius: 12px;
+                font-size: 14px;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+                animation: slideUp 0.3s ease;
+                pointer-events: auto;
+            `;
+            toast.textContent = message;
+            
+            toastContainer.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.style.animation = 'fadeOut 0.3s ease';
+                setTimeout(() => {
+                    toast.remove();
+                    if (toastContainer.children.length === 0) {
+                        toastContainer.remove();
+                    }
+                }, 300);
+            }, 3000);
         }
         
-        elements.channelInput.disabled = false;
-        elements.channelInput.placeholder = "Ketik username, tekan koma untuk menambah... (contoh: @channel1)";
+        // Tambahkan CSS animations
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes slideUp {
+                from {
+                    transform: translateY(100%);
+                    opacity: 0;
+                }
+                to {
+                    transform: translateY(0);
+                    opacity: 1;
+                }
+            }
+            
+            @keyframes fadeOut {
+                to {
+                    opacity: 0;
+                    transform: translateY(100%);
+                }
+            }
+        `;
+        document.head.appendChild(style);
+    
+        // ==================== FUNGSI UPDATE CHANNELS TAGS ====================
+        function updateChannelsTags() {
+          if (!elements.channelTags) return;
         
-        if (validChannels.length > 0) {
+          console.log('Updating channel tags. Channels:', channels);
+        
+          let html = '';
+          channels.forEach((channel, index) => {
+            const bgColor = getRandomColor(index);
+        
+            if (typeof channel === 'string') {
+              const channelId = channel.replace('@', '');
+              html += `<span class="channel-tag" data-channel-id="${channelId}">
+                        <span class="prize-number" style="background: ${bgColor};">${index + 1}</span>
+                        <span class="channel-name-text" title="${escapeHtml(channel)}">${escapeHtml(channel)}</span>
+                        <span class="tag-remove" data-channel="${channelId}">×</span>
+                    </span>`;
+            } else {
+              const channelId = channel.chat_id;
+              const chatIdFormatted = channelId.toString().startsWith('-100') ? channelId.toString() : `-100${Math.abs(channelId)}`;
+        
+              // Format jumlah anggota dengan titik
+              let membersFormatted = '0';
+              if (channel.participants_count) {
+                membersFormatted = channel.participants_count.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+              }
+        
+              // Username tanpa @
+              const username = channel.username ? channel.username.replace('@', '') : '-';
+        
+              // Nama channel tanpa emoji di awal
+              let displayName = channel.title || '';
+        
+              html += `<span class="channel-tag" data-channel-id="${channelId}">
+                        <span class="prize-number" style="background: ${bgColor};">${index + 1}</span>
+                        <div class="channel-info">
+                            <span class="channel-name">
+                                <span class="channel-name-text" title="${escapeHtml(displayName)}">${escapeHtml(displayName)}</span>
+                                ${channel.is_verified ? '<span class="verified-badge">✅</span>' : ''}
+                            </span>
+                            <span class="channel-details">
+                                <span class="channel-id">${chatIdFormatted}</span>
+                                <span class="channel-members">👥 ${membersFormatted}</span>
+                                <span class="channel-username">@${username}</span>
+                            </span>
+                        </div>
+                        <span class="tag-remove" data-channel="${channelId}">×</span>
+                    </span>`;
+            }
+          });
+        
+          elements.channelTags.innerHTML = html;
+        
+          const removeButtons = elements.channelTags.querySelectorAll('.tag-remove');
+          console.log(`Added ${removeButtons.length} remove buttons`);
+        
+          // Re-attach direct event listeners to new remove buttons
+          removeButtons.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+              e.preventDefault();
+              e.stopPropagation();
+        
+              hapticImpact('light');
+        
+              const channelId = btn.dataset.channel;
+              console.log('🗑️ Direct remove click after update:', channelId);
+        
+              if (channelId) {
+                removeChannel(channelId);
+              }
+            });
+          });
+        
+          setTimeout(() => {
+            const scrollContainer = document.querySelector('.channel-tags-scroll');
+            if (scrollContainer) {
+              scrollContainer.scrollLeft = scrollContainer.scrollWidth;
+            }
+          }, 50);
+        }
+    
+        // ==================== FUNGSI REMOVE CHANNEL ====================
+        function removeChannel(channelId) {
+            console.log('🗑️ Removing channel:', channelId);
+            console.log('Current channels before removal:', channels);
+            
+            const beforeLength = channels.length;
+            
+            channels = channels.filter(channel => {
+                if (typeof channel === 'string') {
+                    return channel !== channelId && channel !== `@${channelId}`;
+                } else {
+                    const channelIdStr = String(channelId);
+                    const chatIdStr = String(channel.chat_id);
+                    const usernameStr = channel.username || '';
+                    
+                    return chatIdStr !== channelIdStr && 
+                           usernameStr !== channelId && 
+                           usernameStr !== `@${channelIdStr}`;
+                }
+            });
+            
+            console.log('Channels after removal:', channels);
+            console.log(`Removed ${beforeLength - channels.length} channel(s)`);
+            
             updateChannelsTags();
             hapticNotification('success');
         }
-        
-        if (invalidChannels.length > 0) {
-            hapticNotification('error');
-            
-            let message = `Channel/group tidak valid: ${invalidChannels.join(', ')}`;
-            if (syncStarted) {
-                message += '\n\nBeberapa channel sedang di-sync.';
-            }
-            const failedChannels = invalidChannels.filter(c => !c.includes('sync'));
-            if (failedChannels.length > 0) {
-                alert(message);
-            }
-        }
-        
-        elements.channelInput.value = '@';
-        
-        setTimeout(() => {
-            elements.channelInput.setSelectionRange(1, 1);
-        }, 10);
-    }
-
-    // ==================== FUNGSI TOAST NOTIFICATION ====================
-    function showToast(message, type = 'info') {
-        let toastContainer = document.querySelector('.toast-container');
-        
-        if (!toastContainer) {
-            toastContainer = document.createElement('div');
-            toastContainer.className = 'toast-container';
-            toastContainer.style.cssText = `
-                position: fixed;
-                bottom: 20px;
-                left: 20px;
-                right: 20px;
-                z-index: 9999;
-                display: flex;
-                flex-direction: column;
-                gap: 10px;
-                pointer-events: none;
-            `;
-            document.body.appendChild(toastContainer);
-        }
-        
-        const toast = document.createElement('div');
-        toast.className = `toast toast-${type}`;
-        toast.style.cssText = `
-            background: ${type === 'success' ? '#10b981' : type === 'error' ? '#ef4444' : '#3b82f6'};
-            color: white;
-            padding: 12px 16px;
-            border-radius: 12px;
-            font-size: 14px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-            animation: slideUp 0.3s ease;
-            pointer-events: auto;
-        `;
-        toast.textContent = message;
-        
-        toastContainer.appendChild(toast);
-        
-        setTimeout(() => {
-            toast.style.animation = 'fadeOut 0.3s ease';
-            setTimeout(() => {
-                toast.remove();
-                if (toastContainer.children.length === 0) {
-                    toastContainer.remove();
-                }
-            }, 300);
-        }, 3000);
-    }
     
-    // Tambahkan CSS animations
-    const style = document.createElement('style');
-    style.textContent = `
-        @keyframes slideUp {
-            from {
-                transform: translateY(100%);
-                opacity: 0;
-            }
-            to {
-                transform: translateY(0);
-                opacity: 1;
-            }
-        }
-        
-        @keyframes fadeOut {
-            to {
-                opacity: 0;
-                transform: translateY(100%);
-            }
-        }
-    `;
-    document.head.appendChild(style);
-
-    // ==================== FUNGSI UPDATE CHANNELS TAGS ====================
-    function updateChannelsTags() {
-      if (!elements.channelTags) return;
-    
-      console.log('Updating channel tags. Channels:', channels);
-    
-      let html = '';
-      channels.forEach((channel, index) => {
-        const bgColor = getRandomColor(index);
-    
-        if (typeof channel === 'string') {
-          const channelId = channel.replace('@', '');
-          html += `<span class="channel-tag" data-channel-id="${channelId}">
-                    <span class="prize-number" style="background: ${bgColor};">${index + 1}</span>
-                    <span class="channel-name-text" title="${escapeHtml(channel)}">${escapeHtml(channel)}</span>
-                    <span class="tag-remove" data-channel="${channelId}">×</span>
-                </span>`;
-        } else {
-          const channelId = channel.chat_id;
-          const chatIdFormatted = channelId.toString().startsWith('-100') ? channelId.toString() : `-100${Math.abs(channelId)}`;
-    
-          // Format jumlah anggota dengan titik
-          let membersFormatted = '0';
-          if (channel.participants_count) {
-            membersFormatted = channel.participants_count.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
-          }
-    
-          // Username tanpa @
-          const username = channel.username ? channel.username.replace('@', '') : '-';
-    
-          // Nama channel tanpa emoji di awal
-          let displayName = channel.title || '';
-    
-          html += `<span class="channel-tag" data-channel-id="${channelId}">
-                    <span class="prize-number" style="background: ${bgColor};">${index + 1}</span>
-                    <div class="channel-info">
-                        <span class="channel-name">
-                            <span class="channel-name-text" title="${escapeHtml(displayName)}">${escapeHtml(displayName)}</span>
-                            ${channel.is_verified ? '<span class="verified-badge">✅</span>' : ''}
-                        </span>
-                        <span class="channel-details">
-                            <span class="channel-id">${chatIdFormatted}</span>
-                            <span class="channel-members">👥 ${membersFormatted}</span>
-                            <span class="channel-username">@${username}</span>
-                        </span>
-                    </div>
-                    <span class="tag-remove" data-channel="${channelId}">×</span>
-                </span>`;
-        }
-      });
-    
-      elements.channelTags.innerHTML = html;
-    
-      const removeButtons = elements.channelTags.querySelectorAll('.tag-remove');
-      console.log(`Added ${removeButtons.length} remove buttons`);
-    
-      // Re-attach direct event listeners to new remove buttons
-      removeButtons.forEach(btn => {
-        btn.addEventListener('click', (e) => {
-          e.preventDefault();
-          e.stopPropagation();
-    
-          hapticImpact('light');
-    
-          const channelId = btn.dataset.channel;
-          console.log('🗑️ Direct remove click after update:', channelId);
-    
-          if (channelId) {
-            removeChannel(channelId);
-          }
-        });
-      });
-    
-      setTimeout(() => {
-        const scrollContainer = document.querySelector('.channel-tags-scroll');
-        if (scrollContainer) {
-          scrollContainer.scrollLeft = scrollContainer.scrollWidth;
-        }
-      }, 50);
-    }
-
-    // ==================== FUNGSI REMOVE CHANNEL ====================
-    function removeChannel(channelId) {
-        console.log('🗑️ Removing channel:', channelId);
-        console.log('Current channels before removal:', channels);
-        
-        const beforeLength = channels.length;
-        
-        channels = channels.filter(channel => {
-            if (typeof channel === 'string') {
-                return channel !== channelId && channel !== `@${channelId}`;
-            } else {
-                const channelIdStr = String(channelId);
-                const chatIdStr = String(channel.chat_id);
-                const usernameStr = channel.username || '';
-                
-                return chatIdStr !== channelIdStr && 
-                       usernameStr !== channelId && 
-                       usernameStr !== `@${channelIdStr}`;
-            }
-        });
-        
-        console.log('Channels after removal:', channels);
-        console.log(`Removed ${beforeLength - channels.length} channel(s)`);
-        
-        updateChannelsTags();
-        hapticNotification('success');
-    }
-
-    // ==================== FUNGSI CEK ADMIN ====================
-    async function checkUserIsAdmin(username, userId) {
+    // ==================== FUNGSI CEK ADMIN ATAU OWNER ====================
+    async function checkUserIsAdminOrOwner(username, userId) {
       try {
         const cleanUsername = username.replace('@', '');
         const response = await fetch(`${API_BASE_URL}/api/chatid/username/${cleanUsername}`);
@@ -1940,10 +1941,29 @@
     
         // Cek apakah user ada di daftar admin
         if (data.admins && Array.isArray(data.admins)) {
-          return data.admins.some(admin => admin.user_id == userId);
+          // Admin dengan role 'owner' atau 'admin' diizinkan
+          const isAuthorized = data.admins.some(admin => {
+            const isOwner = admin.role === 'owner' && admin.user_id == userId;
+            const isAdmin = admin.role === 'admin' && admin.user_id == userId;
+            return isOwner || isAdmin;
+          });
+    
+          if (isAuthorized) {
+            console.log(`✅ User ${userId} adalah admin/owner di @${cleanUsername}`);
+            return true;
+          }
         }
     
+        // Jika tidak ada di daftar admin, cek apakah user adalah creator (fallback)
+        // Beberapa API mungkin mengembalikan creator_id
+        if (data.creator_id && data.creator_id == userId) {
+          console.log(`✅ User ${userId} adalah creator di @${cleanUsername}`);
+          return true;
+        }
+    
+        console.log(`❌ User ${userId} bukan admin/owner di @${cleanUsername}`);
         return false;
+    
       } catch (error) {
         console.error('Error checking admin status:', error);
         return false;
