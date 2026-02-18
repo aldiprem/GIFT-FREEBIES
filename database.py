@@ -167,7 +167,64 @@ class Database:
                 FOREIGN KEY (performed_by) REFERENCES users(user_id)
             )
             """)
+
+            # ==================== TABEL CHAT ID DATA (CHANNEL/GROUP) ====================
+            cursor.execute("""
+            CREATE TABLE IF NOT EXISTS chatid_data (
+                chat_id INTEGER PRIMARY KEY,
+                chat_title TEXT,
+                chat_username TEXT,
+                chat_type TEXT,
+                invite_link TEXT,
+                admin_count INTEGER DEFAULT 0,
+                participants_count INTEGER DEFAULT 0,
+                is_verified INTEGER DEFAULT 0,
+                is_scam INTEGER DEFAULT 0,
+                is_fake INTEGER DEFAULT 0,
+                slow_mode_enabled INTEGER DEFAULT 0,
+                slow_mode_seconds INTEGER DEFAULT 0,
+                created_at TEXT,
+                updated_at TEXT
+            )
+            """)
             
+            # Index untuk chatid_data
+            cursor.execute("""
+            CREATE INDEX IF NOT EXISTS idx_chatid_username 
+            ON chatid_data(chat_username)
+            """)
+            
+            cursor.execute("""
+            CREATE INDEX IF NOT EXISTS idx_chatid_type 
+            ON chatid_data(chat_type)
+            """)
+            
+            # ==================== TABEL CHAT ADMINS ====================
+            cursor.execute("""
+            CREATE TABLE IF NOT EXISTS chat_admins (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                chat_id INTEGER NOT NULL,
+                user_id INTEGER NOT NULL,
+                username TEXT,
+                fullname TEXT,
+                role TEXT DEFAULT 'admin',
+                created_at TEXT,
+                updated_at TEXT,
+                UNIQUE(chat_id, user_id)
+            )
+            """)
+            
+            # Index untuk chat_admins
+            cursor.execute("""
+            CREATE INDEX IF NOT EXISTS idx_chat_admins_chat 
+            ON chat_admins(chat_id)
+            """)
+            
+            cursor.execute("""
+            CREATE INDEX IF NOT EXISTS idx_chat_admins_user 
+            ON chat_admins(user_id)
+            """)
+
             conn.commit()
             log_info("All tables created/verified")
             
