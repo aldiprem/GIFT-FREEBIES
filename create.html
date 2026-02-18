@@ -80,10 +80,26 @@
                                 <button type="button" class="foldable-btn" id="textToggleBtn">▼</button>
                             </div>
                             <div class="foldable-content" id="textContent">
-                                <div class="textarea-wrapper">
-                                    <textarea id="giveawayText" class="form-textarea" rows="4" placeholder="Tulis deskripsi giveaway. Kosongkan jika ingin menggunakan text dari bot..."></textarea>
+                                <!-- Toolbar Format -->
+                                <div class="format-toolbar" id="formatToolbar">
+                                    <button type="button" class="format-btn" data-format="bold">Tebal</button>
+                                    <button type="button" class="format-btn" data-format="italic">Miring</button>
+                                    <button type="button" class="format-btn" data-format="underline">Garis Bawah</button>
+                                    <button type="button" class="format-btn" data-format="strikethrough">Coret</button>
+                                    <button type="button" class="format-btn" data-format="code">Monospace</button>
+                                    <button type="button" class="format-btn" data-format="spoiler">Spoiler</button>
+                                    <button type="button" class="format-btn" data-format="link">Tautan</button>
+                                    <button type="button" class="format-btn" data-format="quote">Kutip</button>
+                                </div>
+                                
+                                <!-- Contenteditable div sebagai pengganti textarea -->
+                                <div class="editable-wrapper">
+                                    <div id="giveawayEditable" class="form-editable" contenteditable="true" 
+                                         placeholder="Tulis deskripsi giveaway. Kosongkan jika ingin menggunakan text dari bot..."></div>
                                     <div class="textarea-icon">📝</div>
                                 </div>
+                                <!-- Hidden textarea untuk menyimpan value asli (untuk submit) -->
+                                <textarea id="giveawayText" class="hidden-textarea"></textarea>
                             </div>
                         </div>
 
