@@ -13,6 +13,7 @@ import string
 
 app = Flask(__name__)
 
+chatid_bp = Blueprint('chatid', __name__)
 CORS(app, origins=Config.ALLOWED_ORIGINS, supports_credentials=True)
 
 db = Database()
@@ -663,6 +664,183 @@ def health_check():
             'error': str(e),
             'timestamp': get_jakarta_time()
         }), 500
+
+
+@chatid_bp.route('/api/chatid', methods=['POST'])
+def save_chat_data():
+    """Menyimpan data chat ID dari bot"""
+    try:
+        data = request.get_json()
+        
+        if not data:
+            return jsonify({'error': 'No data provided'}), 400
+            
+        chat_id = data.get('chat_id')
+        if not chat_id:
+            return jsonify({'error': 'chat_id is required'}), 400
+        
+        now = get_jakarta_time()
+        cursor = db.get_cursor()
+        
+        # Simpan data chat
+        cursor.execute("""
+        INSERT INTO chatid_data (
+            chat_id, chat_title, chat_username, chat_type, invite_link,
+            admin_count, participants_count, is_verified, is_scam, is_fake,
+            slow_mode_enabled, slow_mode_seconds, created_at, updated_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ON CONFLICT(chat_id) DO UPDATE SET
+            chat_title=excluded.chat_title,
+            chat_username=excluded.chat_username,
+            chat_type=excluded.chat_type,
+            invite_link=excluded.invite_link,
+            admin_count=excluded.admin_count,
+            participants_count=excluded.participants_count,
+            is_verified=excluded.is_verified,
+            is_scam=excluded.is_scam,
+            is_fake=excluded.is_fake,
+            slow_mode_enabled=excluded.slow_mode_enabled,
+            slow_mode_seconds=excluded.slow_mode_seconds,
+            updated_at=excluded.updated_at
+        """, (
+            chat_id,
+            data.get('chat_title'),
+            data.get('chat_username'),
+            data.get('chat_type'),
+            data.get('invite_link'),
+            data.get('admin_count', 0),
+            data.get('participants_count', 0),
+            data.get('is_verified', 0),
+            data.get('is_scam', 0),
+            data.get('is_fake', 0),
+            data.get('slow_mode_enabled', 0),
+            data.get('slow_mode_seconds', 0),
+            now,
+            now
+        ))
+        
+        # Simpan data admin jika ada
+        admins = data.get('admins', [])
+        if admins:
+            # Hapus admin lama
+            cursor.execute("DELETE FROM chat_admins WHERE chat_id = ?", (chat_id,))
+            
+            for admin in admins:
+                cursor.execute("""
+                INSERT INTO chat_admins (
+                    chat_id, user_id, username, fullname, role, created_at, updated_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?)
+                """, (
+                    chat_id,
+                    admin.get('user_id'),
+                    admin.get('username'),
+                    admin.get('fullname'),
+                    admin.get('role', 'admin'),
+                    now,
+                    now
+                ))
+        
+        db.conn.commit()
+        cursor.close()
+        
+        log_info(f"Chat data saved for ID: {chat_id}")
+        return jsonify({'success': True, 'message': 'Chat data saved successfully'})
+        
+    except Exception as e:
+        log_error(f"Error saving chat data: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@chatid_bp.route('/api/chatid/<chat_id>', methods=['GET'])
+def get_chat_data(chat_id):
+    """Mendapatkan data chat berdasarkan ID"""
+    try:
+        cursor = db.get_cursor()
+        
+        cursor.execute("SELECT * FROM chatid_data WHERE chat_id = ?", (chat_id,))
+        chat_data = cursor.fetchone()
+        
+        if not chat_data:
+            cursor.close()
+            return jsonify({'error': 'Chat not found'}), 404
+        
+        result = dict(chat_data)
+        
+        # Ambil data admin
+        cursor.execute("""
+        SELECT user_id, username, fullname, role 
+        FROM chat_admins WHERE chat_id = ?
+        """, (chat_id,))
+        
+        admins = cursor.fetchall()
+        result['admins'] = [dict(admin) for admin in admins]
+        
+        cursor.close()
+        return jsonify(result)
+        
+    except Exception as e:
+        log_error(f"Error getting chat data: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@chatid_bp.route('/api/chatid/username/<username>', methods=['GET'])
+def get_chat_by_username(username):
+    """Mendapatkan data chat berdasarkan username"""
+    try:
+        clean_username = username.replace('@', '')
+        cursor = db.get_cursor()
+        
+        cursor.execute("SELECT * FROM chatid_data WHERE chat_username = ?", (clean_username,))
+        chat_data = cursor.fetchone()
+        
+        if not chat_data:
+            cursor.close()
+            return jsonify({'error': 'Chat not found'}), 404
+        
+        result = dict(chat_data)
+        
+        # Ambil data admin
+        cursor.execute("""
+        SELECT user_id, username, fullname, role 
+        FROM chat_admins WHERE chat_id = ?
+        """, (result['chat_id'],))
+        
+        admins = cursor.fetchall()
+        result['admins'] = [dict(admin) for admin in admins]
+        
+        cursor.close()
+        return jsonify(result)
+        
+    except Exception as e:
+        log_error(f"Error getting chat by username: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@chatid_bp.route('/api/chatid/search', methods=['GET'])
+def search_chats():
+    """Mencari chat berdasarkan query"""
+    try:
+        query = request.args.get('q', '')
+        if not query:
+            return jsonify({'error': 'Query parameter required'}), 400
+            
+        cursor = db.get_cursor()
+        search_term = f"%{query}%"
+        
+        cursor.execute("""
+        SELECT chat_id, chat_title, chat_username, chat_type, invite_link,
+               admin_count, participants_count, updated_at
+        FROM chatid_data 
+        WHERE chat_title LIKE ? OR chat_username LIKE ?
+        ORDER BY updated_at DESC
+        LIMIT 20
+        """, (search_term, search_term))
+        
+        chats = cursor.fetchall()
+        cursor.close()
+        
+        return jsonify([dict(chat) for chat in chats])
+        
+    except Exception as e:
+        log_error(f"Error searching chats: {e}")
+        return jsonify({'error': str(e)}), 500
 
 # ==================== MAIN ====================
 if __name__ == "__main__":
