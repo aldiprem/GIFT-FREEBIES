@@ -1426,18 +1426,22 @@
           cleanChannel = '@' + cleanChannel;
         }
     
-        // Cek apakah channel valid dan ada di database
         const cleanUsername = cleanChannel.replace('@', '');
     
         try {
-          // Coba ambil data dengan endpoint check
-          const checkResponse = await fetch(`${API_BASE_URL}/api/chatid/check/${cleanUsername}`);
+          // Coba ambil data langsung dari API username
+          let response = await fetch(`${API_BASE_URL}/api/chatid/username/${cleanUsername}`);
     
-          if (checkResponse.status === 404) {
-            const data = await checkResponse.json();
+          if (response.status === 404) {
+            // Data tidak ditemukan, trigger sync
+            console.log(`📡 Data for @${cleanUsername} not found, triggering sync...`);
     
-            if (data.sync_started) {
-              // Sync dimulai, tampilkan notifikasi
+            const syncResponse = await fetch(`${API_BASE_URL}/api/chatid/sync/${cleanUsername}`, {
+              method: 'POST'
+            });
+    
+            if (syncResponse.status === 202) {
+              // Sync dimulai
               syncStarted = true;
               invalidChannels.push(`${cleanChannel} (⏳ sedang sync...)`);
     
@@ -1449,38 +1453,34 @@
             continue;
           }
     
-          if (!checkResponse.ok) {
+          if (!response.ok) {
             invalidChannels.push(cleanChannel);
             continue;
           }
     
-          const data = await checkResponse.json();
+          const result = await response.json();
     
-          if (data.success && data.exists) {
-            // Data valid dan ada di database
-            const result = data.data;
+          // Data valid
+          const verifiedIcon = result.is_verified ? '✅' : '';
+          const typeIcon = result.chat_type === 'channel' ? '📢' : '👥';
+          const displayName = `${typeIcon} ${result.chat_title} ${verifiedIcon} (${result.chat_id})`;
     
-            const verifiedIcon = result.is_verified ? '✅' : '';
-            const typeIcon = result.chat_type === 'channel' ? '📢' : '👥';
-            const displayName = `${typeIcon} ${result.chat_title} ${verifiedIcon} (${result.chat_id})`;
+          const channelData = {
+            chat_id: result.chat_id,
+            username: cleanChannel,
+            title: result.chat_title,
+            type: result.chat_type,
+            invite_link: result.invite_link,
+            admin_count: result.admin_count,
+            participants_count: result.participants_count,
+            is_verified: result.is_verified,
+            displayName: displayName
+          };
     
-            const channelData = {
-              chat_id: result.chat_id,
-              username: cleanChannel,
-              title: result.chat_title,
-              type: result.chat_type,
-              invite_link: result.invite_link,
-              admin_count: result.admin_count,
-              participants_count: result.participants_count,
-              is_verified: result.is_verified,
-              displayName: displayName
-            };
-    
-            // Cek duplikat
-            if (!channels.some(c => c.chat_id === result.chat_id)) {
-              channels.push(channelData);
-              validChannels.push(displayName);
-            }
+          // Cek duplikat
+          if (!channels.some(c => c.chat_id === result.chat_id)) {
+            channels.push(channelData);
+            validChannels.push(displayName);
           }
     
         } catch (error) {
@@ -1509,7 +1509,6 @@
       }
     
       if (syncStarted) {
-        // Tampilkan notifikasi bahwa proses sync sedang berjalan
         showToast('Mengambil data channel dari Telegram...', 'info');
       }
     
@@ -1522,11 +1521,13 @@
     
     // Fungsi untuk polling status sync
     async function pollSyncStatus(username, displayName) {
-      const maxAttempts = 10;
+      const maxAttempts = 15; // 30 detik (2 detik * 15)
       let attempts = 0;
     
       const pollInterval = setInterval(async () => {
         attempts++;
+    
+        console.log(`🔍 Polling status for @${username} (${attempts}/${maxAttempts})`);
     
         try {
           const response = await fetch(`${API_BASE_URL}/api/chatid/username/${username}`);
@@ -1561,15 +1562,21 @@
     
               showToast(`✅ Data untuk @${username} berhasil diambil!`, 'success');
             }
+    
+            return;
           }
     
           if (attempts >= maxAttempts) {
             clearInterval(pollInterval);
-            showToast(`⚠️ Gagal mengambil data untuk @${username}`, 'error');
+            showToast(`⚠️ Timeout mengambil data untuk @${username}`, 'error');
           }
     
         } catch (error) {
           console.error('Polling error:', error);
+          if (attempts >= maxAttempts) {
+            clearInterval(pollInterval);
+            showToast(`⚠️ Gagal mengambil data untuk @${username}`, 'error');
+          }
         }
       }, 2000); // Poll setiap 2 detik
     }
