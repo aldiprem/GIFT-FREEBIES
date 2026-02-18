@@ -10,7 +10,8 @@ from utils import log_info, log_error, get_jakarta_time
 import pytz
 import random
 import string
-import asyncio
+import subprocess
+import sys
 
 app = Flask(__name__)
 
@@ -71,7 +72,7 @@ def calculate_end_time(duration_value, duration_unit):
     elif duration_unit == 'months':
         end_time = now + timedelta(days=duration_value * 30)
     else:
-        end_time = now + timedelta(hours=24)  # Default 24 jam
+        end_time = now + timedelta(hours=24)
     
     return end_time.strftime('%Y-%m-%d %H:%M:%S')
 
@@ -114,7 +115,6 @@ def index():
 
 # ==================== USERS ENDPOINTS ====================
 
-# Get all users
 @app.route('/api/users', methods=['GET'])
 def get_all_users():
     """Get all users with pagination"""
@@ -124,7 +124,6 @@ def get_all_users():
         
         users = db.get_all_users(limit=limit, offset=offset)
         
-        # Add avatar URL
         for user in users:
             user['avatar'] = generate_avatar_url(user['fullname'])
         
@@ -140,7 +139,6 @@ def get_all_users():
         log_error(f"Error in get_all_users: {e}")
         return jsonify({'error': str(e)}), 500
 
-# Get user by ID
 @app.route('/api/users/<int:user_id>', methods=['GET'])
 def get_user(user_id):
     """Get user by ID"""
@@ -163,7 +161,6 @@ def get_user(user_id):
         log_error(f"Error in get_user: {e}")
         return jsonify({'error': str(e)}), 500
 
-# Get user by username
 @app.route('/api/users/username/<username>', methods=['GET'])
 def get_user_by_username(username):
     """Get user by username"""
@@ -186,7 +183,6 @@ def get_user_by_username(username):
         log_error(f"Error in get_user_by_username: {e}")
         return jsonify({'error': str(e)}), 500
 
-# Create or update user
 @app.route('/api/users', methods=['POST'])
 def create_user():
     """Create new user or update existing"""
@@ -194,7 +190,6 @@ def create_user():
         data = request.json
         log_info(f"Received user data: {data}")
         
-        # Required fields
         required_fields = ['user_id', 'fullname']
         for field in required_fields:
             if field not in data:
@@ -203,7 +198,6 @@ def create_user():
                     'error': f'Field {field} is required'
                 }), 400
         
-        # Add user to database
         success = db.add_user(
             user_id=data['user_id'],
             fullname=data['fullname'],
@@ -215,7 +209,6 @@ def create_user():
         )
         
         if success:
-            # Get the updated user
             user = db.get_user(data['user_id'])
             if user:
                 user['avatar'] = generate_avatar_url(user['fullname'])
@@ -235,10 +228,9 @@ def create_user():
         log_error(f"Error in create_user: {e}")
         return jsonify({'error': str(e)}), 500
 
-# Update user stats
 @app.route('/api/users/<int:user_id>/stats', methods=['PUT'])
 def update_user_stats(user_id):
-    """Update user statistics (participations/wins)"""
+    """Update user statistics"""
     try:
         data = request.json
         participated = data.get('participated', False)
@@ -263,7 +255,6 @@ def update_user_stats(user_id):
         log_error(f"Error in update_user_stats: {e}")
         return jsonify({'error': str(e)}), 500
 
-# Search users
 @app.route('/api/users/search', methods=['GET'])
 def search_users():
     """Search users by name or username"""
@@ -277,7 +268,6 @@ def search_users():
         
         users = db.search_users(query)
         
-        # Add avatar URL
         for user in users:
             user['avatar'] = generate_avatar_url(user['fullname'])
         
@@ -292,7 +282,6 @@ def search_users():
         log_error(f"Error in search_users: {e}")
         return jsonify({'error': str(e)}), 500
 
-# Get total users count
 @app.route('/api/users/count', methods=['GET'])
 def get_user_count():
     """Get total number of users"""
@@ -309,7 +298,6 @@ def get_user_count():
         log_error(f"Error in get_user_count: {e}")
         return jsonify({'error': str(e)}), 500
 
-# Get active users count
 @app.route('/api/users/active', methods=['GET'])
 def get_active_users():
     """Get number of active users in last X days"""
@@ -328,7 +316,6 @@ def get_active_users():
         log_error(f"Error in get_active_users: {e}")
         return jsonify({'error': str(e)}), 500
 
-# Get top users by participations
 @app.route('/api/users/top', methods=['GET'])
 def get_top_users():
     """Get top users by total participations"""
@@ -369,7 +356,6 @@ def get_top_users():
 
 # ==================== GIVEAWAY ENDPOINTS ====================
 
-# Create new giveaway
 @app.route('/api/giveaways', methods=['POST'])
 def create_giveaway():
     """Create new giveaway"""
@@ -377,7 +363,6 @@ def create_giveaway():
         data = request.json
         log_info(f"Received giveaway data: {data}")
         
-        # Required fields
         required_fields = ['creator_user_id', 'prizes', 'giveaway_text']
         for field in required_fields:
             if field not in data:
@@ -386,35 +371,30 @@ def create_giveaway():
                     'error': f'Field {field} is required'
                 }), 400
         
-        # Generate giveaway ID
         giveaway_id = generate_giveaway_id()
         
-        # Calculate end time
         end_time = None
         if data.get('duration_type') == 'duration':
             duration_value = data.get('duration_value', 24)
             duration_unit = data.get('duration_unit', 'hours')
             end_time = calculate_end_time(duration_value, duration_unit)
         elif data.get('duration_type') == 'date' and data.get('end_date'):
-            # Convert from datetime-local format
             end_date_str = data.get('end_date').replace('T', ' ')
             if ':' in end_date_str and end_date_str.count(':') == 1:
                 end_date_str += ':00'
             end_time = end_date_str
         
-        # Add creator user if not exists
         db.add_user(
             user_id=data['creator_user_id'],
             fullname=data.get('fullname', 'Unknown'),
             username=data.get('username')
         )
         
-        # Create giveaway in database
         success = db.create_giveaway(
             giveaway_id=giveaway_id,
             creator_user_id=data['creator_user_id'],
-            prizes=data['prizes'],  # List of prizes
-            requirements=data.get('requirements', []),  # List of requirements
+            prizes=data['prizes'],
+            requirements=data.get('requirements', []),
             giveaway_text=data['giveaway_text'],
             duration_type=data.get('duration_type', 'duration'),
             duration_value=data.get('duration_value'),
@@ -425,7 +405,6 @@ def create_giveaway():
         )
         
         if success:
-            # Generate direct link
             direct_link = f"https://aldiprem.github.io/giveaway/?id={giveaway_id}"
             
             return jsonify({
@@ -445,7 +424,6 @@ def create_giveaway():
         log_error(f"Error in create_giveaway: {e}")
         return jsonify({'error': str(e)}), 500
 
-# Get all giveaways
 @app.route('/api/giveaways', methods=['GET'])
 def get_all_giveaways():
     """Get all giveaways with optional filters"""
@@ -469,7 +447,6 @@ def get_all_giveaways():
         log_error(f"Error in get_all_giveaways: {e}")
         return jsonify({'error': str(e)}), 500
 
-# Get giveaway by ID
 @app.route('/api/giveaways/<giveaway_id>', methods=['GET'])
 def get_giveaway(giveaway_id):
     """Get giveaway by ID"""
@@ -477,7 +454,6 @@ def get_giveaway(giveaway_id):
         giveaway = db.get_giveaway(giveaway_id)
         
         if giveaway:
-            # Get creator info
             creator = db.get_user(giveaway['creator_user_id'])
             if creator:
                 giveaway['creator'] = {
@@ -500,7 +476,6 @@ def get_giveaway(giveaway_id):
         log_error(f"Error in get_giveaway: {e}")
         return jsonify({'error': str(e)}), 500
 
-# Get giveaways by user
 @app.route('/api/giveaways/user/<int:user_id>', methods=['GET'])
 def get_user_giveaways(user_id):
     """Get all giveaways created by a specific user"""
@@ -523,14 +498,12 @@ def get_user_giveaways(user_id):
         log_error(f"Error in get_user_giveaways: {e}")
         return jsonify({'error': str(e)}), 500
 
-# Update giveaway
 @app.route('/api/giveaways/<giveaway_id>', methods=['PUT'])
 def update_giveaway(giveaway_id):
     """Update giveaway details"""
     try:
         data = request.json
         
-        # Check if giveaway exists
         existing = db.get_giveaway(giveaway_id)
         if not existing:
             return jsonify({
@@ -538,7 +511,6 @@ def update_giveaway(giveaway_id):
                 'error': 'Giveaway not found'
             }), 404
         
-        # Update giveaway
         success = db.update_giveaway(giveaway_id, data)
         
         if success:
@@ -558,12 +530,10 @@ def update_giveaway(giveaway_id):
         log_error(f"Error in update_giveaway: {e}")
         return jsonify({'error': str(e)}), 500
 
-# Delete giveaway
 @app.route('/api/giveaways/<giveaway_id>', methods=['DELETE'])
 def delete_giveaway(giveaway_id):
     """Delete giveaway (soft delete)"""
     try:
-        # Check if giveaway exists
         existing = db.get_giveaway(giveaway_id)
         if not existing:
             return jsonify({
@@ -571,7 +541,6 @@ def delete_giveaway(giveaway_id):
                 'error': 'Giveaway not found'
             }), 404
         
-        # Delete giveaway
         success = db.delete_giveaway(giveaway_id)
         
         if success:
@@ -589,7 +558,6 @@ def delete_giveaway(giveaway_id):
         log_error(f"Error in delete_giveaway: {e}")
         return jsonify({'error': str(e)}), 500
 
-# Search giveaways
 @app.route('/api/giveaways/search', methods=['GET'])
 def search_giveaways():
     """Search giveaways by prize or text"""
@@ -616,7 +584,6 @@ def search_giveaways():
         log_error(f"Error in search_giveaways: {e}")
         return jsonify({'error': str(e)}), 500
 
-# Get giveaway statistics
 @app.route('/api/giveaways/stats', methods=['GET'])
 def get_giveaway_stats():
     """Get giveaway statistics"""
@@ -638,7 +605,6 @@ def get_giveaway_stats():
 def health_check():
     """Health check endpoint"""
     try:
-        # Test database connection
         user_count = db.get_user_count()
         giveaway_count = db.get_giveaway_count()
         
@@ -666,6 +632,7 @@ def health_check():
             'timestamp': get_jakarta_time()
         }), 500
 
+# ==================== CHATID ENDPOINTS ====================
 
 @chatid_bp.route('/api/chatid', methods=['POST'])
 def save_chat_data():
@@ -683,7 +650,6 @@ def save_chat_data():
         now = get_jakarta_time()
         cursor = db.get_cursor()
         
-        # Simpan data chat
         cursor.execute("""
         INSERT INTO chatid_data (
             chat_id, chat_title, chat_username, chat_type, invite_link,
@@ -720,10 +686,8 @@ def save_chat_data():
             now
         ))
         
-        # Simpan data admin jika ada
         admins = data.get('admins', [])
         if admins:
-            # Hapus admin lama
             cursor.execute("DELETE FROM chat_admins WHERE chat_id = ?", (chat_id,))
             
             for admin in admins:
@@ -766,7 +730,6 @@ def get_chat_data(chat_id):
         
         result = dict(chat_data)
         
-        # Ambil data admin
         cursor.execute("""
         SELECT user_id, username, fullname, role 
         FROM chat_admins WHERE chat_id = ?
@@ -798,7 +761,6 @@ def get_chat_by_username(username):
         
         result = dict(chat_data)
         
-        # Ambil data admin
         cursor.execute("""
         SELECT user_id, username, fullname, role 
         FROM chat_admins WHERE chat_id = ?
@@ -814,98 +776,134 @@ def get_chat_by_username(username):
         log_error(f"Error getting chat by username: {e}")
         return jsonify({'error': str(e)}), 500
 
-# app.py - Tambah di bagian CHATID ENDPOINTS
-
-@chatid_bp.route('/api/chatid/fetch/<username>', methods=['GET'])
-def fetch_chat_from_bot(username):
-    """Memanggil bot untuk mengambil data channel/group secara langsung"""
-    try:
-        clean_username = username.replace('@', '')
-        
-        log_info(f"📡 Fetch requested for @{clean_username}")
-        
-        # Panggil fungsi sync dari bot (import module)
-        try:
-            # Import di sini supaya tidak circular import
-            import importlib.util
-            import sys
-            
-            # Load bot module
-            spec = importlib.util.spec_from_file_location("bot_module", "b.py")
-            bot_module = importlib.util.module_from_spec(spec)
-            sys.modules["bot_module"] = bot_module
-            spec.loader.exec_module(bot_module)
-            
-            # Panggil fungsi sync
-            result = asyncio.run(bot_module.sync_channel_data(clean_username))
-            
-            if result and result.get('success'):
-                return jsonify({
-                    'success': True,
-                    'message': f'Data untuk @{clean_username} berhasil diambil',
-                    'data': result.get('data')
-                })
-            else:
-                return jsonify({
-                    'success': False,
-                    'error': result.get('error', 'Gagal mengambil data channel')
-                }), 404
-                
-        except Exception as e:
-            log_error(f"Error calling bot sync: {e}")
-            return jsonify({
-                'success': False,
-                'error': f'Gagal memanggil bot: {str(e)}'
-            }), 500
-        
-    except Exception as e:
-        log_error(f"Error fetching chat from bot: {e}")
-        return jsonify({'error': str(e)}), 500
-
-# app.py - Tambahkan di endpoint sync
-
 @chatid_bp.route('/api/chatid/sync/<username>', methods=['POST'])
 def sync_chat_from_bot(username):
-    """Memanggil bot untuk sync data channel/group secara ASYNC"""
+    """Memanggil bot untuk sync data channel/group"""
     try:
         clean_username = username.replace('@', '')
         
-        log_info(f"📡 Async sync requested for @{clean_username}")
+        log_info(f"📡 Sync requested for @{clean_username}")
         
-        # Gunakan subprocess
-        import subprocess
-        import sys
-        import os
-        import random
+        # Cek apakah channel sudah ada
+        cursor = db.get_cursor()
+        cursor.execute("SELECT * FROM chatid_data WHERE chat_username = ?", (clean_username,))
+        existing = cursor.fetchone()
+        cursor.close()
         
-        # Buat script temporary
-        script_content = f"""import asyncio
+        if existing:
+            return jsonify({
+                'success': True,
+                'exists': True,
+                'message': f'Data untuk @{clean_username} sudah ada',
+                'data': dict(existing)
+            })
+        
+        # Buat script sync sederhana
+        script_content = f"""# sync_{clean_username}.py
+import asyncio
 import sys
-import logging
+import os
 sys.path.append('{os.getcwd()}')
+
+from telethon import TelegramClient, functions, types
+import requests
+import logging
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-from b import sync_channel_data
+API_ID = 24576633
+API_HASH = '29931cf620fad738ee7f69442c98e2ee'
+BOT_TOKEN = '8007647651:AAHrzy26yws4DaA3BWweQ8CM-oBxDzD308I'
+API_BASE_URL = 'https://individually-threaded-jokes-letting.trycloudflare.com'
 
-async def run():
+async def sync():
     try:
         logger.info("Starting sync for @{clean_username}")
-        result = await sync_channel_data('{clean_username}')
-        logger.info(f"Sync result: {{result}}")
+        
+        # Buat client baru (session terpisah)
+        client = TelegramClient('sync_session', API_ID, API_HASH)
+        await client.start(bot_token=BOT_TOKEN)
+        
+        # Dapatkan entity
+        entity = await client.get_entity('{clean_username}')
+        chat_id = entity.id
+        chat = await client.get_entity(chat_id)
+        
+        # Tentukan tipe
+        if isinstance(chat, types.Channel):
+            chat_type = "supergroup" if getattr(chat, "megagroup", False) else "channel"
+        else:
+            chat_type = "group"
+        
+        # Ambil data
+        c_title = getattr(chat, "title", "-")
+        c_username = getattr(chat, "username", None)
+        
+        # Dapatkan invite link
+        invite_link = None
+        try:
+            if chat_type in ["channel", "supergroup"]:
+                full = await client(functions.channels.GetFullChannelRequest(chat_id))
+                invite = getattr(full.full_chat, "exported_invite", None)
+                if invite:
+                    invite_link = invite.link
+        except:
+            pass
+        
+        # Dapatkan participants count
+        participants_count = 0
+        try:
+            if chat_type in ["channel", "supergroup"]:
+                full = await client(functions.channels.GetFullChannelRequest(chat_id))
+                participants_count = getattr(full.full_chat, "participants_count", 0)
+        except:
+            pass
+        
+        # Payload
+        payload = {{
+            'chat_id': chat_id,
+            'chat_title': c_title,
+            'chat_username': c_username,
+            'chat_type': chat_type,
+            'invite_link': invite_link,
+            'admin_count': 0,
+            'participants_count': participants_count,
+            'is_verified': getattr(chat, 'verified', False),
+            'is_scam': getattr(chat, 'scam', False),
+            'is_fake': getattr(chat, 'fake', False),
+            'slow_mode_enabled': False,
+            'slow_mode_seconds': 0,
+            'admins': []
+        }}
+        
+        # Kirim ke API
+        response = requests.post(f"{{API_BASE_URL}}/api/chatid", json=payload, timeout=10)
+        
+        if response.status_code == 200:
+            logger.info(f"✅ Data saved for @{clean_username}")
+            
+            # Buat file marker
+            with open('/tmp/sync_{clean_username}.done', 'w') as f:
+                import json
+                f.write(json.dumps(payload))
+        else:
+            logger.error(f"API error: {{response.text}}")
+        
+        await client.disconnect()
+        
     except Exception as e:
-        logger.error(f"Sync failed: {{e}}")
+        logger.error(f"Error: {{e}}")
 
 if __name__ == '__main__':
-    asyncio.run(run())
+    asyncio.run(sync())
 """
         
-        script_path = f"/tmp/sync_{clean_username}_{random.randint(1000,9999)}.py"
+        script_path = f"/tmp/sync_{clean_username}.py"
         with open(script_path, 'w') as f:
             f.write(script_content)
         
-        log_info(f"Created temp script: {script_path}")
+        log_info(f"Created sync script: {script_path}")
         
         # Jalankan di background
         subprocess.Popen([sys.executable, script_path], 
@@ -919,7 +917,7 @@ if __name__ == '__main__':
         }), 202
         
     except Exception as e:
-        log_error(f"Error starting async sync: {e}")
+        log_error(f"Error starting sync: {e}")
         return jsonify({
             'success': False,
             'error': f'Gagal memulai sinkronisasi: {str(e)}'
@@ -927,7 +925,7 @@ if __name__ == '__main__':
 
 @chatid_bp.route('/api/chatid/check/<username>', methods=['GET'])
 def check_chat_exists(username):
-    """Cek apakah chat sudah ada di database, jika tidak langsung panggil sync"""
+    """Cek apakah chat sudah ada di database"""
     try:
         clean_username = username.replace('@', '')
         
@@ -937,53 +935,41 @@ def check_chat_exists(username):
         cursor.close()
         
         if chat_data:
-            # Data sudah ada
             return jsonify({
                 'success': True,
                 'exists': True,
                 'data': dict(chat_data)
             })
-        else:
-            # Data belum ada, panggil sync
-            log_info(f"📡 Data for @{clean_username} not found, triggering auto-sync")
-            
-            # Panggil endpoint sync
-            try:
-                # Import di sini
-                import requests
-                
-                # Panggil endpoint sync
-                sync_response = requests.post(
-                    f"http://{Config.HOST}:{Config.PORT}/api/chatid/sync/{clean_username}",
-                    timeout=1  # Timeout cepat karena async
-                )
-                
-                return jsonify({
-                    'success': False,
-                    'exists': False,
-                    'message': f'Data untuk @{clean_username} tidak ditemukan. Sedang mengambil data dari Telegram...',
-                    'sync_started': True
-                }), 404
-                
-            except Exception as e:
-                log_error(f"Error triggering sync: {e}")
-                return jsonify({
-                    'success': False,
-                    'exists': False,
-                    'message': f'Data untuk @{clean_username} tidak ditemukan',
-                    'sync_started': False
-                }), 404
+        
+        # Cek apakah ada file marker
+        import os
+        marker = f"/tmp/sync_{clean_username}.done"
+        if os.path.exists(marker):
+            with open(marker, 'r') as f:
+                data = json.loads(f.read())
+            return jsonify({
+                'success': True,
+                'exists': True,
+                'data': data
+            })
+        
+        return jsonify({
+            'success': False,
+            'exists': False,
+            'message': f'Data untuk @{clean_username} tidak ditemukan'
+        }), 404
         
     except Exception as e:
         log_error(f"Error checking chat: {e}")
         return jsonify({'error': str(e)}), 500
 
-@chatid_bp.route('/api/chatid/sync-status/<username>', methods=['GET'])
+@chatid_bp.route('/api/chatid/status/<username>', methods=['GET'])
 def check_sync_status(username):
     """Cek status sinkronisasi"""
     try:
         clean_username = username.replace('@', '')
         
+        # Cek di database
         cursor = db.get_cursor()
         cursor.execute("SELECT * FROM chatid_data WHERE chat_username = ?", (clean_username,))
         chat_data = cursor.fetchone()
@@ -995,12 +981,24 @@ def check_sync_status(username):
                 'completed': True,
                 'data': dict(chat_data)
             })
-        else:
+        
+        # Cek file marker
+        import os
+        marker = f"/tmp/sync_{clean_username}.done"
+        if os.path.exists(marker):
+            with open(marker, 'r') as f:
+                data = json.loads(f.read())
             return jsonify({
                 'success': True,
-                'completed': False,
-                'message': 'Sinkronisasi masih dalam proses...'
+                'completed': True,
+                'data': data
             })
+        
+        return jsonify({
+            'success': True,
+            'completed': False,
+            'message': 'Sinkronisasi masih dalam proses...'
+        })
         
     except Exception as e:
         log_error(f"Error checking sync status: {e}")
@@ -1035,6 +1033,9 @@ def search_chats():
         log_error(f"Error searching chats: {e}")
         return jsonify({'error': str(e)}), 500
 
+# Hapus endpoint fetch yang tidak digunakan
+# @chatid_bp.route('/api/chatid/fetch/<username>', methods=['GET']) -> HAPUS
+
 app.register_blueprint(chatid_bp)
 
 # ==================== MAIN ====================
@@ -1049,7 +1050,6 @@ if __name__ == "__main__":
     ╚══════════════════════════════════════════╝
     """)
     
-    # Cek port availability
     port = Config.PORT
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     result = sock.connect_ex(('127.0.0.1', port))
