@@ -862,7 +862,7 @@ def fetch_chat_from_bot(username):
         log_error(f"Error fetching chat from bot: {e}")
         return jsonify({'error': str(e)}), 500
 
-# app.py - Tambahkan di bagian CHATID ENDPOINTS
+# app.py - Tambahkan di endpoint sync
 
 @chatid_bp.route('/api/chatid/sync/<username>', methods=['POST'])
 def sync_chat_from_bot(username):
@@ -872,48 +872,51 @@ def sync_chat_from_bot(username):
         
         log_info(f"📡 Async sync requested for @{clean_username}")
         
-        # Import bot module
-        import importlib.util
+        # Gunakan subprocess
+        import subprocess
         import sys
-        import asyncio
-        import threading
+        import os
+        import random
         
-        # Load bot module
-        spec = importlib.util.spec_from_file_location("bot_module", "b.py")
-        bot_module = importlib.util.module_from_spec(spec)
-        sys.modules["bot_module"] = bot_module
-        spec.loader.exec_module(bot_module)
+        # Buat script temporary
+        script_content = f"""import asyncio
+import sys
+import logging
+sys.path.append('{os.getcwd()}')
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+from b import sync_channel_data
+
+async def run():
+    try:
+        logger.info("Starting sync for @{clean_username}")
+        result = await sync_channel_data('{clean_username}')
+        logger.info(f"Sync result: {{result}}")
+    except Exception as e:
+        logger.error(f"Sync failed: {{e}}")
+
+if __name__ == '__main__':
+    asyncio.run(run())
+"""
         
-        # Fungsi untuk menjalankan async task di thread terpisah
-        def run_sync():
-            try:
-                # Buat event loop baru untuk thread ini
-                loop = asyncio.new_event_loop()
-                asyncio.set_event_loop(loop)
-                
-                # Jalankan sync
-                result = loop.run_until_complete(bot_module.sync_channel_data(clean_username))
-                
-                if result and result.get('success'):
-                    log_info(f"✅ Async sync completed for @{clean_username}")
-                else:
-                    log_error(f"❌ Async sync failed for @{clean_username}: {result.get('error')}")
-                
-                loop.close()
-            except Exception as e:
-                log_error(f"Error in async sync thread: {e}")
+        script_path = f"/tmp/sync_{clean_username}_{random.randint(1000,9999)}.py"
+        with open(script_path, 'w') as f:
+            f.write(script_content)
         
-        # Jalankan di thread terpisah agar tidak blocking
-        thread = threading.Thread(target=run_sync)
-        thread.daemon = True
-        thread.start()
+        log_info(f"Created temp script: {script_path}")
         
-        # Langsung return response bahwa proses sedang berjalan
+        # Jalankan di background
+        subprocess.Popen([sys.executable, script_path], 
+                        stdout=subprocess.DEVNULL, 
+                        stderr=subprocess.DEVNULL)
+        
         return jsonify({
             'success': True,
-            'message': f'Proses sinkronisasi untuk @{clean_username} dimulai. Silakan tunggu beberapa saat.',
+            'message': f'Proses sinkronisasi untuk @{clean_username} dimulai',
             'status': 'processing'
-        }), 202  # 202 Accepted
+        }), 202
         
     except Exception as e:
         log_error(f"Error starting async sync: {e}")
