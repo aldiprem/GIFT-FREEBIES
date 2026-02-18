@@ -1686,7 +1686,26 @@
                     is_verified: result.is_verified,
                     displayName: displayName
                 };
+
+                // Cek apakah user adalah admin di channel ini
+                if (telegramUser && telegramUser.id) {
+                  const isAdmin = await checkUserIsAdmin(cleanChannel, telegramUser.id);
                 
+                  if (!isAdmin) {
+                    hapticNotification('error');
+                
+                    // Tampilkan notifikasi bahwa user harus menjadi admin
+                    if (window.Telegram?.WebApp) {
+                      window.Telegram.WebApp.showAlert(`❌ Anda harus menjadi admin di ${cleanChannel} untuk menambahkannya ke giveaway.`);
+                    } else {
+                      alert(`❌ Anda harus menjadi admin di ${cleanChannel} untuk menambahkannya ke giveaway.`);
+                    }
+                
+                    invalidChannels.push(`${cleanChannel} (bukan admin)`);
+                    continue;
+                  }
+                }
+
                 if (!channels.some(c => c.chat_id === result.chat_id)) {
                     channels.push(channelData);
                     validChannels.push(displayName);
@@ -1814,26 +1833,37 @@
           const channelId = channel.replace('@', '');
           html += `<span class="channel-tag" data-channel-id="${channelId}">
                     <span class="prize-number" style="background: ${bgColor};">${index + 1}</span>
-                    <span class="channel-name-text">${escapeHtml(channel)}</span>
+                    <span class="channel-name-text" title="${escapeHtml(channel)}">${escapeHtml(channel)}</span>
                     <span class="tag-remove" data-channel="${channelId}">×</span>
                 </span>`;
         } else {
           const channelId = channel.chat_id;
-          const typeIcon = channel.type === 'channel' ? '📢' : '👥';
-          const verifiedIcon = channel.is_verified ? ' ✅' : '';
+          const chatIdFormatted = channelId.toString().startsWith('-100') ? channelId.toString() : `-100${Math.abs(channelId)}`;
     
-          // Buat display name dengan format yang lebih rapi
+          // Format jumlah anggota dengan titik
+          let membersFormatted = '0';
+          if (channel.participants_count) {
+            membersFormatted = channel.participants_count.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+          }
+    
+          // Username tanpa @
+          const username = channel.username ? channel.username.replace('@', '') : '-';
+    
+          // Nama channel tanpa emoji di awal
           let displayName = channel.title || '';
     
           html += `<span class="channel-tag" data-channel-id="${channelId}">
                     <span class="prize-number" style="background: ${bgColor};">${index + 1}</span>
                     <div class="channel-info">
                         <span class="channel-name">
-                            <span class="channel-type-icon">${typeIcon}</span>
                             <span class="channel-name-text" title="${escapeHtml(displayName)}">${escapeHtml(displayName)}</span>
-                            ${verifiedIcon}
+                            ${channel.is_verified ? '<span class="verified-badge">✅</span>' : ''}
                         </span>
-                        ${channel.participants_count ? `<span class="channel-members">👥 ${channel.participants_count}</span>` : ''}
+                        <span class="channel-details">
+                            <span class="channel-id">${chatIdFormatted}</span>
+                            <span class="channel-members">👥 ${membersFormatted}</span>
+                            <span class="channel-username">@${username}</span>
+                        </span>
                     </div>
                     <span class="tag-remove" data-channel="${channelId}">×</span>
                 </span>`;
@@ -1896,6 +1926,28 @@
         
         updateChannelsTags();
         hapticNotification('success');
+    }
+
+    // ==================== FUNGSI CEK ADMIN ====================
+    async function checkUserIsAdmin(username, userId) {
+      try {
+        const cleanUsername = username.replace('@', '');
+        const response = await fetch(`${API_BASE_URL}/api/chatid/username/${cleanUsername}`);
+    
+        if (!response.ok) return false;
+    
+        const data = await response.json();
+    
+        // Cek apakah user ada di daftar admin
+        if (data.admins && Array.isArray(data.admins)) {
+          return data.admins.some(admin => admin.user_id == userId);
+        }
+    
+        return false;
+      } catch (error) {
+        console.error('Error checking admin status:', error);
+        return false;
+      }
     }
 
     // ==================== FUNGSI INIT ====================
