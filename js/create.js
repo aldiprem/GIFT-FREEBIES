@@ -1802,69 +1802,72 @@
 
     // ==================== FUNGSI UPDATE CHANNELS TAGS ====================
     function updateChannelsTags() {
-        if (!elements.channelTags) return;
-        
-        console.log('Updating channel tags. Channels:', channels);
-        
-        let html = '';
-        channels.forEach((channel, index) => {
-            const bgColor = getRandomColor(index);
-            
-            if (typeof channel === 'string') {
-                const channelId = channel.replace('@', '');
-                html += `<span class="channel-tag" data-channel-id="${channelId}">
+      if (!elements.channelTags) return;
+    
+      console.log('Updating channel tags. Channels:', channels);
+    
+      let html = '';
+      channels.forEach((channel, index) => {
+        const bgColor = getRandomColor(index);
+    
+        if (typeof channel === 'string') {
+          const channelId = channel.replace('@', '');
+          html += `<span class="channel-tag" data-channel-id="${channelId}">
                     <span class="prize-number" style="background: ${bgColor};">${index + 1}</span>
-                    ${escapeHtml(channel)}
+                    <span class="channel-name-text">${escapeHtml(channel)}</span>
                     <span class="tag-remove" data-channel="${channelId}">×</span>
                 </span>`;
-            } else {
-                const channelId = channel.chat_id;
-                const typeIcon = channel.type === 'channel' ? '📢' : '👥';
-                const verifiedIcon = channel.is_verified ? ' ✅' : '';
-                const displayName = channel.displayName || `${typeIcon} ${channel.title}${verifiedIcon}`;
-                
-                html += `<span class="channel-tag" data-channel-id="${channelId}">
+        } else {
+          const channelId = channel.chat_id;
+          const typeIcon = channel.type === 'channel' ? '📢' : '👥';
+          const verifiedIcon = channel.is_verified ? ' ✅' : '';
+    
+          // Buat display name dengan format yang lebih rapi
+          let displayName = channel.title || '';
+    
+          html += `<span class="channel-tag" data-channel-id="${channelId}">
                     <span class="prize-number" style="background: ${bgColor};">${index + 1}</span>
                     <div class="channel-info">
-                        <span class="channel-name">${displayName}</span>
-                        <span class="channel-details">
-                            <span class="channel-id">${escapeHtml(channelId)}</span>
-                            ${channel.participants_count ? `<span class="channel-members">👥 ${channel.participants_count}</span>` : ''}
+                        <span class="channel-name">
+                            <span class="channel-type-icon">${typeIcon}</span>
+                            <span class="channel-name-text" title="${escapeHtml(displayName)}">${escapeHtml(displayName)}</span>
+                            ${verifiedIcon}
                         </span>
+                        ${channel.participants_count ? `<span class="channel-members">👥 ${channel.participants_count}</span>` : ''}
                     </div>
                     <span class="tag-remove" data-channel="${channelId}">×</span>
                 </span>`;
-            }
+        }
+      });
+    
+      elements.channelTags.innerHTML = html;
+    
+      const removeButtons = elements.channelTags.querySelectorAll('.tag-remove');
+      console.log(`Added ${removeButtons.length} remove buttons`);
+    
+      // Re-attach direct event listeners to new remove buttons
+      removeButtons.forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+    
+          hapticImpact('light');
+    
+          const channelId = btn.dataset.channel;
+          console.log('🗑️ Direct remove click after update:', channelId);
+    
+          if (channelId) {
+            removeChannel(channelId);
+          }
         });
-        
-        elements.channelTags.innerHTML = html;
-        
-        const removeButtons = elements.channelTags.querySelectorAll('.tag-remove');
-        console.log(`Added ${removeButtons.length} remove buttons`);
-        
-        // Re-attach direct event listeners to new remove buttons
-        removeButtons.forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                
-                hapticImpact('light');
-                
-                const channelId = btn.dataset.channel;
-                console.log('🗑️ Direct remove click after update:', channelId);
-                
-                if (channelId) {
-                    removeChannel(channelId);
-                }
-            });
-        });
-        
-        setTimeout(() => {
-            const scrollContainer = document.querySelector('.channel-tags-scroll');
-            if (scrollContainer) {
-                scrollContainer.scrollLeft = scrollContainer.scrollWidth;
-            }
-        }, 50);
+      });
+    
+      setTimeout(() => {
+        const scrollContainer = document.querySelector('.channel-tags-scroll');
+        if (scrollContainer) {
+          scrollContainer.scrollLeft = scrollContainer.scrollWidth;
+        }
+      }, 50);
     }
 
     // ==================== FUNGSI REMOVE CHANNEL ====================
