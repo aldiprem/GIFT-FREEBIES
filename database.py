@@ -244,7 +244,42 @@ class Database:
             
         except Exception as e:
             log_error(f"Error initializing database: {e}")
-    
+
+    def reset_database(self):
+        """
+        Mereset database dengan menghapus file dan membuat ulang
+        """
+        try:
+            # Tutup koneksi yang ada
+            if self.conn:
+                self.conn.close()
+                self.conn = None
+            
+            log_info("🗑️  Mereset database...")
+            
+            # Hapus file database
+            import os
+            if os.path.exists(self.db_path):
+                os.remove(self.db_path)
+                log_info(f"✅ File database dihapus: {self.db_path}")
+            
+            # Inisialisasi ulang database (membuat tabel baru)
+            self.init_db()
+            
+            # Verifikasi
+            cursor = self.get_cursor()
+            cursor.execute("SELECT name FROM sqlite_master WHERE type='table'")
+            tables = cursor.fetchall()
+            cursor.close()
+            
+            log_info(f"✅ Database berhasil direset. Tabel yang dibuat: {len(tables)}")
+            
+            return True
+            
+        except Exception as e:
+            log_error(f"❌ Error resetting database: {e}")
+            return False
+
     # ==================== USER METHODS ====================
     
     def add_user(self, user_id, fullname, username=None, phone_number=None,
