@@ -188,6 +188,20 @@ class Database:
             )
             """)
             
+            cursor.execute("""
+            CREATE TABLE IF NOT EXISTS chat_admins (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                chat_id INTEGER NOT NULL,
+                user_id INTEGER NOT NULL,
+                username TEXT,
+                fullname TEXT,
+                role TEXT DEFAULT 'admin',
+                created_at TEXT,
+                updated_at TEXT,
+                UNIQUE(chat_id, user_id)
+            )
+            """)
+            
             # Index untuk chatid_data
             cursor.execute("""
             CREATE INDEX IF NOT EXISTS idx_chatid_username 
@@ -922,7 +936,188 @@ class Database:
             return {}
         finally:
             cursor.close()
+
+    # ==================== GIVEAWAY METHODS - TAMBAHKAN ====================
     
+    def get_user_giveaways(self, user_id, status='all', limit=50, offset=0):
+        """Mendapatkan semua giveaway yang dibuat oleh user tertentu"""
+        cursor = self.get_cursor()
+        try:
+            if status == 'all':
+                cursor.execute("""
+                SELECT * FROM giveaways 
+                WHERE creator_user_id = ?
+                ORDER BY created_at DESC
+                LIMIT ? OFFSET ?
+                """, (user_id, limit, offset))
+            else:
+                cursor.execute("""
+                SELECT * FROM giveaways 
+                WHERE creator_user_id = ? AND status = ?
+                ORDER BY created_at DESC
+                LIMIT ? OFFSET ?
+                """, (user_id, status, limit, offset))
+            
+            giveaways = cursor.fetchall()
+            result = []
+            for g in giveaways:
+                g_dict = dict(g)
+                # Parse JSON fields
+                for field in ['prizes', 'channels', 'links', 'requirements']:
+                    if g_dict.get(field):
+                        try:
+                            g_dict[field] = json.loads(g_dict[field])
+                        except:
+                            g_dict[field] = []
+                result.append(g_dict)
+            return result
+            
+        except Exception as e:
+            log_error(f"Error getting user giveaways: {e}")
+            return []
+        finally:
+            cursor.close()
+    
+    def get_giveaway_count(self):
+        """Mendapatkan total jumlah giveaway"""
+        cursor = self.get_cursor()
+        try:
+            cursor.execute("SELECT COUNT(*) FROM giveaways")
+            count = cursor.fetchone()[0]
+            return count
+        except Exception as e:
+            log_error(f"Error getting giveaway count: {e}")
+            return 0
+        finally:
+            cursor.close()
+    
+    def get_all_giveaways(self, status='active', limit=50, offset=0):
+        """Mendapatkan semua giveaway dengan filter status"""
+        cursor = self.get_cursor()
+        try:
+            if status == 'all':
+                cursor.execute("""
+                SELECT * FROM giveaways 
+                ORDER BY created_at DESC
+                LIMIT ? OFFSET ?
+                """, (limit, offset))
+            else:
+                cursor.execute("""
+                SELECT * FROM giveaways 
+                WHERE status = ?
+                ORDER BY created_at DESC
+                LIMIT ? OFFSET ?
+                """, (status, limit, offset))
+            
+            giveaways = cursor.fetchall()
+            result = []
+            for g in giveaways:
+                g_dict = dict(g)
+                for field in ['prizes', 'channels', 'links', 'requirements']:
+                    if g_dict.get(field):
+                        try:
+                            g_dict[field] = json.loads(g_dict[field])
+                        except:
+                            g_dict[field] = []
+                result.append(g_dict)
+            return result
+            
+        except Exception as e:
+            log_error(f"Error getting all giveaways: {e}")
+            return []
+        finally:
+            cursor.close()
+    
+    def update_giveaway(self, giveaway_id, data):
+        """Update giveaway"""
+        cursor = self.get_cursor()
+        try:
+            now = get_jakarta_time()
+            
+            # Build update query
+            update_fields = []
+            params = []
+            
+            if 'prizes' in data:
+                update_fields.append("prizes = ?")
+                params.append(json.dumps(data['prizes']))
+            
+            if 'requirements' in data:
+                update_fields.append("requirements = ?")
+                params.append(json.dumps(data['requirements']))
+            
+            if 'giveaway_text' in data:
+                update_fields.append("giveaway_text = ?")
+                params.append(data['giveaway_text'])
+            
+            if 'status' in data:
+                update_fields.append("status = ?")
+                params.append(data['status'])
+            
+            if 'captcha_enabled' in data:
+                update_fields.append("captcha_enabled = ?")
+                params.append(data['captcha_enabled'])
+            
+            update_fields.append("updated_at = ?")
+            params.append(now)
+            
+            if not update_fields:
+                return True
+            
+            query = f"""
+            UPDATE giveaways 
+            SET {', '.join(update_fields)}
+            WHERE giveaway_id = ?
+            """
+            params.append(giveaway_id)
+            
+            cursor.execute(query, params)
+            self.conn.commit()
+            
+            log_info(f"Giveaway {giveaway_id} updated")
+            return True
+            
+        except Exception as e:
+            log_error(f"Error updating giveaway: {e}")
+            return False
+        finally:
+            cursor.close()
+    
+    def delete_giveaway(self, giveaway_id):
+        """Soft delete giveaway"""
+        return self.update_giveaway(giveaway_id, {'status': 'deleted'})
+    
+    def search_giveaways(self, query, limit=20):
+        """Mencari giveaway berdasarkan prize atau text"""
+        cursor = self.get_cursor()
+        try:
+            search_term = f"%{query}%"
+            cursor.execute("""
+            SELECT * FROM giveaways 
+            WHERE prizes LIKE ? OR giveaway_text LIKE ?
+            ORDER BY created_at DESC
+            LIMIT ?
+            """, (search_term, search_term, limit))
+            
+            giveaways = cursor.fetchall()
+            result = []
+            for g in giveaways:
+                g_dict = dict(g)
+                for field in ['prizes', 'channels', 'links', 'requirements']:
+                    if g_dict.get(field):
+                        try:
+                            g_dict[field] = json.loads(g_dict[field])
+                        except:
+                            g_dict[field] = []
+                result.append(g_dict)
+            return result
+            
+        except Exception as e:
+            log_error(f"Error searching giveaways: {e}")
+            return []
+        finally:
+            cursor.close()
+
     def close(self):
         """Menutup koneksi database"""
         if self.conn:
