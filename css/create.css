@@ -224,7 +224,7 @@
 }
 
 /* ------------------------------------------------------------------
-   CHANNEL/GROUP INPUT - SAMA PERSIS DENGAN PRIZE (DENGAN ELLIPSIS)
+   CHANNEL/GROUP INPUT - DENGAN 3D DAN ELLIPSIS
    ------------------------------------------------------------------ */
 .channel-input-container {
   background: rgba(10, 20, 30, 0.3);
@@ -279,78 +279,102 @@
   border-radius: 4px;
 }
 
-/* Update style channel tag dengan ELLIPSIS */
+/* Update style channel tag dengan 3D dan ELLIPSIS */
 .channel-tag {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  padding: 6px 12px 6px 8px;
-  background: rgba(0, 136, 255, 0.15);
+  padding: 8px 12px 8px 8px;
+  background: linear-gradient(145deg, rgba(0, 136, 255, 0.2), rgba(0, 68, 136, 0.3));
   backdrop-filter: blur(5px);
   -webkit-backdrop-filter: blur(5px);
-  border: 1px solid rgba(0, 136, 255, 0.3);
+  border: 1px solid rgba(0, 136, 255, 0.4);
   border-radius: 30px;
   color: white;
   font-size: 13px;
   font-weight: 500;
   white-space: nowrap;
   animation: tagAppear 0.3s ease;
-  box-shadow: 0 2px 8px rgba(0, 136, 255, 0.2);
+  box-shadow: 
+    0 8px 16px -4px rgba(0, 0, 0, 0.4),
+    inset 0 1px 2px rgba(255, 255, 255, 0.2),
+    inset 0 -2px 4px rgba(0, 0, 0, 0.3);
   transition: all 0.2s ease;
-  max-width: 280px; /* Batasi lebar maksimum */
+  max-width: 350px;
+  position: relative;
+  transform: translateY(0);
+}
+
+.channel-tag:hover {
+  background: linear-gradient(145deg, rgba(0, 136, 255, 0.3), rgba(0, 68, 136, 0.4));
+  transform: translateY(-2px);
+  box-shadow: 
+    0 12px 20px -6px rgba(0, 136, 255, 0.3),
+    inset 0 1px 2px rgba(255, 255, 255, 0.2),
+    inset 0 -2px 4px rgba(0, 0, 0, 0.3);
 }
 
 .channel-info {
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
-  line-height: 1.3;
-  min-width: 0; /* PENTING: Untuk text-overflow */
-  max-width: 200px; /* Batasi lebar info */
+  line-height: 1.4;
+  min-width: 0;
+  max-width: 250px;
 }
 
 .channel-name {
-  font-size: 13px;
-  font-weight: 600;
-  color: white;
   display: flex;
   align-items: center;
   gap: 4px;
   width: 100%;
-  min-width: 0; /* PENTING: Untuk text-overflow */
+  min-width: 0;
+  margin-bottom: 2px;
 }
 
-/* Text nama channel dengan ellipsis */
+/* Text nama channel dengan ellipsis - TANPA SPASI DI AKHIR */
 .channel-name-text {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 150px; /* Sesuaikan dengan kebutuhan */
+  max-width: 200px;
   display: inline-block;
+  font-weight: 600;
+  color: white;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  letter-spacing: -0.2px;
 }
 
-/* Ikon tipe channel */
-.channel-type-icon {
+.verified-badge {
   font-size: 12px;
   flex-shrink: 0;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
 }
 
-/* Container untuk details (anggota) */
+/* Container untuk details (ID, members, username) */
 .channel-details {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   font-size: 10px;
-  color: rgba(255, 255, 255, 0.6);
+  color: rgba(255, 255, 255, 0.8);
   width: 100%;
+  flex-wrap: wrap;
+  background: rgba(0, 0, 0, 0.2);
+  padding: 3px 6px;
+  border-radius: 20px;
+  margin-top: 2px;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.2);
 }
 
 .channel-id {
-  font-family: monospace;
-  background: rgba(0, 0, 0, 0.2);
+  font-family: 'SF Mono', 'Fira Code', monospace;
+  background: rgba(255, 255, 255, 0.1);
   padding: 2px 6px;
-  border-radius: 10px;
-  display: none; /* SEMBUNYIKAN ID */
+  border-radius: 12px;
+  color: #aaddff;
+  font-weight: 500;
+  letter-spacing: -0.5px;
 }
 
 .channel-members {
@@ -359,46 +383,22 @@
   gap: 2px;
   background: rgba(255, 255, 255, 0.1);
   padding: 2px 6px;
-  border-radius: 10px;
-  width: fit-content;
+  border-radius: 12px;
+  color: #ffd966;
 }
 
-/* Tooltip untuk melihat teks lengkap saat hover */
-.channel-name-text[title]:hover::after {
-  content: attr(title);
-  position: absolute;
-  bottom: 100%;
-  left: 0;
-  background: rgba(0, 0, 0, 0.9);
-  color: white;
-  padding: 6px 12px;
-  border-radius: 8px;
-  font-size: 12px;
-  white-space: nowrap;
-  z-index: 10000;
-  pointer-events: none;
-  margin-bottom: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(5px);
-  font-weight: normal;
-}
-
-/* Pastikan parent punya position relative untuk tooltip */
-.channel-tag {
-  position: relative;
-}
-
-.channel-tag:hover {
-  background: rgba(0, 136, 255, 0.25);
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0, 136, 255, 0.3);
+.channel-username {
+  font-family: 'SF Mono', 'Fira Code', monospace;
+  background: rgba(255, 255, 255, 0.1);
+  padding: 2px 6px;
+  border-radius: 12px;
+  color: #b0e0ff;
 }
 
 .channel-tag .tag-remove {
   cursor: pointer;
-  width: 18px;
-  height: 18px;
+  width: 20px;
+  height: 20px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -406,18 +406,58 @@
   border-radius: 50%;
   font-size: 14px;
   transition: all 0.2s ease;
-  color: rgba(255, 255, 255, 0.8);
+  color: rgba(255, 255, 255, 0.9);
   margin-left: 4px;
   flex-shrink: 0;
   z-index: 10;
   position: relative;
   pointer-events: auto;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
 .channel-tag .tag-remove:hover {
-  background: rgba(255, 107, 107, 0.8);
+  background: rgba(255, 107, 107, 0.9);
   transform: rotate(90deg) scale(1.1);
   color: white;
+  box-shadow: 0 4px 8px rgba(255, 107, 107, 0.3);
+}
+
+/* Tooltip untuk melihat teks lengkap saat hover - 3D juga */
+.channel-name-text[title]:hover::after {
+  content: attr(title);
+  position: absolute;
+  bottom: 100%;
+  left: 0;
+  background: linear-gradient(145deg, #1a2a3a, #0a1a2a);
+  color: white;
+  padding: 8px 16px;
+  border-radius: 12px;
+  font-size: 12px;
+  white-space: nowrap;
+  z-index: 10000;
+  pointer-events: none;
+  margin-bottom: 10px;
+  box-shadow: 
+    0 10px 20px -5px rgba(0, 0, 0, 0.5),
+    inset 0 1px 2px rgba(255, 255, 255, 0.1),
+    inset 0 -2px 4px rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(0, 170, 255, 0.3);
+  backdrop-filter: blur(5px);
+  font-weight: normal;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+  transform: translateY(0);
+  animation: tooltipAppear 0.2s ease;
+}
+
+@keyframes tooltipAppear {
+  from {
+    opacity: 0;
+    transform: translateY(5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .channel-input-wrapper {
@@ -471,20 +511,6 @@
   color: rgba(255, 255, 255, 0.3);
   font-style: italic;
   border-top: 1px solid rgba(255, 255, 255, 0.02);
-}
-
-@media (max-width: 380px) {
-  .channel-tag {
-    max-width: 180px;
-  }
-  
-  .channel-info {
-    max-width: 120px;
-  }
-  
-  .channel-name-text {
-    max-width: 80px;
-  }
 }
 
 /* ------------------------------------------------------------------
@@ -3169,17 +3195,22 @@ input:checked ~ .toggle-label {
     }
     
     .channel-tag {
-      max-width: 220px;
+      max-width: 300px;
     }
   
     .channel-info {
-      max-width: 150px;
+      max-width: 200px;
     }
   
     .channel-name-text {
-      max-width: 110px;
+      max-width: 150px;
     }
-}
+  
+    .channel-details {
+      gap: 4px;
+      font-size: 9px;
+    }
+ }
 
 @media (max-width: 380px) {
     .form-container {
@@ -3200,17 +3231,23 @@ input:checked ~ .toggle-label {
     }
 
     .channel-tag {
-      max-width: 180px;
+      max-width: 260px;
+      padding: 6px 10px 6px 6px;
     }
   
     .channel-info {
-      max-width: 120px;
+      max-width: 160px;
     }
   
     .channel-name-text {
-      max-width: 80px;
+      max-width: 110px;
     }
-}
+  
+    .channel-details {
+      flex-wrap: wrap;
+      gap: 3px;
+    }
+ }
 
 /* ------------------------------------------------------------------
    ANIMATIONS
