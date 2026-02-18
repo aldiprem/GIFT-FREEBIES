@@ -1381,139 +1381,140 @@
       }
     }
   
-    // Di js/create.js, update fungsi addChannelFromInput
-    
-    async function addChannelFromInput() {
-      let value = elements.channelInput.value.trim();
-    
-      if (value.endsWith(',')) {
-        value = value.slice(0, -1).trim();
-      }
-    
-      if (!value || value === '@') {
-        elements.channelInput.value = '@';
-        hapticNotification('error');
-        return;
-      }
-    
-      if (!value.startsWith('@')) {
-        value = '@' + value;
-      }
-    
-      const usernameRegex = /^@[a-zA-Z0-9_]+$/;
-      if (!usernameRegex.test(value)) {
-        hapticNotification('error');
-        alert('Format username tidak valid! Hanya boleh huruf, angka, dan underscore.');
-        return;
-      }
-    
-      hapticImpact('light');
-    
-      const newChannels = value.split(',').map(c => c.trim()).filter(c => c && c !== '@');
-    
-      elements.channelInput.disabled = true;
-      elements.channelInput.placeholder = 'Memvalidasi...';
-    
-      let validChannels = [];
-      let invalidChannels = [];
-      let syncStarted = false;
-    
-      for (const channel of newChannels) {
-        let cleanChannel = channel;
-        if (!cleanChannel.startsWith('@')) {
-          cleanChannel = '@' + cleanChannel;
-        }
-    
-        const cleanUsername = cleanChannel.replace('@', '');
-    
-        try {
-          // Cek apakah data sudah ada
-          let response = await fetch(`${API_BASE_URL}/api/chatid/username/${cleanUsername}`);
-    
-          if (response.status === 404) {
-            // Data tidak ditemukan, trigger sync
-            console.log(`📡 Data for @${cleanUsername} not found, triggering sync...`);
-    
-            const syncResponse = await fetch(`${API_BASE_URL}/api/chatid/sync/${cleanUsername}`, {
-              method: 'POST'
-            });
-    
-            if (syncResponse.status === 202) {
-              syncStarted = true;
-              invalidChannels.push(`${cleanChannel} (⏳ sedang sync...)`);
-              pollSyncStatus(cleanUsername, cleanChannel);
-            } else {
+        // Di js/create.js, update fungsi addChannelFromInput
+        
+        async function addChannelFromInput() {
+          let value = elements.channelInput.value.trim();
+        
+          if (value.endsWith(',')) {
+            value = value.slice(0, -1).trim();
+          }
+        
+          if (!value || value === '@') {
+            elements.channelInput.value = '@';
+            hapticNotification('error');
+            return;
+          }
+        
+          if (!value.startsWith('@')) {
+            value = '@' + value;
+          }
+        
+          const usernameRegex = /^@[a-zA-Z0-9_]+$/;
+          if (!usernameRegex.test(value)) {
+            hapticNotification('error');
+            alert('Format username tidak valid! Hanya boleh huruf, angka, dan underscore.');
+            return;
+          }
+        
+          hapticImpact('light');
+        
+          const newChannels = value.split(',').map(c => c.trim()).filter(c => c && c !== '@');
+        
+          elements.channelInput.disabled = true;
+          elements.channelInput.placeholder = 'Memvalidasi...';
+        
+          let validChannels = [];
+          let invalidChannels = [];
+          let syncStarted = false;
+        
+          for (const channel of newChannels) {
+            let cleanChannel = channel;
+            if (!cleanChannel.startsWith('@')) {
+              cleanChannel = '@' + cleanChannel;
+            }
+        
+            const cleanUsername = cleanChannel.replace('@', '');
+        
+            try {
+              // Cek apakah data sudah ada
+              let response = await fetch(`${API_BASE_URL}/api/chatid/username/${cleanUsername}`);
+        
+              if (response.status === 404) {
+                // Data tidak ditemukan, trigger sync
+                console.log(`📡 Data for @${cleanUsername} not found, triggering sync...`);
+        
+                const syncResponse = await fetch(`${API_BASE_URL}/api/chatid/sync/${cleanUsername}`, {
+                  method: 'POST'
+                });
+        
+                if (syncResponse.status === 202) {
+                  syncStarted = true;
+                  invalidChannels.push(`${cleanChannel} (⏳ sedang sync...)`);
+                  pollSyncStatus(cleanUsername, cleanChannel);
+                } else {
+                  invalidChannels.push(cleanChannel);
+                }
+                continue;
+              }
+        
+              if (!response.ok) {
+                invalidChannels.push(cleanChannel);
+                continue;
+              }
+        
+              const result = await response.json();
+        
+              const verifiedIcon = result.is_verified ? '✅' : '';
+              const typeIcon = result.chat_type === 'channel' ? '📢' : '👥';
+              const displayName = `${typeIcon} ${result.chat_title} ${verifiedIcon} (${result.chat_id})`;
+        
+              const channelData = {
+                chat_id: result.chat_id,
+                username: cleanChannel,
+                title: result.chat_title,
+                type: result.chat_type,
+                invite_link: result.invite_link,
+                admin_count: result.admin_count,
+                participants_count: result.participants_count,
+                is_verified: result.is_verified,
+                displayName: displayName
+              };
+        
+              if (!channels.some(c => c.chat_id === result.chat_id)) {
+                channels.push(channelData);
+                validChannels.push(displayName);
+              }
+        
+            } catch (error) {
+              console.error('Error checking channel:', error);
               invalidChannels.push(cleanChannel);
             }
-            continue;
           }
-    
-          if (!response.ok) {
-            invalidChannels.push(cleanChannel);
-            continue;
+        
+          elements.channelInput.disabled = false;
+          elements.channelInput.placeholder = "Ketik username, tekan koma untuk menambah... (contoh: @channel1)";
+        
+          if (validChannels.length > 0) {
+            updateChannelsTags();
+            hapticNotification('success');
           }
-    
-          const result = await response.json();
-    
-          const verifiedIcon = result.is_verified ? '✅' : '';
-          const typeIcon = result.chat_type === 'channel' ? '📢' : '👥';
-          const displayName = `${typeIcon} ${result.chat_title} ${verifiedIcon} (${result.chat_id})`;
-    
-          const channelData = {
-            chat_id: result.chat_id,
-            username: cleanChannel,
-            title: result.chat_title,
-            type: result.chat_type,
-            invite_link: result.invite_link,
-            admin_count: result.admin_count,
-            participants_count: result.participants_count,
-            is_verified: result.is_verified,
-            displayName: displayName
-          };
-    
-          if (!channels.some(c => c.chat_id === result.chat_id)) {
-            channels.push(channelData);
-            validChannels.push(displayName);
+        
+          if (invalidChannels.length > 0) {
+            hapticNotification('error');
+        
+            let message = `Channel/group tidak valid: ${invalidChannels.join(', ')}`;
+            if (syncStarted) {
+              message += '\n\nBeberapa channel sedang di-sync. Tunggu beberapa saat dan coba lagi.';
+            }
+            alert(message);
           }
-    
-        } catch (error) {
-          console.error('Error checking channel:', error);
-          invalidChannels.push(cleanChannel);
+        
+          if (syncStarted) {
+            showToast('Mengambil data channel dari Telegram...', 'info');
+          }
+        
+          elements.channelInput.value = '@';
+        
+          setTimeout(() => {
+            elements.channelInput.setSelectionRange(1, 1);
+          }, 10);
         }
-      }
+        
+    // Di js/create.js, update fungsi pollSyncStatus
     
-      elements.channelInput.disabled = false;
-      elements.channelInput.placeholder = "Ketik username, tekan koma untuk menambah... (contoh: @channel1)";
-    
-      if (validChannels.length > 0) {
-        updateChannelsTags();
-        hapticNotification('success');
-      }
-    
-      if (invalidChannels.length > 0) {
-        hapticNotification('error');
-    
-        let message = `Channel/group tidak valid: ${invalidChannels.join(', ')}`;
-        if (syncStarted) {
-          message += '\n\nBeberapa channel sedang di-sync. Tunggu beberapa saat dan coba lagi.';
-        }
-        alert(message);
-      }
-    
-      if (syncStarted) {
-        showToast('Mengambil data channel dari Telegram...', 'info');
-      }
-    
-      elements.channelInput.value = '@';
-    
-      setTimeout(() => {
-        elements.channelInput.setSelectionRange(1, 1);
-      }, 10);
-    }
-    
-    // Fungsi polling
     async function pollSyncStatus(username, displayName) {
-      const maxAttempts = 15;
+      const maxAttempts = 20; // Tambah jadi 20 kali (40 detik)
       let attempts = 0;
     
       const pollInterval = setInterval(async () => {
@@ -1522,6 +1523,7 @@
         console.log(`🔍 Polling status for @${username} (${attempts}/${maxAttempts})`);
     
         try {
+          // Gunakan endpoint yang benar
           const response = await fetch(`${API_BASE_URL}/api/chatid/username/${username}`);
     
           if (response.ok) {
