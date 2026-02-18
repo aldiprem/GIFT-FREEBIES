@@ -279,10 +279,11 @@
   border-radius: 4px;
 }
 
+/* Update style channel tag */
 .channel-tag {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   padding: 4px 10px 4px 6px;
   background: rgba(0, 136, 255, 0.2);
   backdrop-filter: blur(5px);
@@ -295,6 +296,24 @@
   white-space: nowrap;
   animation: tagAppear 0.3s ease;
   box-shadow: 0 2px 8px rgba(0, 136, 255, 0.2);
+}
+
+.channel-info {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.channel-name {
+  font-size: 13px;
+  font-weight: 500;
+  color: white;
+}
+
+.channel-type {
+  font-size: 9px;
+  color: rgba(255, 255, 255, 0.5);
+  text-transform: uppercase;
 }
 
 .channel-tag:hover {
