@@ -995,6 +995,8 @@ def check_user_role(username, user_id):
             role = admin['role']
             is_authorized = role in ['owner', 'admin']
             
+            log_info(f"✅ User {user_id} ditemukan dengan role: {role}")
+            
             return jsonify({
                 'success': True,
                 'is_authorized': is_authorized,
@@ -1003,6 +1005,8 @@ def check_user_role(username, user_id):
             })
         else:
             # User tidak ditemukan di tabel admins
+            log_info(f"❌ User {user_id} tidak ditemukan di daftar admin/owner")
+            
             return jsonify({
                 'success': True,
                 'is_authorized': False,
@@ -1012,7 +1016,10 @@ def check_user_role(username, user_id):
         
     except Exception as e:
         log_error(f"Error checking user role: {e}")
-        return jsonify({'error': str(e)}), 500
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
 
 @chatid_bp.route('/search', methods=['GET'])
 def search_chats():
