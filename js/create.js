@@ -1294,40 +1294,37 @@
       }
     }
     
-    // ==================== FUNGSI VALIDASI CHANNEL TELEGRAM ====================
-    async function validateTelegramChannel(username) {
+    // ==================== FUNGSI GET CHAT DATA DARI API ====================
+    async function getChatData(username) {
       try {
-        // Hapus @ dari depan
         const cleanUsername = username.replace('@', '');
     
-        // Panggil API backend untuk validasi
-        const response = await fetch(`${API_BASE_URL}/api/validate-channel`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            username: cleanUsername
-          })
-        });
+        const response = await fetch(`${API_BASE_URL}/api/chatid/username/${cleanUsername}`);
+    
+        if (!response.ok) {
+          return {
+            valid: false,
+            error: 'Channel/group tidak ditemukan'
+          };
+        }
     
         const data = await response.json();
     
-        if (response.ok && data.valid) {
-          return {
-            valid: true,
-            name: data.name || cleanUsername,
-            id: data.id,
-            type: data.type // 'channel' atau 'group'
-          };
-        } else {
-          return {
-            valid: false,
-            error: data.error || 'Channel/group tidak ditemukan'
-          };
-        }
+        return {
+          valid: true,
+          chat_id: data.chat_id,
+          title: data.chat_title,
+          username: data.chat_username,
+          type: data.chat_type,
+          invite_link: data.invite_link,
+          admin_count: data.admin_count,
+          participants_count: data.participants_count,
+          is_verified: data.is_verified,
+          admins: data.admins || []
+        };
+    
       } catch (error) {
-        console.error('❌ Error validating channel:', error);
+        console.error('❌ Error getting chat data:', error);
         return {
           valid: false,
           error: 'Gagal terhubung ke server'
@@ -1365,7 +1362,7 @@
       // Split dengan koma
       const newChannels = value.split(',').map(c => c.trim()).filter(c => c && c !== '@');
     
-      // Tampilkan loading state di input
+      // Tampilkan loading state
       elements.channelInput.disabled = true;
       elements.channelInput.placeholder = 'Memvalidasi...';
     
@@ -1378,21 +1375,28 @@
           cleanChannel = '@' + cleanChannel;
         }
     
-        // Validasi ke API
-        const result = await validateTelegramChannel(cleanChannel);
+        // Ambil data dari API
+        const result = await getChatData(cleanChannel);
     
         if (result.valid) {
-          // Simpan dengan format: Nama (ID) - Tipe
-          const displayName = `${result.name} (${result.id})`;
+          // Format display name dengan info lengkap
+          const verifiedIcon = result.is_verified ? '✅' : '';
+          const typeIcon = result.type === 'channel' ? '📢' : '👥';
+          const displayName = `${typeIcon} ${result.title} ${verifiedIcon} (${result.chat_id})`;
+    
           const channelData = {
-            username: cleanChannel,
-            name: result.name,
-            id: result.id,
+            chat_id: result.chat_id,
+            username: `@${result.username}`,
+            title: result.title,
             type: result.type,
+            invite_link: result.invite_link,
+            admin_count: result.admin_count,
+            participants_count: result.participants_count,
             displayName: displayName
           };
     
-          if (!channels.some(c => c.username === cleanChannel)) {
+          // Cek duplikat
+          if (!channels.some(c => c.chat_id === result.chat_id)) {
             channels.push(channelData);
             validChannels.push(displayName);
           }
@@ -1422,19 +1426,6 @@
       }, 10);
     }
     
-    // Update fungsi removeChannel
-    function removeChannel(channelData) {
-      channels = channels.filter(c => {
-        if (typeof c === 'string') {
-          return c !== channelData;
-        } else {
-          return c.username !== channelData;
-        }
-      });
-      updateChannelsTags();
-      hapticNotification('success');
-    }
-    
     // Update fungsi updateChannelsTags
     function updateChannelsTags() {
       if (!elements.channelTags) return;
@@ -1447,26 +1438,34 @@
         let channelId = '';
     
         if (typeof channel === 'string') {
-          // Format lama (hanya username)
+          // Format lama
           displayText = channel;
           channelId = channel;
+          html += `<span class="channel-tag" data-channel-id="${channelId}">
+                            <span class="prize-number" style="background: ${bgColor};">${index + 1}</span>
+                            ${escapeHtml(displayText)}
+                            <span class="tag-remove" data-channel="${channelId}">×</span>
+                        </span>`;
         } else {
-          // Format baru (dengan data lengkap)
-          displayText = channel.displayName || channel.username;
-          channelId = channel.username;
+          // Format baru dengan data lengkap
+          channelId = channel.chat_id;
+          const typeIcon = channel.type === 'channel' ? '📢' : '👥';
+          const verifiedIcon = channel.is_verified ? ' ✅' : '';
     
-          // Tambah icon berdasarkan tipe
-          const icon = channel.type === 'channel' ? '📢' : '👥';
-          displayText = `${icon} ${displayText}`;
+          html += `<span class="channel-tag" data-channel-id="${channelId}" data-channel-data='${JSON.stringify(channel)}'>
+                            <span class="prize-number" style="background: ${bgColor};">${index + 1}</span>
+                            <div class="channel-info">
+                                <span class="channel-name">
+                                    ${typeIcon} ${escapeHtml(channel.title)}${verifiedIcon}
+                                </span>
+                                <span class="channel-details">
+                                    <span class="channel-id">${escapeHtml(channel.chat_id)}</span>
+                                    ${channel.participants_count ? `<span class="channel-members">👥 ${channel.participants_count}</span>` : ''}
+                                </span>
+                            </div>
+                            <span class="tag-remove" data-channel="${channelId}">×</span>
+                        </span>`;
         }
-    
-        html += `<span class="channel-tag" data-channel-id="${channelId}">
-                        <span class="prize-number" style="background: ${bgColor};">${index + 1}</span>
-                        <span class="channel-info">
-                            <span class="channel-name">${escapeHtml(displayText)}</span>
-                        </span>
-                        <span class="tag-remove" data-channel="${channelId}">×</span>
-                    </span>`;
       });
     
       elements.channelTags.innerHTML = html;
