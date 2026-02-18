@@ -632,7 +632,7 @@ def health_check():
             'timestamp': get_jakarta_time()
         }), 500
 
-# ==================== CHATID ENDPOINTS ====================
+# app.py - Ganti endpoint save_chat_data
 
 @chatid_bp.route('/api/chatid', methods=['POST'])
 def save_chat_data():
@@ -647,9 +647,28 @@ def save_chat_data():
         if not chat_id:
             return jsonify({'error': 'chat_id is required'}), 400
         
+        # Bersihkan username - HAPUS @ dan lowercase
+        chat_username = data.get('chat_username')
+        if chat_username:
+            # Hapus @ jika ada dan lowercase
+            chat_username = chat_username.replace('@', '').strip().lower()
+            log_info(f"Cleaned username: {chat_username} (original: {data.get('chat_username')})")
+        else:
+            chat_username = None
+        
         now = get_jakarta_time()
         cursor = db.get_cursor()
         
+        # Cek dulu apakah data sudah ada
+        cursor.execute("SELECT * FROM chatid_data WHERE chat_id = ?", (chat_id,))
+        existing = cursor.fetchone()
+        
+        if existing:
+            log_info(f"Updating existing chat: {chat_id}")
+        else:
+            log_info(f"Inserting new chat: {chat_id}")
+        
+        # Simpan data chat dengan username yang sudah dibersihkan
         cursor.execute("""
         INSERT INTO chatid_data (
             chat_id, chat_title, chat_username, chat_type, invite_link,
@@ -672,7 +691,7 @@ def save_chat_data():
         """, (
             chat_id,
             data.get('chat_title'),
-            data.get('chat_username'),
+            chat_username,  # Pakai yang sudah dibersihkan
             data.get('chat_type'),
             data.get('invite_link'),
             data.get('admin_count', 0),
@@ -686,6 +705,7 @@ def save_chat_data():
             now
         ))
         
+        # Simpan data admin jika ada
         admins = data.get('admins', [])
         if admins:
             cursor.execute("DELETE FROM chat_admins WHERE chat_id = ?", (chat_id,))
@@ -706,61 +726,58 @@ def save_chat_data():
                 ))
         
         db.conn.commit()
+        
+        # Verifikasi data tersimpan
+        cursor.execute("SELECT * FROM chatid_data WHERE chat_id = ?", (chat_id,))
+        saved = cursor.fetchone()
+        if saved:
+            log_info(f"✅ Verified: Chat {chat_id} saved with username: {saved['chat_username']}")
+        else:
+            log_error(f"❌ Failed to verify save for chat {chat_id}")
+        
         cursor.close()
         
-        log_info(f"Chat data saved for ID: {chat_id}")
+        log_info(f"✅ Chat data saved for ID: {chat_id}")
         return jsonify({'success': True, 'message': 'Chat data saved successfully'})
         
     except Exception as e:
         log_error(f"Error saving chat data: {e}")
         return jsonify({'error': str(e)}), 500
 
-@chatid_bp.route('/api/chatid/<chat_id>', methods=['GET'])
-def get_chat_data(chat_id):
-    """Mendapatkan data chat berdasarkan ID"""
-    try:
-        cursor = db.get_cursor()
-        
-        cursor.execute("SELECT * FROM chatid_data WHERE chat_id = ?", (chat_id,))
-        chat_data = cursor.fetchone()
-        
-        if not chat_data:
-            cursor.close()
-            return jsonify({'error': 'Chat not found'}), 404
-        
-        result = dict(chat_data)
-        
-        cursor.execute("""
-        SELECT user_id, username, fullname, role 
-        FROM chat_admins WHERE chat_id = ?
-        """, (chat_id,))
-        
-        admins = cursor.fetchall()
-        result['admins'] = [dict(admin) for admin in admins]
-        
-        cursor.close()
-        return jsonify(result)
-        
-    except Exception as e:
-        log_error(f"Error getting chat data: {e}")
-        return jsonify({'error': str(e)}), 500
+
+# app.py - Ganti endpoint get_chat_by_username
 
 @chatid_bp.route('/api/chatid/username/<username>', methods=['GET'])
 def get_chat_by_username(username):
     """Mendapatkan data chat berdasarkan username"""
     try:
-        clean_username = username.replace('@', '')
+        # Bersihkan username - HAPUS @ dan lowercase
+        clean_username = username.replace('@', '').strip().lower()
+        log_info(f"🔍 Looking up chat by username: '{clean_username}' (original: '{username}')")
+        
         cursor = db.get_cursor()
         
-        cursor.execute("SELECT * FROM chatid_data WHERE chat_username = ?", (clean_username,))
+        # Cari di database (case insensitive)
+        cursor.execute("SELECT * FROM chatid_data WHERE LOWER(chat_username) = ?", (clean_username,))
         chat_data = cursor.fetchone()
         
         if not chat_data:
+            log_info(f"❌ Chat not found for username: '{clean_username}'")
+            
+            # Debug: tampilkan semua username yang ada di database
+            cursor.execute("SELECT chat_id, chat_username FROM chatid_data")
+            all_chats = cursor.fetchall()
+            log_info(f"Total chats in DB: {len(all_chats)}")
+            for chat in all_chats:
+                log_info(f"  - ID: {chat['chat_id']}, Username: '{chat['chat_username']}'")
+            
             cursor.close()
             return jsonify({'error': 'Chat not found'}), 404
         
         result = dict(chat_data)
+        log_info(f"✅ Chat found: {result.get('chat_title')} (ID: {result.get('chat_id')}, Username: '{result.get('chat_username')}')")
         
+        # Ambil data admin
         cursor.execute("""
         SELECT user_id, username, fullname, role 
         FROM chat_admins WHERE chat_id = ?
@@ -776,21 +793,25 @@ def get_chat_by_username(username):
         log_error(f"Error getting chat by username: {e}")
         return jsonify({'error': str(e)}), 500
 
+
+# app.py - Update endpoint sync_chat_from_bot untuk memastikan username dibersihkan
+
 @chatid_bp.route('/api/chatid/sync/<username>', methods=['POST'])
 def sync_chat_from_bot(username):
     """Memanggil bot untuk sync data channel/group"""
     try:
-        clean_username = username.replace('@', '')
+        clean_username = username.replace('@', '').strip().lower()
         
         log_info(f"📡 Sync requested for @{clean_username}")
         
         # Cek apakah channel sudah ada
         cursor = db.get_cursor()
-        cursor.execute("SELECT * FROM chatid_data WHERE chat_username = ?", (clean_username,))
+        cursor.execute("SELECT * FROM chatid_data WHERE LOWER(chat_username) = ?", (clean_username,))
         existing = cursor.fetchone()
         cursor.close()
         
         if existing:
+            log_info(f"✅ Data already exists for @{clean_username}")
             return jsonify({
                 'success': True,
                 'exists': True,
@@ -798,7 +819,7 @@ def sync_chat_from_bot(username):
                 'data': dict(existing)
             })
         
-        # Buat script sync sederhana
+        # Buat script sync sederhana dengan username yang sudah dibersihkan
         script_content = f"""# sync_{clean_username}.py
 import asyncio
 import sys
@@ -860,11 +881,11 @@ async def sync():
         except:
             pass
         
-        # Payload
+        # Payload - PASTIKAN USERNAME DISIMPAN TANPA @
         payload = {{
             'chat_id': chat_id,
             'chat_title': c_title,
-            'chat_username': c_username,
+            'chat_username': c_username,  # Ini akan tanpa @ dari Telegram
             'chat_type': chat_type,
             'invite_link': invite_link,
             'admin_count': 0,
@@ -876,6 +897,8 @@ async def sync():
             'slow_mode_seconds': 0,
             'admins': []
         }}
+        
+        logger.info(f"Payload prepared: {{payload}}")
         
         # Kirim ke API
         response = requests.post(f"{{API_BASE_URL}}/api/chatid", json=payload, timeout=10)
