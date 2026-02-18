@@ -671,10 +671,19 @@
       // Channel tags remove
       if (elements.channelTags) {
         elements.channelTags.addEventListener('click', (e) => {
-          if (e.target.classList.contains('tag-remove')) {
+          // Cari elemen tag-remove yang diklik
+          const removeBtn = e.target.closest('.tag-remove');
+          if (removeBtn) {
+            e.preventDefault();
+            e.stopPropagation();
+      
             hapticImpact('light');
-            const channel = e.target.dataset.channel;
-            removeChannel(channel);
+      
+            // Ambil channelId dari dataset
+            const channelId = removeBtn.dataset.channel;
+            if (channelId) {
+              removeChannel(channelId);
+            }
           }
         });
       }
@@ -1906,56 +1915,67 @@
     `;
     document.head.appendChild(style);
 
-    // ==================== FUNGSI UPDATE CHANNELS TAGS ====================
     function updateChannelsTags() {
-        if (!elements.channelTags) return;
-      
-        let html = '';
-        channels.forEach((channel, index) => {
-            const bgColor = getRandomColor(index);
-      
-            let displayText = '';
-            let channelId = '';
-      
-            if (typeof channel === 'string') {
-                // Format lama
-                displayText = channel;
-                channelId = channel;
-                html += `<span class="channel-tag" data-channel-id="${channelId}">
-                              <span class="prize-number" style="background: ${bgColor};">${index + 1}</span>
-                              ${escapeHtml(displayText)}
-                              <span class="tag-remove" data-channel="${channelId}">×</span>
-                          </span>`;
-            } else {
-                // Format baru dengan data lengkap
-                channelId = channel.chat_id;
-                const typeIcon = channel.type === 'channel' ? '📢' : '👥';
-                const verifiedIcon = channel.is_verified ? ' ✅' : '';
-      
-                html += `<span class="channel-tag" data-channel-id="${channelId}" data-channel-data='${JSON.stringify(channel)}'>
-                              <span class="prize-number" style="background: ${bgColor};">${index + 1}</span>
-                              <div class="channel-info">
-                                  <span class="channel-name">
-                                      ${typeIcon} ${escapeHtml(channel.title)}${verifiedIcon}
-                                  </span>
-                                  <span class="channel-details">
-                                      <span class="channel-id">${escapeHtml(channel.chat_id)}</span>
-                                      ${channel.participants_count ? `<span class="channel-members">👥 ${channel.participants_count}</span>` : ''}
-                                  </span>
-                              </div>
-                              <span class="tag-remove" data-channel="${channelId}">×</span>
-                          </span>`;
-            }
-        });
-      
-        elements.channelTags.innerHTML = html;
-      
-        setTimeout(() => {
-            const scrollContainer = document.querySelector('.channel-tags-scroll');
-            if (scrollContainer) {
-                scrollContainer.scrollLeft = scrollContainer.scrollWidth;
-            }
-        }, 50);
+      if (!elements.channelTags) return;
+    
+      let html = '';
+      channels.forEach((channel, index) => {
+        const bgColor = getRandomColor(index);
+    
+        if (typeof channel === 'string') {
+          // Format lama
+          html += `<span class="channel-tag" data-channel-id="${channel}">
+                            <span class="prize-number" style="background: ${bgColor};">${index + 1}</span>
+                            ${escapeHtml(channel)}
+                            <span class="tag-remove" data-channel="${channel}">×</span>
+                        </span>`;
+        } else {
+          // Format baru dengan data lengkap
+          const channelId = channel.chat_id;
+          const typeIcon = channel.type === 'channel' ? '📢' : '👥';
+          const verifiedIcon = channel.is_verified ? ' ✅' : '';
+          const displayName = channel.displayName || `${typeIcon} ${channel.title}${verifiedIcon}`;
+    
+          html += `<span class="channel-tag" data-channel-id="${channelId}">
+                            <span class="prize-number" style="background: ${bgColor};">${index + 1}</span>
+                            <div class="channel-info">
+                                <span class="channel-name">${displayName}</span>
+                                <span class="channel-details">
+                                    <span class="channel-id">${escapeHtml(channelId)}</span>
+                                    ${channel.participants_count ? `<span class="channel-members">👥 ${channel.participants_count}</span>` : ''}
+                                </span>
+                            </div>
+                            <span class="tag-remove" data-channel="${channelId}">×</span>
+                        </span>`;
+        }
+      });
+    
+      elements.channelTags.innerHTML = html;
+    
+      setTimeout(() => {
+        const scrollContainer = document.querySelector('.channel-tags-scroll');
+        if (scrollContainer) {
+          scrollContainer.scrollLeft = scrollContainer.scrollWidth;
+        }
+      }, 50);
+    }
+
+    function removeChannel(channelId) {
+      channels = channels.filter(channel => {
+        if (typeof channel === 'string') {
+          return channel !== channelId;
+        } else {
+          return channel.chat_id != channelId && channel.username !== channelId;
+        }
+      });
+    
+      // Update tampilan tags
+      updateChannelsTags();
+    
+      // Haptic feedback
+      hapticNotification('success');
+    
+      console.log(`✅ Channel removed: ${channelId}`);
     }
 
     // ==================== FUNGSI INIT ====================
