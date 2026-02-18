@@ -3144,6 +3144,117 @@ input:checked ~ .toggle-label {
 }
 
 /* ------------------------------------------------------------------
+   TEXT FORMATTING TOOLBAR
+   ------------------------------------------------------------------ */
+.format-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 12px 12px 8px 12px;
+  background: rgba(20, 30, 45, 0.4);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1.5px solid rgba(0, 170, 255, 0.2);
+  border-radius: 20px 20px 0 0;
+  border-bottom: none;
+  margin-bottom: -2px;
+  position: relative;
+  z-index: 10;
+}
+
+.format-toolbar::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 50%;
+  background: linear-gradient(to bottom, rgba(255, 255, 255, 0.1), transparent);
+  border-radius: 20px 20px 0 0;
+  pointer-events: none;
+}
+
+.format-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 40px;
+  height: 36px;
+  padding: 0 10px;
+  background: rgba(30, 40, 55, 0.6);
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 18px;
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow:
+    0 4px 8px -2px rgba(0, 0, 0, 0.3),
+    inset 0 1px 1px rgba(255, 255, 255, 0.1);
+  position: relative;
+  overflow: hidden;
+}
+
+.format-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 40%;
+  background: linear-gradient(to bottom, rgba(255, 255, 255, 0.15), transparent);
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+.format-btn:hover {
+  background: rgba(0, 136, 255, 0.2);
+  border-color: rgba(0, 136, 255, 0.4);
+  transform: translateY(-1px);
+  color: white;
+  box-shadow: 0 8px 12px -4px rgba(0, 136, 255, 0.3);
+}
+
+.format-btn:active {
+  transform: translateY(0);
+  background: rgba(0, 136, 255, 0.3);
+}
+
+.format-icon {
+  font-family: 'SF Mono', 'Fira Code', monospace;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+  .format-toolbar {
+    padding: 8px 8px 4px 8px;
+    gap: 4px;
+  }
+
+  .format-btn {
+    min-width: 36px;
+    height: 32px;
+    padding: 0 6px;
+    font-size: 12px;
+  }
+}
+
+/* Preview formatted text di textarea */
+.form-textarea {
+  font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+/* Style untuk teks yang diformat */
+.form-textarea::selection {
+  background: rgba(0, 136, 255, 0.3);
+}
+
+/* ------------------------------------------------------------------
    RESPONSIVE
    ------------------------------------------------------------------ */
 @media (max-width: 480px) {
