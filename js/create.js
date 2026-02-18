@@ -1381,109 +1381,272 @@
       }
     }
   
-  // Update fungsi addChannelFromInput
-  async function addChannelFromInput() {
-    let value = elements.channelInput.value.trim();
-  
-    if (value.endsWith(',')) {
-      value = value.slice(0, -1).trim();
-    }
-  
-    if (!value || value === '@') {
-      elements.channelInput.value = '@';
-      hapticNotification('error');
-      return;
-    }
-  
-    if (!value.startsWith('@')) {
-      value = '@' + value;
-    }
-  
-    const usernameRegex = /^@[a-zA-Z0-9_]+$/;
-    if (!usernameRegex.test(value)) {
-      hapticNotification('error');
-      alert('Format username tidak valid! Hanya boleh huruf, angka, dan underscore.');
-      return;
-    }
-  
-    hapticImpact('light');
-  
-    // Split dengan koma
-    const newChannels = value.split(',').map(c => c.trim()).filter(c => c && c !== '@');
-  
-    // Tampilkan loading state
-    elements.channelInput.disabled = true;
-    elements.channelInput.placeholder = 'Memvalidasi...';
-  
-    let validChannels = [];
-    let invalidChannels = [];
-    let needsReload = false;
-  
-    for (const channel of newChannels) {
-      let cleanChannel = channel;
-      if (!cleanChannel.startsWith('@')) {
-        cleanChannel = '@' + cleanChannel;
+    // Di js/create.js, update fungsi addChannelFromInput
+    
+    async function addChannelFromInput() {
+      let value = elements.channelInput.value.trim();
+    
+      if (value.endsWith(',')) {
+        value = value.slice(0, -1).trim();
       }
-  
-      // Ambil data dari API
-      const result = await getChatData(cleanChannel);
-  
-      if (result.valid) {
-        // Format display name dengan info lengkap
-        const verifiedIcon = result.is_verified ? '✅' : '';
-        const typeIcon = result.type === 'channel' ? '📢' : '👥';
-        const displayName = `${typeIcon} ${result.title} ${verifiedIcon} (${result.chat_id})`;
-  
-        const channelData = {
-          chat_id: result.chat_id,
-          username: `@${result.username}`,
-          title: result.title,
-          type: result.type,
-          invite_link: result.invite_link,
-          admin_count: result.admin_count,
-          participants_count: result.participants_count,
-          is_verified: result.is_verified,
-          displayName: displayName
-        };
-  
-        // Cek duplikat
-        if (!channels.some(c => c.chat_id === result.chat_id)) {
-          channels.push(channelData);
-          validChannels.push(displayName);
+    
+      if (!value || value === '@') {
+        elements.channelInput.value = '@';
+        hapticNotification('error');
+        return;
+      }
+    
+      if (!value.startsWith('@')) {
+        value = '@' + value;
+      }
+    
+      const usernameRegex = /^@[a-zA-Z0-9_]+$/;
+      if (!usernameRegex.test(value)) {
+        hapticNotification('error');
+        alert('Format username tidak valid! Hanya boleh huruf, angka, dan underscore.');
+        return;
+      }
+    
+      hapticImpact('light');
+    
+      // Split dengan koma
+      const newChannels = value.split(',').map(c => c.trim()).filter(c => c && c !== '@');
+    
+      // Tampilkan loading state
+      elements.channelInput.disabled = true;
+      elements.channelInput.placeholder = 'Memvalidasi...';
+    
+      let validChannels = [];
+      let invalidChannels = [];
+      let syncStarted = false;
+    
+      for (const channel of newChannels) {
+        let cleanChannel = channel;
+        if (!cleanChannel.startsWith('@')) {
+          cleanChannel = '@' + cleanChannel;
         }
-      } else if (result.needsReload) {
-        needsReload = true;
-        invalidChannels.push(cleanChannel);
-      } else {
-        invalidChannels.push(cleanChannel);
+    
+        // Cek apakah channel valid dan ada di database
+        const cleanUsername = cleanChannel.replace('@', '');
+    
+        try {
+          // Coba ambil data dengan endpoint check
+          const checkResponse = await fetch(`${API_BASE_URL}/api/chatid/check/${cleanUsername}`);
+    
+          if (checkResponse.status === 404) {
+            const data = await checkResponse.json();
+    
+            if (data.sync_started) {
+              // Sync dimulai, tampilkan notifikasi
+              syncStarted = true;
+              invalidChannels.push(`${cleanChannel} (⏳ sedang sync...)`);
+    
+              // Polling status
+              pollSyncStatus(cleanUsername, cleanChannel);
+            } else {
+              invalidChannels.push(cleanChannel);
+            }
+            continue;
+          }
+    
+          if (!checkResponse.ok) {
+            invalidChannels.push(cleanChannel);
+            continue;
+          }
+    
+          const data = await checkResponse.json();
+    
+          if (data.success && data.exists) {
+            // Data valid dan ada di database
+            const result = data.data;
+    
+            const verifiedIcon = result.is_verified ? '✅' : '';
+            const typeIcon = result.chat_type === 'channel' ? '📢' : '👥';
+            const displayName = `${typeIcon} ${result.chat_title} ${verifiedIcon} (${result.chat_id})`;
+    
+            const channelData = {
+              chat_id: result.chat_id,
+              username: cleanChannel,
+              title: result.chat_title,
+              type: result.chat_type,
+              invite_link: result.invite_link,
+              admin_count: result.admin_count,
+              participants_count: result.participants_count,
+              is_verified: result.is_verified,
+              displayName: displayName
+            };
+    
+            // Cek duplikat
+            if (!channels.some(c => c.chat_id === result.chat_id)) {
+              channels.push(channelData);
+              validChannels.push(displayName);
+            }
+          }
+    
+        } catch (error) {
+          console.error('Error checking channel:', error);
+          invalidChannels.push(cleanChannel);
+        }
       }
-    }
-  
-    // Update UI
-    elements.channelInput.disabled = false;
-    elements.channelInput.placeholder = "Ketik username, tekan koma untuk menambah... (contoh: @channel1)";
-  
-    if (validChannels.length > 0) {
-      updateChannelsTags();
-      hapticNotification('success');
-    }
-  
-    if (invalidChannels.length > 0) {
-      hapticNotification('error');
-      if (needsReload) {
-        alert(`Channel/group perlu di-reload: ${invalidChannels.join(', ')}\n\nPastikan bot sudah ditambahkan ke channel/group dan jalankan perintah /reload di channel tersebut.`);
-      } else {
-        alert(`Channel/group tidak valid: ${invalidChannels.join(', ')}`);
+    
+      // Update UI
+      elements.channelInput.disabled = false;
+      elements.channelInput.placeholder = "Ketik username, tekan koma untuk menambah... (contoh: @channel1)";
+    
+      if (validChannels.length > 0) {
+        updateChannelsTags();
+        hapticNotification('success');
       }
+    
+      if (invalidChannels.length > 0) {
+        hapticNotification('error');
+    
+        let message = `Channel/group tidak valid: ${invalidChannels.join(', ')}`;
+        if (syncStarted) {
+          message += '\n\nBeberapa channel sedang di-sync. Tunggu beberapa saat dan coba lagi.';
+        }
+        alert(message);
+      }
+    
+      if (syncStarted) {
+        // Tampilkan notifikasi bahwa proses sync sedang berjalan
+        showToast('Mengambil data channel dari Telegram...', 'info');
+      }
+    
+      elements.channelInput.value = '@';
+    
+      setTimeout(() => {
+        elements.channelInput.setSelectionRange(1, 1);
+      }, 10);
     }
-  
-    elements.channelInput.value = '@';
-  
-    setTimeout(() => {
-      elements.channelInput.setSelectionRange(1, 1);
-    }, 10);
-  }
-  
+    
+    // Fungsi untuk polling status sync
+    async function pollSyncStatus(username, displayName) {
+      const maxAttempts = 10;
+      let attempts = 0;
+    
+      const pollInterval = setInterval(async () => {
+        attempts++;
+    
+        try {
+          const response = await fetch(`${API_BASE_URL}/api/chatid/username/${username}`);
+    
+          if (response.ok) {
+            const data = await response.json();
+    
+            // Data sudah tersedia
+            clearInterval(pollInterval);
+    
+            const verifiedIcon = data.is_verified ? '✅' : '';
+            const typeIcon = data.chat_type === 'channel' ? '📢' : '👥';
+            const displayName = `${typeIcon} ${data.chat_title} ${verifiedIcon} (${data.chat_id})`;
+    
+            const channelData = {
+              chat_id: data.chat_id,
+              username: `@${username}`,
+              title: data.chat_title,
+              type: data.chat_type,
+              invite_link: data.invite_link,
+              admin_count: data.admin_count,
+              participants_count: data.participants_count,
+              is_verified: data.is_verified,
+              displayName: displayName
+            };
+    
+            // Tambahkan ke channels
+            if (!channels.some(c => c.chat_id === data.chat_id)) {
+              channels.push(channelData);
+              updateChannelsTags();
+              hapticNotification('success');
+    
+              showToast(`✅ Data untuk @${username} berhasil diambil!`, 'success');
+            }
+          }
+    
+          if (attempts >= maxAttempts) {
+            clearInterval(pollInterval);
+            showToast(`⚠️ Gagal mengambil data untuk @${username}`, 'error');
+          }
+    
+        } catch (error) {
+          console.error('Polling error:', error);
+        }
+      }, 2000); // Poll setiap 2 detik
+    }
+    
+    // Fungsi untuk menampilkan toast notification
+    function showToast(message, type = 'info') {
+      // Cek apakah sudah ada toast container
+      let toastContainer = document.querySelector('.toast-container');
+    
+      if (!toastContainer) {
+        toastContainer = document.createElement('div');
+        toastContainer.className = 'toast-container';
+        toastContainer.style.cssText = `
+          position: fixed;
+          bottom: 20px;
+          left: 20px;
+          right: 20px;
+          z-index: 9999;
+          display: flex;
+          flex-direction: column;
+          gap: 10px;
+          pointer-events: none;
+        `;
+        document.body.appendChild(toastContainer);
+      }
+    
+      const toast = document.createElement('div');
+      toast.className = `toast toast-${type}`;
+      toast.style.cssText = `
+        background: ${type === 'success' ? '#10b981' : type === 'error' ? '#ef4444' : '#3b82f6'};
+        color: white;
+        padding: 12px 16px;
+        border-radius: 12px;
+        font-size: 14px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        animation: slideUp 0.3s ease;
+        pointer-events: auto;
+      `;
+      toast.textContent = message;
+    
+      toastContainer.appendChild(toast);
+    
+      // Hapus setelah 3 detik
+      setTimeout(() => {
+        toast.style.animation = 'fadeOut 0.3s ease';
+        setTimeout(() => {
+          toast.remove();
+          if (toastContainer.children.length === 0) {
+            toastContainer.remove();
+          }
+        }, 300);
+      }, 3000);
+    }
+    
+    // Tambahkan CSS animations
+    const style = document.createElement('style');
+    style.textContent = `
+      @keyframes slideUp {
+        from {
+          transform: translateY(100%);
+          opacity: 0;
+        }
+        to {
+          transform: translateY(0);
+          opacity: 1;
+        }
+      }
+      
+      @keyframes fadeOut {
+        to {
+          opacity: 0;
+          transform: translateY(100%);
+        }
+      }
+    `;
+    document.head.appendChild(style);
+
   // Update fungsi updateChannelsTags
   function updateChannelsTags() {
     if (!elements.channelTags) return;
