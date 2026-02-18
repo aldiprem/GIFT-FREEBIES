@@ -244,7 +244,9 @@ class Database:
             
         except Exception as e:
             log_error(f"Error initializing database: {e}")
-
+    
+    # database.py - Perbaiki method reset_database
+    
     def reset_database(self):
         """
         Mereset database dengan menghapus file dan membuat ulang
@@ -262,6 +264,8 @@ class Database:
             if os.path.exists(self.db_path):
                 os.remove(self.db_path)
                 log_info(f"✅ File database dihapus: {self.db_path}")
+            else:
+                log_info(f"ℹ️ File database tidak ditemukan: {self.db_path}")
             
             # Inisialisasi ulang database (membuat tabel baru)
             self.init_db()
@@ -278,6 +282,8 @@ class Database:
             
         except Exception as e:
             log_error(f"❌ Error resetting database: {e}")
+            import traceback
+            traceback.print_exc()
             return False
 
     # ==================== USER METHODS ====================
