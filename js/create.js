@@ -1985,54 +1985,85 @@
       }
     }
 
-    // ==================== FUNGSI FORMATTING TEXT GIVEAWAY ====================
-    function setupTextFormatting() {
+    // ==================== FUNGSI FORMATTING TEXT NATIVE ====================
+    function setupNativeTextFormatting() {
       const textarea = elements.giveawayText;
       if (!textarea) return;
     
-      // Buat container untuk toolbar formatting
-      const formatToolbar = document.createElement('div');
-      formatToolbar.className = 'format-toolbar';
-      formatToolbar.innerHTML = `
-            <button type="button" class="format-btn" data-format="bold" title="Tebal">
-                <span class="format-icon">𝐁</span>
-            </button>
-            <button type="button" class="format-btn" data-format="italic" title="Miring">
-                <span class="format-icon">𝐼</span>
-            </button>
-            <button type="button" class="format-btn" data-format="underline" title="Garis Bawah">
-                <span class="format-icon">𝑈</span>
-            </button>
-            <button type="button" class="format-btn" data-format="strikethrough" title="Coret">
-                <span class="format-icon">~~S~~</span>
-            </button>
-            <button type="button" class="format-btn" data-format="monospace" title="Monospace">
-                <span class="format-icon">{ }</span>
-            </button>
-            <button type="button" class="format-btn" data-format="spoiler" title="Spoiler">
-                <span class="format-icon">|| ||</span>
-            </button>
-            <button type="button" class="format-btn" data-format="link" title="Tautan">
-                <span class="format-icon">🔗</span>
-            </button>
-        `;
+      // Simpan fungsi asli
+      const originalContextMenu = textarea.oncontextmenu;
     
-      // Sisipkan toolbar sebelum textarea
-      const textareaWrapper = textarea.closest('.textarea-wrapper');
-      if (textareaWrapper) {
-        textareaWrapper.parentNode.insertBefore(formatToolbar, textareaWrapper);
+      // Tangani event context menu (klik kanan)
+      textarea.addEventListener('contextmenu', (e) => {
+        // Hanya tampilkan menu kustom jika ada teks yang dipilih
+        if (textarea.selectionStart !== textarea.selectionEnd) {
+          e.preventDefault();
+          showNativeFormatMenu(e);
+        }
+      });
+    
+      // Fungsi untuk menampilkan menu native
+      function showNativeFormatMenu(event) {
+        const selectedText = textarea.value.substring(
+          textarea.selectionStart,
+          textarea.selectionEnd
+        );
+    
+        // Buat menu floating sementara
+        const menu = document.createElement('div');
+        menu.className = 'native-format-menu';
+        menu.innerHTML = `
+                <div class="native-format-menu-content">
+                    <button class="native-format-option" data-format="bold">Tebal</button>
+                    <button class="native-format-option" data-format="italic">Miring</button>
+                    <button class="native-format-option" data-format="underline">Garis Bawah</button>
+                    <button class="native-format-option" data-format="strikethrough">Coret</button>
+                    <button class="native-format-option" data-format="monospace">Monospace</button>
+                    <button class="native-format-option" data-format="spoiler">Spoiler</button>
+                    <button class="native-format-option" data-format="link">Tautan</button>
+                </div>
+            `;
+    
+        // Posisikan menu di dekat kursor
+        menu.style.position = 'fixed';
+        menu.style.left = event.clientX + 'px';
+        menu.style.top = event.clientY + 'px';
+        menu.style.zIndex = '999999';
+    
+        document.body.appendChild(menu);
+    
+        // Handler untuk tombol format
+        menu.querySelectorAll('.native-format-option').forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+    
+            const format = btn.dataset.format;
+            applyNativeFormat(format, selectedText);
+    
+            // Hapus menu
+            menu.remove();
+    
+            // Haptic feedback
+            hapticImpact('light');
+          });
+        });
+    
+        // Tutup menu saat klik di luar
+        setTimeout(() => {
+          document.addEventListener('click', function closeMenu(e) {
+            if (!menu.contains(e.target)) {
+              menu.remove();
+              document.removeEventListener('click', closeMenu);
+            }
+          });
+        }, 100);
       }
     
-      // Fungsi untuk apply formatting
-      function applyFormat(format) {
+      // Fungsi untuk mengaplikasikan format
+      function applyNativeFormat(format, selectedText) {
         const start = textarea.selectionStart;
         const end = textarea.selectionEnd;
-        const selectedText = textarea.value.substring(start, end);
-    
-        if (start === end) {
-          hapticNotification('warning');
-          return; // Tidak ada teks yang dipilih
-        }
     
         let formattedText = '';
         let cursorOffset = 0;
@@ -2047,7 +2078,7 @@
             cursorOffset = 2;
             break;
           case 'underline':
-            formattedText = `__${selectedText}__`; // Telegram menggunakan __ untuk underline
+            formattedText = `__${selectedText}__`;
             cursorOffset = 2;
             break;
           case 'strikethrough':
@@ -2070,70 +2101,25 @@
               return;
             }
             break;
-          default:
-            return;
         }
     
-        // Replace teks yang dipilih dengan teks yang sudah diformat
+        // Apply formatting
         textarea.value = textarea.value.substring(0, start) +
           formattedText +
           textarea.value.substring(end);
     
-        // Set cursor position setelah teks yang diformat
+        // Set cursor position
         textarea.selectionStart = start + formattedText.length - cursorOffset;
         textarea.selectionEnd = textarea.selectionStart;
     
-        // Trigger event input
+        // Trigger event
         textarea.dispatchEvent(new Event('input', { bubbles: true }));
-    
-        // Haptic feedback
-        hapticImpact('soft');
-    
-        // Fokus kembali ke textarea
         textarea.focus();
       }
     
-      // Tambahkan event listener ke setiap tombol format
-      formatToolbar.querySelectorAll('.format-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-          e.preventDefault();
-          e.stopPropagation();
-    
-          const format = btn.dataset.format;
-          applyFormat(format);
-        });
-      });
-    
-      // Tambahkan shortcut keyboard (Ctrl+B, Ctrl+I, dll)
-      textarea.addEventListener('keydown', (e) => {
-        if (!e.ctrlKey) return;
-    
-        let format = null;
-        switch (e.key.toLowerCase()) {
-          case 'b':
-            format = 'bold';
-            break;
-          case 'i':
-            format = 'italic';
-            break;
-          case 'u':
-            format = 'underline';
-            break;
-          case 'k':
-            format = 'link';
-            break;
-        }
-    
-        if (format) {
-          e.preventDefault();
-          applyFormat(format);
-        }
-      });
-    
-      console.log('✅ Text formatting initialized');
+      console.log('✅ Native text formatting initialized');
     }
 
-    // Di dalam fungsi init(), setelah setupDurationManager() dan setupEventListeners()
     function init() {
       console.log('🚀 Initializing create giveaway form...');
     
@@ -2153,8 +2139,8 @@
       setupDurationManager();
       setupEventListeners();
     
-      // TAMBAHKAN INI
-      setupTextFormatting();
+      // GANTI dengan yang ini
+      setupNativeTextFormatting(); // ← bukan setupTextFormatting
     
       if (!restored) {
         durationDays = 10;
