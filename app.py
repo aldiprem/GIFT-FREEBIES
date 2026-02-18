@@ -10,12 +10,14 @@ from utils import log_info, log_error, get_jakarta_time
 import pytz
 import random
 import string
-import subprocess
-import sys
 
 app = Flask(__name__)
 
-chatid_bp = Blueprint('chatid', __name__)
+# Register blueprints
+users_bp = Blueprint('users', __name__, url_prefix='/api/users')
+giveaways_bp = Blueprint('giveaways', __name__, url_prefix='/api/giveaways')
+chatid_bp = Blueprint('chatid', __name__, url_prefix='/api/chatid')
+
 CORS(app, origins=Config.ALLOWED_ORIGINS, supports_credentials=True)
 
 db = Database()
@@ -33,6 +35,7 @@ def after_request(response):
         response.headers.add('Access-Control-Allow-Credentials', 'true')
     return response
 
+# ==================== UTILITY FUNCTIONS ====================
 def generate_avatar_url(name):
     """Generate avatar URL dari ui-avatars.com"""
     first_char = name[0] if name and len(name) > 0 else 'U'
@@ -104,7 +107,15 @@ def index():
                 'GET /api/giveaways/user/<user_id>': 'Get giveaways by user',
                 'PUT /api/giveaways/<giveaway_id>': 'Update giveaway',
                 'DELETE /api/giveaways/<giveaway_id>': 'Delete giveaway',
-                'GET /api/giveaways/search?q=<query>': 'Search giveaways'
+                'GET /api/giveaways/search?q=<query>': 'Search giveaways',
+                'GET /api/giveaways/stats': 'Get giveaway statistics'
+            },
+            'chat': {
+                'POST /api/chatid': 'Save chat data',
+                'GET /api/chatid/username/<username>': 'Get chat by username',
+                'POST /api/chatid/sync/<username>': 'Trigger chat sync',
+                'GET /api/chatid/status/<username>': 'Check sync status',
+                'GET /api/chatid/search?q=<query>': 'Search chats'
             },
             'health': {
                 'GET /api/health': 'Health check'
@@ -113,9 +124,40 @@ def index():
         'timestamp': get_jakarta_time()
     })
 
-# ==================== USERS ENDPOINTS ====================
+# ==================== HEALTH CHECK ====================
+@app.route('/api/health', methods=['GET'])
+def health_check():
+    """Health check endpoint"""
+    try:
+        user_count = db.get_user_count()
+        giveaway_count = db.get_giveaway_count()
+        
+        return jsonify({
+            'status': 'healthy',
+            'timestamp': get_jakarta_time(),
+            'server': 'giftfreebies-api',
+            'version': '1.0.0',
+            'database': {
+                'connected': True,
+                'users_count': user_count,
+                'giveaways_count': giveaway_count
+            },
+            'client': {
+                'ip': get_client_ip(),
+                'via_cloudflare': request.headers.get('CF-Ray') is not None
+            }
+        })
+        
+    except Exception as e:
+        log_error(f"Health check failed: {e}")
+        return jsonify({
+            'status': 'unhealthy',
+            'error': str(e),
+            'timestamp': get_jakarta_time()
+        }), 500
 
-@app.route('/api/users', methods=['GET'])
+# ==================== USERS ENDPOINTS ====================
+@users_bp.route('', methods=['GET'])
 def get_all_users():
     """Get all users with pagination"""
     try:
@@ -139,51 +181,7 @@ def get_all_users():
         log_error(f"Error in get_all_users: {e}")
         return jsonify({'error': str(e)}), 500
 
-@app.route('/api/users/<int:user_id>', methods=['GET'])
-def get_user(user_id):
-    """Get user by ID"""
-    try:
-        user = db.get_user(user_id)
-        
-        if user:
-            user['avatar'] = generate_avatar_url(user['fullname'])
-            return jsonify({
-                'success': True,
-                'user': user
-            })
-        else:
-            return jsonify({
-                'success': False,
-                'error': 'User not found'
-            }), 404
-            
-    except Exception as e:
-        log_error(f"Error in get_user: {e}")
-        return jsonify({'error': str(e)}), 500
-
-@app.route('/api/users/username/<username>', methods=['GET'])
-def get_user_by_username(username):
-    """Get user by username"""
-    try:
-        user = db.get_user_by_username(username)
-        
-        if user:
-            user['avatar'] = generate_avatar_url(user['fullname'])
-            return jsonify({
-                'success': True,
-                'user': user
-            })
-        else:
-            return jsonify({
-                'success': False,
-                'error': 'User not found'
-            }), 404
-            
-    except Exception as e:
-        log_error(f"Error in get_user_by_username: {e}")
-        return jsonify({'error': str(e)}), 500
-
-@app.route('/api/users', methods=['POST'])
+@users_bp.route('', methods=['POST'])
 def create_user():
     """Create new user or update existing"""
     try:
@@ -228,7 +226,51 @@ def create_user():
         log_error(f"Error in create_user: {e}")
         return jsonify({'error': str(e)}), 500
 
-@app.route('/api/users/<int:user_id>/stats', methods=['PUT'])
+@users_bp.route('/<int:user_id>', methods=['GET'])
+def get_user(user_id):
+    """Get user by ID"""
+    try:
+        user = db.get_user(user_id)
+        
+        if user:
+            user['avatar'] = generate_avatar_url(user['fullname'])
+            return jsonify({
+                'success': True,
+                'user': user
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'error': 'User not found'
+            }), 404
+            
+    except Exception as e:
+        log_error(f"Error in get_user: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@users_bp.route('/username/<username>', methods=['GET'])
+def get_user_by_username(username):
+    """Get user by username"""
+    try:
+        user = db.get_user_by_username(username)
+        
+        if user:
+            user['avatar'] = generate_avatar_url(user['fullname'])
+            return jsonify({
+                'success': True,
+                'user': user
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'error': 'User not found'
+            }), 404
+            
+    except Exception as e:
+        log_error(f"Error in get_user_by_username: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@users_bp.route('/<int:user_id>/stats', methods=['PUT'])
 def update_user_stats(user_id):
     """Update user statistics"""
     try:
@@ -255,7 +297,7 @@ def update_user_stats(user_id):
         log_error(f"Error in update_user_stats: {e}")
         return jsonify({'error': str(e)}), 500
 
-@app.route('/api/users/search', methods=['GET'])
+@users_bp.route('/search', methods=['GET'])
 def search_users():
     """Search users by name or username"""
     try:
@@ -282,7 +324,7 @@ def search_users():
         log_error(f"Error in search_users: {e}")
         return jsonify({'error': str(e)}), 500
 
-@app.route('/api/users/count', methods=['GET'])
+@users_bp.route('/count', methods=['GET'])
 def get_user_count():
     """Get total number of users"""
     try:
@@ -298,7 +340,7 @@ def get_user_count():
         log_error(f"Error in get_user_count: {e}")
         return jsonify({'error': str(e)}), 500
 
-@app.route('/api/users/active', methods=['GET'])
+@users_bp.route('/active', methods=['GET'])
 def get_active_users():
     """Get number of active users in last X days"""
     try:
@@ -316,7 +358,7 @@ def get_active_users():
         log_error(f"Error in get_active_users: {e}")
         return jsonify({'error': str(e)}), 500
 
-@app.route('/api/users/top', methods=['GET'])
+@users_bp.route('/top', methods=['GET'])
 def get_top_users():
     """Get top users by total participations"""
     try:
@@ -355,8 +397,7 @@ def get_top_users():
         return jsonify({'error': str(e)}), 500
 
 # ==================== GIVEAWAY ENDPOINTS ====================
-
-@app.route('/api/giveaways', methods=['POST'])
+@giveaways_bp.route('', methods=['POST'])
 def create_giveaway():
     """Create new giveaway"""
     try:
@@ -424,7 +465,7 @@ def create_giveaway():
         log_error(f"Error in create_giveaway: {e}")
         return jsonify({'error': str(e)}), 500
 
-@app.route('/api/giveaways', methods=['GET'])
+@giveaways_bp.route('', methods=['GET'])
 def get_all_giveaways():
     """Get all giveaways with optional filters"""
     try:
@@ -447,7 +488,7 @@ def get_all_giveaways():
         log_error(f"Error in get_all_giveaways: {e}")
         return jsonify({'error': str(e)}), 500
 
-@app.route('/api/giveaways/<giveaway_id>', methods=['GET'])
+@giveaways_bp.route('/<giveaway_id>', methods=['GET'])
 def get_giveaway(giveaway_id):
     """Get giveaway by ID"""
     try:
@@ -476,7 +517,7 @@ def get_giveaway(giveaway_id):
         log_error(f"Error in get_giveaway: {e}")
         return jsonify({'error': str(e)}), 500
 
-@app.route('/api/giveaways/user/<int:user_id>', methods=['GET'])
+@giveaways_bp.route('/user/<int:user_id>', methods=['GET'])
 def get_user_giveaways(user_id):
     """Get all giveaways created by a specific user"""
     try:
@@ -498,7 +539,7 @@ def get_user_giveaways(user_id):
         log_error(f"Error in get_user_giveaways: {e}")
         return jsonify({'error': str(e)}), 500
 
-@app.route('/api/giveaways/<giveaway_id>', methods=['PUT'])
+@giveaways_bp.route('/<giveaway_id>', methods=['PUT'])
 def update_giveaway(giveaway_id):
     """Update giveaway details"""
     try:
@@ -530,7 +571,7 @@ def update_giveaway(giveaway_id):
         log_error(f"Error in update_giveaway: {e}")
         return jsonify({'error': str(e)}), 500
 
-@app.route('/api/giveaways/<giveaway_id>', methods=['DELETE'])
+@giveaways_bp.route('/<giveaway_id>', methods=['DELETE'])
 def delete_giveaway(giveaway_id):
     """Delete giveaway (soft delete)"""
     try:
@@ -558,7 +599,7 @@ def delete_giveaway(giveaway_id):
         log_error(f"Error in delete_giveaway: {e}")
         return jsonify({'error': str(e)}), 500
 
-@app.route('/api/giveaways/search', methods=['GET'])
+@giveaways_bp.route('/search', methods=['GET'])
 def search_giveaways():
     """Search giveaways by prize or text"""
     try:
@@ -584,7 +625,7 @@ def search_giveaways():
         log_error(f"Error in search_giveaways: {e}")
         return jsonify({'error': str(e)}), 500
 
-@app.route('/api/giveaways/stats', methods=['GET'])
+@giveaways_bp.route('/stats', methods=['GET'])
 def get_giveaway_stats():
     """Get giveaway statistics"""
     try:
@@ -600,41 +641,8 @@ def get_giveaway_stats():
         log_error(f"Error in get_giveaway_stats: {e}")
         return jsonify({'error': str(e)}), 500
 
-# ==================== HEALTH CHECK ====================
-@app.route('/api/health', methods=['GET'])
-def health_check():
-    """Health check endpoint"""
-    try:
-        user_count = db.get_user_count()
-        giveaway_count = db.get_giveaway_count()
-        
-        return jsonify({
-            'status': 'healthy',
-            'timestamp': get_jakarta_time(),
-            'server': 'giftfreebies-api',
-            'version': '1.0.0',
-            'database': {
-                'connected': True,
-                'users_count': user_count,
-                'giveaways_count': giveaway_count
-            },
-            'client': {
-                'ip': get_client_ip(),
-                'via_cloudflare': request.headers.get('CF-Ray') is not None
-            }
-        })
-        
-    except Exception as e:
-        log_error(f"Health check failed: {e}")
-        return jsonify({
-            'status': 'unhealthy',
-            'error': str(e),
-            'timestamp': get_jakarta_time()
-        }), 500
-
-# app.py - Ganti endpoint save_chat_data
-
-@chatid_bp.route('/api/chatid', methods=['POST'])
+# ==================== CHAT ID ENDPOINTS ====================
+@chatid_bp.route('', methods=['POST'])
 def save_chat_data():
     """Menyimpan data chat ID dari bot"""
     try:
@@ -647,28 +655,17 @@ def save_chat_data():
         if not chat_id:
             return jsonify({'error': 'chat_id is required'}), 400
         
-        # Bersihkan username - HAPUS @ dan lowercase
+        # Bersihkan username
         chat_username = data.get('chat_username')
         if chat_username:
-            # Hapus @ jika ada dan lowercase
             chat_username = chat_username.replace('@', '').strip().lower()
-            log_info(f"Cleaned username: {chat_username} (original: {data.get('chat_username')})")
+            log_info(f"Cleaned username: {chat_username}")
         else:
             chat_username = None
         
         now = get_jakarta_time()
         cursor = db.get_cursor()
         
-        # Cek dulu apakah data sudah ada
-        cursor.execute("SELECT * FROM chatid_data WHERE chat_id = ?", (chat_id,))
-        existing = cursor.fetchone()
-        
-        if existing:
-            log_info(f"Updating existing chat: {chat_id}")
-        else:
-            log_info(f"Inserting new chat: {chat_id}")
-        
-        # Simpan data chat dengan username yang sudah dibersihkan
         cursor.execute("""
         INSERT INTO chatid_data (
             chat_id, chat_title, chat_username, chat_type, invite_link,
@@ -691,7 +688,7 @@ def save_chat_data():
         """, (
             chat_id,
             data.get('chat_title'),
-            chat_username,  # Pakai yang sudah dibersihkan
+            chat_username,
             data.get('chat_type'),
             data.get('invite_link'),
             data.get('admin_count', 0),
@@ -726,15 +723,6 @@ def save_chat_data():
                 ))
         
         db.conn.commit()
-        
-        # Verifikasi data tersimpan
-        cursor.execute("SELECT * FROM chatid_data WHERE chat_id = ?", (chat_id,))
-        saved = cursor.fetchone()
-        if saved:
-            log_info(f"✅ Verified: Chat {chat_id} saved with username: {saved['chat_username']}")
-        else:
-            log_error(f"❌ Failed to verify save for chat {chat_id}")
-        
         cursor.close()
         
         log_info(f"✅ Chat data saved for ID: {chat_id}")
@@ -744,40 +732,23 @@ def save_chat_data():
         log_error(f"Error saving chat data: {e}")
         return jsonify({'error': str(e)}), 500
 
-
-# app.py - Ganti endpoint get_chat_by_username
-
-@chatid_bp.route('/api/chatid/username/<username>', methods=['GET'])
+@chatid_bp.route('/username/<username>', methods=['GET'])
 def get_chat_by_username(username):
     """Mendapatkan data chat berdasarkan username"""
     try:
-        # Bersihkan username - HAPUS @ dan lowercase
         clean_username = username.replace('@', '').strip().lower()
-        log_info(f"🔍 Looking up chat by username: '{clean_username}' (original: '{username}')")
+        log_info(f"🔍 Looking up chat by username: '{clean_username}'")
         
         cursor = db.get_cursor()
-        
-        # Cari di database (case insensitive)
         cursor.execute("SELECT * FROM chatid_data WHERE LOWER(chat_username) = ?", (clean_username,))
         chat_data = cursor.fetchone()
         
         if not chat_data:
-            log_info(f"❌ Chat not found for username: '{clean_username}'")
-            
-            # Debug: tampilkan semua username yang ada di database
-            cursor.execute("SELECT chat_id, chat_username FROM chatid_data")
-            all_chats = cursor.fetchall()
-            log_info(f"Total chats in DB: {len(all_chats)}")
-            for chat in all_chats:
-                log_info(f"  - ID: {chat['chat_id']}, Username: '{chat['chat_username']}'")
-            
             cursor.close()
             return jsonify({'error': 'Chat not found'}), 404
         
         result = dict(chat_data)
-        log_info(f"✅ Chat found: {result.get('chat_title')} (ID: {result.get('chat_id')}, Username: '{result.get('chat_username')}')")
         
-        # Ambil data admin
         cursor.execute("""
         SELECT user_id, username, fullname, role 
         FROM chat_admins WHERE chat_id = ?
@@ -793,57 +764,11 @@ def get_chat_by_username(username):
         log_error(f"Error getting chat by username: {e}")
         return jsonify({'error': str(e)}), 500
 
-# app.py - Tambahkan endpoint baru
-
-@chatid_bp.route('/api/chatid/sync-status/<username>', methods=['GET'])
-def check_sync_request_status(username):
-    """Cek apakah ada request sync yang sedang diproses"""
-    try:
-        clean_username = username.replace('@', '').strip().lower()
-        
-        import os
-        import glob
-        
-        # Cek apakah ada file request
-        request_files = glob.glob(f"/tmp/sync_{clean_username}.request")
-        
-        if request_files:
-            return jsonify({
-                'success': True,
-                'has_request': True,
-                'message': 'Request sync sedang dalam antrian'
-            })
-        
-        # Cek apakah ada file done
-        done_files = glob.glob(f"/tmp/sync_{clean_username}.done")
-        
-        if done_files:
-            return jsonify({
-                'success': True,
-                'has_request': False,
-                'has_result': True,
-                'message': 'Sync sudah selesai'
-            })
-        
-        return jsonify({
-            'success': True,
-            'has_request': False,
-            'has_result': False,
-            'message': 'Tidak ada request sync'
-        })
-        
-    except Exception as e:
-        log_error(f"Error checking sync status: {e}")
-        return jsonify({'error': str(e)}), 500
-
-# app.py - Ganti endpoint sync_chat_from_bot
-
-@chatid_bp.route('/api/chatid/sync/<username>', methods=['POST'])
+@chatid_bp.route('/sync/<username>', methods=['POST'])
 def sync_chat_from_bot(username):
     """Memanggil bot untuk sync data channel/group"""
     try:
         clean_username = username.replace('@', '').strip().lower()
-        
         log_info(f"📡 Sync requested for @{clean_username}")
         
         # Cek apakah channel sudah ada
@@ -861,29 +786,18 @@ def sync_chat_from_bot(username):
                 'data': dict(existing)
             })
         
-        # Panggil API internal bot untuk sync
-        try:
-            # Kirim perintah ke bot melalui HTTP (bot harus punya webhook atau endpoint)
-            # Alternatif: simpan request di database dan bot akan memprosesnya
-            # Untuk sementara, kita akan menggunakan file marker
-            marker_file = f"/tmp/sync_{clean_username}.request"
-            with open(marker_file, 'w') as f:
-                f.write(clean_username)
-            
-            log_info(f"✅ Sync request created for @{clean_username}")
-            
-            return jsonify({
-                'success': True,
-                'message': f'Proses sinkronisasi untuk @{clean_username} dimulai',
-                'status': 'processing'
-            }), 202
-            
-        except Exception as e:
-            log_error(f"Error creating sync request: {e}")
-            return jsonify({
-                'success': False,
-                'error': f'Gagal membuat request sync: {str(e)}'
-            }), 500
+        # Buat file request untuk bot
+        marker_file = f"/tmp/sync_{clean_username}.request"
+        with open(marker_file, 'w') as f:
+            f.write(clean_username)
+        
+        log_info(f"✅ Sync request created for @{clean_username}")
+        
+        return jsonify({
+            'success': True,
+            'message': f'Proses sinkronisasi untuk @{clean_username} dimulai',
+            'status': 'processing'
+        }), 202
         
     except Exception as e:
         log_error(f"Error starting sync: {e}")
@@ -892,55 +806,15 @@ def sync_chat_from_bot(username):
             'error': f'Gagal memulai sinkronisasi: {str(e)}'
         }), 500
 
-@chatid_bp.route('/api/chatid/check/<username>', methods=['GET'])
-def check_chat_exists(username):
-    """Cek apakah chat sudah ada di database"""
-    try:
-        clean_username = username.replace('@', '')
-        
-        cursor = db.get_cursor()
-        cursor.execute("SELECT * FROM chatid_data WHERE chat_username = ?", (clean_username,))
-        chat_data = cursor.fetchone()
-        cursor.close()
-        
-        if chat_data:
-            return jsonify({
-                'success': True,
-                'exists': True,
-                'data': dict(chat_data)
-            })
-        
-        # Cek apakah ada file marker
-        import os
-        marker = f"/tmp/sync_{clean_username}.done"
-        if os.path.exists(marker):
-            with open(marker, 'r') as f:
-                data = json.loads(f.read())
-            return jsonify({
-                'success': True,
-                'exists': True,
-                'data': data
-            })
-        
-        return jsonify({
-            'success': False,
-            'exists': False,
-            'message': f'Data untuk @{clean_username} tidak ditemukan'
-        }), 404
-        
-    except Exception as e:
-        log_error(f"Error checking chat: {e}")
-        return jsonify({'error': str(e)}), 500
-
-@chatid_bp.route('/api/chatid/status/<username>', methods=['GET'])
+@chatid_bp.route('/status/<username>', methods=['GET'])
 def check_sync_status(username):
     """Cek status sinkronisasi"""
     try:
-        clean_username = username.replace('@', '')
+        clean_username = username.replace('@', '').strip().lower()
         
         # Cek di database
         cursor = db.get_cursor()
-        cursor.execute("SELECT * FROM chatid_data WHERE chat_username = ?", (clean_username,))
+        cursor.execute("SELECT * FROM chatid_data WHERE LOWER(chat_username) = ?", (clean_username,))
         chat_data = cursor.fetchone()
         cursor.close()
         
@@ -963,6 +837,15 @@ def check_sync_status(username):
                 'data': data
             })
         
+        # Cek apakah masih ada request
+        request_file = f"/tmp/sync_{clean_username}.request"
+        if os.path.exists(request_file):
+            return jsonify({
+                'success': True,
+                'completed': False,
+                'message': 'Sinkronisasi sedang dalam antrian...'
+            })
+        
         return jsonify({
             'success': True,
             'completed': False,
@@ -973,7 +856,7 @@ def check_sync_status(username):
         log_error(f"Error checking sync status: {e}")
         return jsonify({'error': str(e)}), 500
 
-@chatid_bp.route('/api/chatid/search', methods=['GET'])
+@chatid_bp.route('/search', methods=['GET'])
 def search_chats():
     """Mencari chat berdasarkan query"""
     try:
@@ -1002,9 +885,9 @@ def search_chats():
         log_error(f"Error searching chats: {e}")
         return jsonify({'error': str(e)}), 500
 
-# Hapus endpoint fetch yang tidak digunakan
-# @chatid_bp.route('/api/chatid/fetch/<username>', methods=['GET']) -> HAPUS
-
+# Register all blueprints
+app.register_blueprint(users_bp)
+app.register_blueprint(giveaways_bp)
 app.register_blueprint(chatid_bp)
 
 # ==================== MAIN ====================
@@ -1034,6 +917,7 @@ if __name__ == "__main__":
     print(f"🔍 Health Check: http://{Config.HOST}:{port}/api/health")
     print(f"👥 Users endpoint: http://{Config.HOST}:{port}/api/users")
     print(f"🎁 Giveaways endpoint: http://{Config.HOST}:{port}/api/giveaways")
+    print(f"💬 Chat endpoint: http://{Config.HOST}:{port}/api/chatid")
     print(f"\n📌 Press CTRL+C to stop\n")
     
     app.run(host=Config.HOST, port=port, debug=Config.DEBUG, threaded=True)
