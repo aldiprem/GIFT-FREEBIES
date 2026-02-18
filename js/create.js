@@ -1676,41 +1676,42 @@
                 const displayName = `${typeIcon} ${result.chat_title} ${verifiedIcon} (${result.chat_id})`;
                 
                 const channelData = {
-                    chat_id: result.chat_id,
-                    username: cleanChannel,
-                    title: result.chat_title,
-                    type: result.chat_type,
-                    invite_link: result.invite_link,
-                    admin_count: result.admin_count,
-                    participants_count: result.participants_count,
-                    is_verified: result.is_verified,
-                    displayName: displayName
+                  chat_id: result.chat_id,
+                  username: cleanChannel,
+                  title: result.chat_title,
+                  type: result.chat_type,
+                  invite_link: result.invite_link,
+                  admin_count: result.admin_count,
+                  participants_count: result.participants_count,
+                  is_verified: result.is_verified,
+                  displayName: displayName
                 };
-
-                    // Cek apakah user adalah admin atau owner di channel ini
-                    if (telegramUser && telegramUser.id) {
-                      const isAuthorized = await checkUserIsAdminOrOwner(cleanChannel, telegramUser.id);
-                    
-                      if (!isAuthorized) {
-                        hapticNotification('error');
-                    
-                        const errorMessage = `❌ Anda harus menjadi admin atau owner di ${cleanChannel} untuk menambahkannya ke giveaway.`;
-                    
-                        if (window.Telegram?.WebApp) {
-                          window.Telegram.WebApp.showAlert(errorMessage);
-                        } else {
-                          alert(errorMessage);
-                        }
-                    
-                        invalidChannels.push(`${cleanChannel} (bukan admin/owner)`);
-                        continue;
-                      }
+                
+                // CEK ADMIN/OWNER DISINI - SEBELUM menambahkan ke channels
+                if (telegramUser && telegramUser.id) {
+                  const isAuthorized = await checkUserIsAdminOrOwner(cleanChannel, telegramUser.id);
+                
+                  if (!isAuthorized) {
+                    hapticNotification('error');
+                
+                    const errorMessage = `❌ Anda harus menjadi admin atau owner di ${cleanChannel} untuk menambahkannya ke giveaway.`;
+                
+                    if (window.Telegram?.WebApp) {
+                      window.Telegram.WebApp.showAlert(errorMessage);
+                    } else {
+                      alert(errorMessage);
                     }
-    
-                    if (!channels.some(c => c.chat_id === result.chat_id)) {
-                        channels.push(channelData);
-                        validChannels.push(displayName);
-                    }
+                
+                    invalidChannels.push(`${cleanChannel} (bukan admin/owner)`);
+                    continue; // SKIP channel ini
+                  }
+                }
+                
+                // Jika authorized, baru tambahkan ke channels
+                if (!channels.some(c => c.chat_id === result.chat_id)) {
+                  channels.push(channelData);
+                  validChannels.push(displayName);
+                }
                     
                 } catch (error) {
                     console.error('Error checking channel:', error);
@@ -1929,40 +1930,54 @@
             hapticNotification('success');
         }
     
-    // ==================== FUNGSI CEK ADMIN ATAU OWNER ====================
+    // ==================== FUNGSI CEK ADMIN ATAU OWNER (VERSI OPTIMAL) ====================
     async function checkUserIsAdminOrOwner(username, userId) {
       try {
         const cleanUsername = username.replace('@', '');
-        const response = await fetch(`${API_BASE_URL}/api/chatid/username/${cleanUsername}`);
     
-        if (!response.ok) return false;
+        // Gunakan endpoint khusus untuk mengecek role
+        const response = await fetch(`${API_BASE_URL}/api/chatid/check-role/${cleanUsername}/${userId}`);
     
-        const data = await response.json();
+        if (response.ok) {
+          const data = await response.json();
+          console.log('Role check result:', data);
     
-        // Cek apakah user ada di daftar admin
-        if (data.admins && Array.isArray(data.admins)) {
-          // Admin dengan role 'owner' atau 'admin' diizinkan
-          const isAuthorized = data.admins.some(admin => {
-            const isOwner = admin.role === 'owner' && admin.user_id == userId;
-            const isAdmin = admin.role === 'admin' && admin.user_id == userId;
-            return isOwner || isAdmin;
-          });
-    
-          if (isAuthorized) {
-            console.log(`✅ User ${userId} adalah admin/owner di @${cleanUsername}`);
-            return true;
+          if (data.success) {
+            // Jika data.success true, berarti user adalah admin/owner
+            // is_authorized akan bernilai true jika role adalah 'owner' atau 'admin'
+            return data.is_authorized === true;
+          } else {
+            console.log('Role check failed:', data.error);
+            return false;
           }
-        }
+        } else {
+          console.log(`❌ Role check returned status: ${response.status}`);
     
-        // Jika tidak ada di daftar admin, cek apakah user adalah creator (fallback)
-        // Beberapa API mungkin mengembalikan creator_id
-        if (data.creator_id && data.creator_id == userId) {
-          console.log(`✅ User ${userId} adalah creator di @${cleanUsername}`);
-          return true;
-        }
+          // Fallback ke method lama jika endpoint tidak tersedia
+          console.log('Falling back to admin list check...');
+          const chatResponse = await fetch(`${API_BASE_URL}/api/chatid/username/${cleanUsername}`);
     
-        console.log(`❌ User ${userId} bukan admin/owner di @${cleanUsername}`);
-        return false;
+          if (!chatResponse.ok) return false;
+    
+          const chatData = await chatResponse.json();
+    
+          // Cek apakah user ada di daftar admin
+          if (chatData.admins && Array.isArray(chatData.admins)) {
+            const isAuthorized = chatData.admins.some(admin => {
+              const isOwner = admin.role === 'owner' && admin.user_id == userId;
+              const isAdmin = admin.role === 'admin' && admin.user_id == userId;
+              return isOwner || isAdmin;
+            });
+    
+            if (isAuthorized) {
+              console.log(`✅ User ${userId} adalah admin/owner di @${cleanUsername}`);
+              return true;
+            }
+          }
+    
+          console.log(`❌ User ${userId} bukan admin/owner di @${cleanUsername}`);
+          return false;
+        }
     
       } catch (error) {
         console.error('Error checking admin status:', error);
