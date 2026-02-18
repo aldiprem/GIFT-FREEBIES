@@ -532,6 +532,7 @@
     box-shadow: 0 4px 12px rgba(0, 136, 255, 0.3);
 }
 
+/* Sudah ada di kode Anda, tapi pastikan properti ini: */
 .tag-remove {
     cursor: pointer;
     width: 18px;
@@ -544,6 +545,8 @@
     font-size: 14px;
     transition: all 0.2s ease;
     color: rgba(255, 255, 255, 0.8);
+    z-index: 10;
+    position: relative;
 }
 
 .tag-remove:hover {
