@@ -115,7 +115,8 @@ def index():
                 'GET /api/chatid/username/<username>': 'Get chat by username',
                 'POST /api/chatid/sync/<username>': 'Trigger chat sync',
                 'GET /api/chatid/status/<username>': 'Check sync status',
-                'GET /api/chatid/search?q=<query>': 'Search chats'
+                'GET /api/chatid/search?q=<query>': 'Search chats',
+                'GET /api/chatid/check-role/<username>/<int:user_id>': 'Check if user is admin/owner'
             },
             'health': {
                 'GET /api/health': 'Health check'
@@ -856,6 +857,61 @@ def check_sync_status(username):
         log_error(f"Error checking sync status: {e}")
         return jsonify({'error': str(e)}), 500
 
+@chatid_bp.route('/check-role/<username>/<int:user_id>', methods=['GET'])
+def check_user_role(username, user_id):
+    """Cek apakah user adalah admin atau owner di channel"""
+    try:
+        clean_username = username.replace('@', '').strip().lower()
+        log_info(f"🔍 Checking role for user {user_id} in @{clean_username}")
+        
+        cursor = db.get_cursor()
+        
+        # Cari chat berdasarkan username
+        cursor.execute("SELECT chat_id FROM chatid_data WHERE LOWER(chat_username) = ?", (clean_username,))
+        chat = cursor.fetchone()
+        
+        if not chat:
+            cursor.close()
+            return jsonify({
+                'success': False,
+                'error': 'Chat not found'
+            }), 404
+        
+        chat_id = chat['chat_id']
+        
+        # Cek apakah user ada di tabel admins
+        cursor.execute("""
+        SELECT role FROM chat_admins 
+        WHERE chat_id = ? AND user_id = ?
+        """, (chat_id, user_id))
+        
+        admin = cursor.fetchone()
+        cursor.close()
+        
+        if admin:
+            # User ditemukan di tabel admins
+            role = admin['role']
+            is_authorized = role in ['owner', 'admin']
+            
+            return jsonify({
+                'success': True,
+                'is_authorized': is_authorized,
+                'role': role,
+                'message': f'User adalah {role} di channel ini'
+            })
+        else:
+            # User tidak ditemukan di tabel admins
+            return jsonify({
+                'success': True,
+                'is_authorized': False,
+                'role': None,
+                'message': 'User bukan admin atau owner di channel ini'
+            })
+        
+    except Exception as e:
+        log_error(f"Error checking user role: {e}")
+        return jsonify({'error': str(e)}), 500
+
 @chatid_bp.route('/search', methods=['GET'])
 def search_chats():
     """Mencari chat berdasarkan query"""
@@ -918,6 +974,7 @@ if __name__ == "__main__":
     print(f"👥 Users endpoint: http://{Config.HOST}:{port}/api/users")
     print(f"🎁 Giveaways endpoint: http://{Config.HOST}:{port}/api/giveaways")
     print(f"💬 Chat endpoint: http://{Config.HOST}:{port}/api/chatid")
+    print(f"   • GET /api/chatid/check-role/<username>/<user_id> - Check if user is admin/owner")
     print(f"\n📌 Press CTRL+C to stop\n")
     
     app.run(host=Config.HOST, port=port, debug=Config.DEBUG, threaded=True)
