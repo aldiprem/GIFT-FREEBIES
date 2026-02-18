@@ -862,6 +862,147 @@ def fetch_chat_from_bot(username):
         log_error(f"Error fetching chat from bot: {e}")
         return jsonify({'error': str(e)}), 500
 
+# app.py - Tambahkan di bagian CHATID ENDPOINTS
+
+@chatid_bp.route('/api/chatid/sync/<username>', methods=['POST'])
+def sync_chat_from_bot(username):
+    """Memanggil bot untuk sync data channel/group secara ASYNC"""
+    try:
+        clean_username = username.replace('@', '')
+        
+        log_info(f"📡 Async sync requested for @{clean_username}")
+        
+        # Import bot module
+        import importlib.util
+        import sys
+        import asyncio
+        import threading
+        
+        # Load bot module
+        spec = importlib.util.spec_from_file_location("bot_module", "b.py")
+        bot_module = importlib.util.module_from_spec(spec)
+        sys.modules["bot_module"] = bot_module
+        spec.loader.exec_module(bot_module)
+        
+        # Fungsi untuk menjalankan async task di thread terpisah
+        def run_sync():
+            try:
+                # Buat event loop baru untuk thread ini
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+                
+                # Jalankan sync
+                result = loop.run_until_complete(bot_module.sync_channel_data(clean_username))
+                
+                if result and result.get('success'):
+                    log_info(f"✅ Async sync completed for @{clean_username}")
+                else:
+                    log_error(f"❌ Async sync failed for @{clean_username}: {result.get('error')}")
+                
+                loop.close()
+            except Exception as e:
+                log_error(f"Error in async sync thread: {e}")
+        
+        # Jalankan di thread terpisah agar tidak blocking
+        thread = threading.Thread(target=run_sync)
+        thread.daemon = True
+        thread.start()
+        
+        # Langsung return response bahwa proses sedang berjalan
+        return jsonify({
+            'success': True,
+            'message': f'Proses sinkronisasi untuk @{clean_username} dimulai. Silakan tunggu beberapa saat.',
+            'status': 'processing'
+        }), 202  # 202 Accepted
+        
+    except Exception as e:
+        log_error(f"Error starting async sync: {e}")
+        return jsonify({
+            'success': False,
+            'error': f'Gagal memulai sinkronisasi: {str(e)}'
+        }), 500
+
+@chatid_bp.route('/api/chatid/check/<username>', methods=['GET'])
+def check_chat_exists(username):
+    """Cek apakah chat sudah ada di database, jika tidak langsung panggil sync"""
+    try:
+        clean_username = username.replace('@', '')
+        
+        cursor = db.get_cursor()
+        cursor.execute("SELECT * FROM chatid_data WHERE chat_username = ?", (clean_username,))
+        chat_data = cursor.fetchone()
+        cursor.close()
+        
+        if chat_data:
+            # Data sudah ada
+            return jsonify({
+                'success': True,
+                'exists': True,
+                'data': dict(chat_data)
+            })
+        else:
+            # Data belum ada, panggil sync
+            log_info(f"📡 Data for @{clean_username} not found, triggering auto-sync")
+            
+            # Panggil endpoint sync
+            try:
+                # Import di sini
+                import requests
+                
+                # Panggil endpoint sync
+                sync_response = requests.post(
+                    f"http://{Config.HOST}:{Config.PORT}/api/chatid/sync/{clean_username}",
+                    timeout=1  # Timeout cepat karena async
+                )
+                
+                return jsonify({
+                    'success': False,
+                    'exists': False,
+                    'message': f'Data untuk @{clean_username} tidak ditemukan. Sedang mengambil data dari Telegram...',
+                    'sync_started': True
+                }), 404
+                
+            except Exception as e:
+                log_error(f"Error triggering sync: {e}")
+                return jsonify({
+                    'success': False,
+                    'exists': False,
+                    'message': f'Data untuk @{clean_username} tidak ditemukan',
+                    'sync_started': False
+                }), 404
+        
+    except Exception as e:
+        log_error(f"Error checking chat: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@chatid_bp.route('/api/chatid/sync-status/<username>', methods=['GET'])
+def check_sync_status(username):
+    """Cek status sinkronisasi"""
+    try:
+        clean_username = username.replace('@', '')
+        
+        cursor = db.get_cursor()
+        cursor.execute("SELECT * FROM chatid_data WHERE chat_username = ?", (clean_username,))
+        chat_data = cursor.fetchone()
+        cursor.close()
+        
+        if chat_data:
+            return jsonify({
+                'success': True,
+                'completed': True,
+                'data': dict(chat_data)
+            })
+        else:
+            return jsonify({
+                'success': True,
+                'completed': False,
+                'message': 'Sinkronisasi masih dalam proses...'
+            })
+        
+    except Exception as e:
+        log_error(f"Error checking sync status: {e}")
+        return jsonify({'error': str(e)}), 500
+
 @chatid_bp.route('/api/chatid/search', methods=['GET'])
 def search_chats():
     """Mencari chat berdasarkan query"""
