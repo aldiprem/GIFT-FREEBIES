@@ -1409,10 +1409,8 @@
     
       hapticImpact('light');
     
-      // Split dengan koma
       const newChannels = value.split(',').map(c => c.trim()).filter(c => c && c !== '@');
     
-      // Tampilkan loading state
       elements.channelInput.disabled = true;
       elements.channelInput.placeholder = 'Memvalidasi...';
     
@@ -1429,7 +1427,7 @@
         const cleanUsername = cleanChannel.replace('@', '');
     
         try {
-          // Coba ambil data langsung dari API username
+          // Cek apakah data sudah ada
           let response = await fetch(`${API_BASE_URL}/api/chatid/username/${cleanUsername}`);
     
           if (response.status === 404) {
@@ -1441,11 +1439,8 @@
             });
     
             if (syncResponse.status === 202) {
-              // Sync dimulai
               syncStarted = true;
               invalidChannels.push(`${cleanChannel} (⏳ sedang sync...)`);
-    
-              // Polling status
               pollSyncStatus(cleanUsername, cleanChannel);
             } else {
               invalidChannels.push(cleanChannel);
@@ -1460,7 +1455,6 @@
     
           const result = await response.json();
     
-          // Data valid
           const verifiedIcon = result.is_verified ? '✅' : '';
           const typeIcon = result.chat_type === 'channel' ? '📢' : '👥';
           const displayName = `${typeIcon} ${result.chat_title} ${verifiedIcon} (${result.chat_id})`;
@@ -1477,7 +1471,6 @@
             displayName: displayName
           };
     
-          // Cek duplikat
           if (!channels.some(c => c.chat_id === result.chat_id)) {
             channels.push(channelData);
             validChannels.push(displayName);
@@ -1489,7 +1482,6 @@
         }
       }
     
-      // Update UI
       elements.channelInput.disabled = false;
       elements.channelInput.placeholder = "Ketik username, tekan koma untuk menambah... (contoh: @channel1)";
     
@@ -1519,9 +1511,9 @@
       }, 10);
     }
     
-    // Fungsi untuk polling status sync
+    // Fungsi polling
     async function pollSyncStatus(username, displayName) {
-      const maxAttempts = 15; // 30 detik (2 detik * 15)
+      const maxAttempts = 15;
       let attempts = 0;
     
       const pollInterval = setInterval(async () => {
@@ -1535,7 +1527,6 @@
           if (response.ok) {
             const data = await response.json();
     
-            // Data sudah tersedia
             clearInterval(pollInterval);
     
             const verifiedIcon = data.is_verified ? '✅' : '';
@@ -1554,12 +1545,10 @@
               displayName: displayName
             };
     
-            // Tambahkan ke channels
             if (!channels.some(c => c.chat_id === data.chat_id)) {
               channels.push(channelData);
               updateChannelsTags();
               hapticNotification('success');
-    
               showToast(`✅ Data untuk @${username} berhasil diambil!`, 'success');
             }
     
@@ -1578,7 +1567,7 @@
             showToast(`⚠️ Gagal mengambil data untuk @${username}`, 'error');
           }
         }
-      }, 2000); // Poll setiap 2 detik
+      }, 2000);
     }
     
     // Fungsi untuk menampilkan toast notification
