@@ -50,18 +50,10 @@ class Database:
             )
             """)
             
-            # Index untuk users
-            cursor.execute("""
-            CREATE INDEX IF NOT EXISTS idx_users_username 
-            ON users(username)
-            """)
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_users_username ON users(username)")
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_users_last_seen ON users(last_seen)")
             
-            cursor.execute("""
-            CREATE INDEX IF NOT EXISTS idx_users_last_seen 
-            ON users(last_seen)
-            """)
-            
-            # ==================== TABEL GIVEAWAYS - DIPERBARUI ====================
+            # ==================== TABEL GIVEAWAYS ====================
             cursor.execute("""
             CREATE TABLE IF NOT EXISTS giveaways (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -69,10 +61,10 @@ class Database:
                 creator_user_id INTEGER NOT NULL,
                 creator_fullname TEXT,
                 creator_username TEXT,
-                prizes TEXT NOT NULL, -- JSON array of prizes
-                channels TEXT, -- JSON array of channels/groups
-                links TEXT, -- JSON array of links
-                requirements TEXT, -- JSON array of requirements
+                prizes TEXT NOT NULL,
+                channels TEXT,
+                links TEXT,
+                requirements TEXT,
                 giveaway_text TEXT,
                 duration_days INTEGER DEFAULT 0,
                 duration_hours INTEGER DEFAULT 0,
@@ -92,21 +84,9 @@ class Database:
             )
             """)
             
-            # Index untuk giveaways
-            cursor.execute("""
-            CREATE INDEX IF NOT EXISTS idx_giveaways_creator 
-            ON giveaways(creator_user_id)
-            """)
-            
-            cursor.execute("""
-            CREATE INDEX IF NOT EXISTS idx_giveaways_status 
-            ON giveaways(status)
-            """)
-            
-            cursor.execute("""
-            CREATE INDEX IF NOT EXISTS idx_giveaways_end_date 
-            ON giveaways(end_date)
-            """)
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_giveaways_creator ON giveaways(creator_user_id)")
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_giveaways_status ON giveaways(status)")
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_giveaways_end_date ON giveaways(end_date)")
             
             # ==================== TABEL PARTICIPANTS ====================
             cursor.execute("""
@@ -126,16 +106,8 @@ class Database:
             )
             """)
             
-            # Index untuk participants
-            cursor.execute("""
-            CREATE INDEX IF NOT EXISTS idx_participants_giveaway 
-            ON participants(giveaway_id)
-            """)
-            
-            cursor.execute("""
-            CREATE INDEX IF NOT EXISTS idx_participants_user 
-            ON participants(user_id)
-            """)
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_participants_giveaway ON participants(giveaway_id)")
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_participants_user ON participants(user_id)")
             
             # ==================== TABEL WINNERS ====================
             cursor.execute("""
@@ -168,7 +140,7 @@ class Database:
             )
             """)
 
-            # ==================== TABEL CHAT ID DATA (CHANNEL/GROUP) ====================
+            # ==================== TABEL CHAT ID DATA ====================
             cursor.execute("""
             CREATE TABLE IF NOT EXISTS chatid_data (
                 chat_id INTEGER PRIMARY KEY,
@@ -202,42 +174,10 @@ class Database:
             )
             """)
             
-            # Index untuk chatid_data
-            cursor.execute("""
-            CREATE INDEX IF NOT EXISTS idx_chatid_username 
-            ON chatid_data(chat_username)
-            """)
-            
-            cursor.execute("""
-            CREATE INDEX IF NOT EXISTS idx_chatid_type 
-            ON chatid_data(chat_type)
-            """)
-            
-            # ==================== TABEL CHAT ADMINS ====================
-            cursor.execute("""
-            CREATE TABLE IF NOT EXISTS chat_admins (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                chat_id INTEGER NOT NULL,
-                user_id INTEGER NOT NULL,
-                username TEXT,
-                fullname TEXT,
-                role TEXT DEFAULT 'admin',
-                created_at TEXT,
-                updated_at TEXT,
-                UNIQUE(chat_id, user_id)
-            )
-            """)
-            
-            # Index untuk chat_admins
-            cursor.execute("""
-            CREATE INDEX IF NOT EXISTS idx_chat_admins_chat 
-            ON chat_admins(chat_id)
-            """)
-            
-            cursor.execute("""
-            CREATE INDEX IF NOT EXISTS idx_chat_admins_user 
-            ON chat_admins(user_id)
-            """)
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_chatid_username ON chatid_data(chat_username)")
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_chatid_type ON chatid_data(chat_type)")
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_chat_admins_chat ON chat_admins(chat_id)")
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_chat_admins_user ON chat_admins(user_id)")
 
             conn.commit()
             log_info("All tables created/verified")
@@ -245,21 +185,15 @@ class Database:
         except Exception as e:
             log_error(f"Error initializing database: {e}")
     
-    # database.py - Perbaiki method reset_database
-    
     def reset_database(self):
-        """
-        Mereset database dengan menghapus file dan membuat ulang
-        """
+        """Mereset database dengan menghapus file dan membuat ulang"""
         try:
-            # Tutup koneksi yang ada
             if self.conn:
                 self.conn.close()
                 self.conn = None
             
             log_info("🗑️  Mereset database...")
             
-            # Hapus file database
             import os
             if os.path.exists(self.db_path):
                 os.remove(self.db_path)
@@ -267,27 +201,21 @@ class Database:
             else:
                 log_info(f"ℹ️ File database tidak ditemukan: {self.db_path}")
             
-            # Inisialisasi ulang database (membuat tabel baru)
             self.init_db()
             
-            # Verifikasi
             cursor = self.get_cursor()
             cursor.execute("SELECT name FROM sqlite_master WHERE type='table'")
             tables = cursor.fetchall()
             cursor.close()
             
             log_info(f"✅ Database berhasil direset. Tabel yang dibuat: {len(tables)}")
-            
             return True
             
         except Exception as e:
             log_error(f"❌ Error resetting database: {e}")
-            import traceback
-            traceback.print_exc()
             return False
 
     # ==================== USER METHODS ====================
-    
     def add_user(self, user_id, fullname, username=None, phone_number=None,
                  language_code=None, is_bot=0, is_premium=0):
         """Menambah atau mengupdate user"""
@@ -295,7 +223,6 @@ class Database:
         cursor = self.get_cursor()
         
         try:
-            # Cek apakah user sudah ada
             cursor.execute(
                 "SELECT user_id FROM users WHERE user_id = ?",
                 (user_id,)
@@ -303,34 +230,23 @@ class Database:
             existing = cursor.fetchone()
             
             if existing:
-                # Update user yang sudah ada
                 cursor.execute("""
                 UPDATE users SET
-                    fullname = ?,
-                    username = ?,
-                    phone_number = ?,
-                    language_code = ?,
-                    is_bot = ?,
-                    is_premium = ?,
-                    last_seen = ?,
-                    updated_at = ?
+                    fullname = ?, username = ?, phone_number = ?,
+                    language_code = ?, is_bot = ?, is_premium = ?,
+                    last_seen = ?, updated_at = ?
                 WHERE user_id = ?
-                """, (
-                    fullname, username, phone_number, language_code,
-                    is_bot, is_premium, now, now, user_id
-                ))
+                """, (fullname, username, phone_number, language_code,
+                      is_bot, is_premium, now, now, user_id))
                 log_info(f"User {user_id} updated")
             else:
-                # Insert user baru
                 cursor.execute("""
                 INSERT INTO users (
                     user_id, fullname, username, phone_number, language_code,
                     is_bot, is_premium, first_seen, last_seen, created_at, updated_at
                 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                """, (
-                    user_id, fullname, username, phone_number, language_code,
-                    is_bot, is_premium, now, now, now, now
-                ))
+                """, (user_id, fullname, username, phone_number, language_code,
+                      is_bot, is_premium, now, now, now, now))
                 log_info(f"User {user_id} added")
             
             self.conn.commit()
@@ -355,10 +271,6 @@ class Database:
             
             user = cursor.fetchone()
             return dict(user) if user else None
-            
-        except Exception as e:
-            log_error(f"Error getting user: {e}")
-            return None
         finally:
             cursor.close()
     
@@ -375,10 +287,6 @@ class Database:
             
             user = cursor.fetchone()
             return dict(user) if user else None
-            
-        except Exception as e:
-            log_error(f"Error getting user by username: {e}")
-            return None
         finally:
             cursor.close()
     
@@ -394,12 +302,7 @@ class Database:
             LIMIT ? OFFSET ?
             """, (limit, offset))
             
-            users = cursor.fetchall()
-            return [dict(user) for user in users]
-            
-        except Exception as e:
-            log_error(f"Error getting all users: {e}")
-            return []
+            return [dict(user) for user in cursor.fetchall()]
         finally:
             cursor.close()
     
@@ -412,7 +315,6 @@ class Database:
             
             if participated:
                 updates.append("total_participations = total_participations + 1")
-            
             if won:
                 updates.append("total_wins = total_wins + 1")
             
@@ -420,23 +322,15 @@ class Database:
                 return True
             
             query = f"""
-            UPDATE users 
-            SET {', '.join(updates)}, last_seen = ?
-            WHERE user_id = ?
+            UPDATE users SET {', '.join(updates)}, last_seen = ? WHERE user_id = ?
             """
-            
             params.append(get_jakarta_time())
             params.append(user_id)
             
             cursor.execute(query, params)
             self.conn.commit()
-            
             log_info(f"User {user_id} stats updated")
             return True
-            
-        except Exception as e:
-            log_error(f"Error updating user stats: {e}")
-            return False
         finally:
             cursor.close()
     
@@ -454,12 +348,7 @@ class Database:
             LIMIT ?
             """, (search_term, search_term, limit))
             
-            users = cursor.fetchall()
-            return [dict(user) for user in users]
-            
-        except Exception as e:
-            log_error(f"Error searching users: {e}")
-            return []
+            return [dict(user) for user in cursor.fetchall()]
         finally:
             cursor.close()
     
@@ -468,11 +357,7 @@ class Database:
         cursor = self.get_cursor()
         try:
             cursor.execute("SELECT COUNT(*) FROM users")
-            count = cursor.fetchone()[0]
-            return count
-        except Exception as e:
-            log_error(f"Error getting user count: {e}")
-            return 0
+            return cursor.fetchone()[0]
         finally:
             cursor.close()
     
@@ -483,27 +368,18 @@ class Database:
             jakarta_tz = pytz.timezone('Asia/Jakarta')
             cutoff = (datetime.now(jakarta_tz) - timedelta(days=days)).strftime('%Y-%m-%d %H:%M:%S')
             
-            cursor.execute("""
-            SELECT COUNT(*) FROM users WHERE last_seen > ?
-            """, (cutoff,))
-            
-            count = cursor.fetchone()[0]
-            return count
-        except Exception as e:
-            log_error(f"Error getting active users: {e}")
-            return 0
+            cursor.execute("SELECT COUNT(*) FROM users WHERE last_seen > ?", (cutoff,))
+            return cursor.fetchone()[0]
         finally:
             cursor.close()
     
-    # ==================== GIVEAWAY METHODS - DIPERBARUI ====================
-    
+    # ==================== GIVEAWAY METHODS ====================
     def create_giveaway(self, giveaway_data):
-        """Membuat giveaway baru dengan semua field dari form"""
+        """Membuat giveaway baru"""
         cursor = self.get_cursor()
         try:
             now = get_jakarta_time()
             
-            # Hitung total seconds
             total_seconds = (
                 giveaway_data.get('duration_days', 0) * 86400 +
                 giveaway_data.get('duration_hours', 0) * 3600 +
@@ -511,7 +387,6 @@ class Database:
                 giveaway_data.get('duration_seconds', 0)
             )
             
-            # Hitung end_date
             end_date = None
             if total_seconds > 0:
                 jakarta_tz = pytz.timezone('Asia/Jakarta')
@@ -551,15 +426,6 @@ class Database:
             
             self.conn.commit()
             log_info(f"Giveaway {giveaway_data['giveaway_id']} created")
-            
-            # Log creation
-            self.add_giveaway_log(
-                giveaway_data['giveaway_id'],
-                'created',
-                giveaway_data['creator_user_id'],
-                {'prizes_count': len(giveaway_data.get('prizes', []))}
-            )
-            
             return True
             
         except Exception as e:
@@ -572,14 +438,11 @@ class Database:
         """Mendapatkan data giveaway berdasarkan ID"""
         cursor = self.get_cursor()
         try:
-            cursor.execute("""
-            SELECT * FROM giveaways WHERE giveaway_id = ?
-            """, (giveaway_id,))
-            
+            cursor.execute("SELECT * FROM giveaways WHERE giveaway_id = ?", (giveaway_id,))
             giveaway = cursor.fetchone()
+            
             if giveaway:
                 result = dict(giveaway)
-                # Parse JSON fields
                 for field in ['prizes', 'channels', 'links', 'requirements']:
                     if result.get(field):
                         try:
@@ -588,397 +451,8 @@ class Database:
                             result[field] = []
                 return result
             return None
-            
-        except Exception as e:
-            log_error(f"Error getting giveaway: {e}")
-            return None
         finally:
             cursor.close()
-    
-    def get_giveaways_by_creator(self, creator_user_id, limit=50, offset=0):
-        """Mendapatkan semua giveaway yang dibuat oleh user tertentu"""
-        cursor = self.get_cursor()
-        try:
-            cursor.execute("""
-            SELECT * FROM giveaways 
-            WHERE creator_user_id = ?
-            ORDER BY created_at DESC
-            LIMIT ? OFFSET ?
-            """, (creator_user_id, limit, offset))
-            
-            giveaways = cursor.fetchall()
-            result = []
-            for g in giveaways:
-                g_dict = dict(g)
-                for field in ['prizes', 'channels', 'links', 'requirements']:
-                    if g_dict.get(field):
-                        try:
-                            g_dict[field] = json.loads(g_dict[field])
-                        except:
-                            g_dict[field] = []
-                result.append(g_dict)
-            return result
-            
-        except Exception as e:
-            log_error(f"Error getting giveaways by creator: {e}")
-            return []
-        finally:
-            cursor.close()
-    
-    def get_active_giveaways(self, limit=50):
-        """Mendapatkan giveaway yang masih aktif"""
-        cursor = self.get_cursor()
-        try:
-            now = get_jakarta_time()
-            cursor.execute("""
-            SELECT * FROM giveaways 
-            WHERE status = 'active' AND (end_date IS NULL OR end_date > ?)
-            ORDER BY created_at DESC
-            LIMIT ?
-            """, (now, limit))
-            
-            giveaways = cursor.fetchall()
-            result = []
-            for g in giveaways:
-                g_dict = dict(g)
-                for field in ['prizes', 'channels', 'links', 'requirements']:
-                    if g_dict.get(field):
-                        try:
-                            g_dict[field] = json.loads(g_dict[field])
-                        except:
-                            g_dict[field] = []
-                result.append(g_dict)
-            return result
-            
-        except Exception as e:
-            log_error(f"Error getting active giveaways: {e}")
-            return []
-        finally:
-            cursor.close()
-    
-    def update_giveaway_status(self, giveaway_id, status):
-        """Update status giveaway"""
-        cursor = self.get_cursor()
-        try:
-            now = get_jakarta_time()
-            cursor.execute("""
-            UPDATE giveaways 
-            SET status = ?, updated_at = ?
-            WHERE giveaway_id = ?
-            """, (status, now, giveaway_id))
-            
-            self.conn.commit()
-            log_info(f"Giveaway {giveaway_id} status updated to {status}")
-            
-            # Log status change
-            self.add_giveaway_log(giveaway_id, f'status_changed_to_{status}', None)
-            
-            return True
-            
-        except Exception as e:
-            log_error(f"Error updating giveaway status: {e}")
-            return False
-        finally:
-            cursor.close()
-    
-    def increment_participants(self, giveaway_id):
-        """Menambah jumlah peserta giveaway"""
-        cursor = self.get_cursor()
-        try:
-            cursor.execute("""
-            UPDATE giveaways 
-            SET participants_count = participants_count + 1,
-                updated_at = ?
-            WHERE giveaway_id = ?
-            """, (get_jakarta_time(), giveaway_id))
-            
-            self.conn.commit()
-            return True
-            
-        except Exception as e:
-            log_error(f"Error incrementing participants: {e}")
-            return False
-        finally:
-            cursor.close()
-    
-    # ==================== PARTICIPANT METHODS ====================
-    
-    def add_participant(self, giveaway_id, user_id, tickets=1):
-        """Menambah peserta giveaway"""
-        cursor = self.get_cursor()
-        try:
-            now = get_jakarta_time()
-            
-            cursor.execute("""
-            INSERT OR REPLACE INTO participants 
-            (giveaway_id, user_id, tickets, joined_at)
-            VALUES (?, ?, ?, ?)
-            """, (giveaway_id, user_id, tickets, now))
-            
-            self.conn.commit()
-            
-            # Update user stats
-            self.update_user_stats(user_id, participated=True)
-            
-            log_info(f"User {user_id} joined giveaway {giveaway_id}")
-            return True
-            
-        except Exception as e:
-            log_error(f"Error adding participant: {e}")
-            return False
-        finally:
-            cursor.close()
-    
-    def get_participants(self, giveaway_id):
-        """Mendapatkan semua peserta giveaway"""
-        cursor = self.get_cursor()
-        try:
-            cursor.execute("""
-            SELECT p.*, u.fullname, u.username, u.is_premium
-            FROM participants p
-            JOIN users u ON p.user_id = u.user_id
-            WHERE p.giveaway_id = ?
-            ORDER BY p.joined_at ASC
-            """, (giveaway_id,))
-            
-            participants = cursor.fetchall()
-            return [dict(p) for p in participants]
-            
-        except Exception as e:
-            log_error(f"Error getting participants: {e}")
-            return []
-        finally:
-            cursor.close()
-    
-    def get_participant_count(self, giveaway_id):
-        """Mendapatkan jumlah peserta giveaway"""
-        cursor = self.get_cursor()
-        try:
-            cursor.execute("""
-            SELECT COUNT(*) FROM participants WHERE giveaway_id = ?
-            """, (giveaway_id,))
-            
-            count = cursor.fetchone()[0]
-            return count
-            
-        except Exception as e:
-            log_error(f"Error getting participant count: {e}")
-            return 0
-        finally:
-            cursor.close()
-    
-    def check_participant(self, giveaway_id, user_id):
-        """Cek apakah user sudah ikut giveaway"""
-        cursor = self.get_cursor()
-        try:
-            cursor.execute("""
-            SELECT * FROM participants 
-            WHERE giveaway_id = ? AND user_id = ?
-            """, (giveaway_id, user_id))
-            
-            return cursor.fetchone() is not None
-            
-        except Exception as e:
-            log_error(f"Error checking participant: {e}")
-            return False
-        finally:
-            cursor.close()
-    
-    # ==================== WINNER METHODS ====================
-    
-    def add_winners(self, giveaway_id, winners):
-        """Menambah pemenang giveaway"""
-        cursor = self.get_cursor()
-        try:
-            now = get_jakarta_time()
-            jakarta_tz = pytz.timezone('Asia/Jakarta')
-            claim_deadline = (datetime.now(jakarta_tz) + timedelta(days=3)).strftime('%Y-%m-%d %H:%M:%S')
-            
-            for winner in winners:
-                cursor.execute("""
-                INSERT INTO winners 
-                (giveaway_id, user_id, win_position, announced_at, claim_deadline)
-                VALUES (?, ?, ?, ?, ?)
-                """, (
-                    giveaway_id,
-                    winner['user_id'],
-                    winner.get('position'),
-                    now,
-                    claim_deadline
-                ))
-                
-                # Update user stats
-                self.update_user_stats(winner['user_id'], won=True)
-                
-                # Update participant as winner
-                cursor.execute("""
-                UPDATE participants 
-                SET is_winner = 1, win_position = ?
-                WHERE giveaway_id = ? AND user_id = ?
-                """, (winner.get('position'), giveaway_id, winner['user_id']))
-            
-            # Update giveaway winners count
-            cursor.execute("""
-            UPDATE giveaways 
-            SET winners_count = winners_count + ?,
-                updated_at = ?
-            WHERE giveaway_id = ?
-            """, (len(winners), now, giveaway_id))
-            
-            self.conn.commit()
-            log_info(f"{len(winners)} winners added to giveaway {giveaway_id}")
-            return True
-            
-        except Exception as e:
-            log_error(f"Error adding winners: {e}")
-            return False
-        finally:
-            cursor.close()
-    
-    def get_winners(self, giveaway_id):
-        """Mendapatkan pemenang giveaway"""
-        cursor = self.get_cursor()
-        try:
-            cursor.execute("""
-            SELECT w.*, u.fullname, u.username, u.is_premium
-            FROM winners w
-            JOIN users u ON w.user_id = u.user_id
-            WHERE w.giveaway_id = ?
-            ORDER BY w.win_position ASC
-            """, (giveaway_id,))
-            
-            winners = cursor.fetchall()
-            return [dict(w) for w in winners]
-            
-        except Exception as e:
-            log_error(f"Error getting winners: {e}")
-            return []
-        finally:
-            cursor.close()
-    
-    def claim_prize(self, giveaway_id, user_id):
-        """User mengklaim hadiah"""
-        cursor = self.get_cursor()
-        try:
-            now = get_jakarta_time()
-            
-            cursor.execute("""
-            UPDATE winners 
-            SET claimed_at = ?, delivery_status = 'claimed'
-            WHERE giveaway_id = ? AND user_id = ?
-            """, (now, giveaway_id, user_id))
-            
-            cursor.execute("""
-            UPDATE participants 
-            SET has_claimed = 1, claimed_at = ?
-            WHERE giveaway_id = ? AND user_id = ?
-            """, (now, giveaway_id, user_id))
-            
-            self.conn.commit()
-            log_info(f"User {user_id} claimed prize for giveaway {giveaway_id}")
-            return True
-            
-        except Exception as e:
-            log_error(f"Error claiming prize: {e}")
-            return False
-        finally:
-            cursor.close()
-    
-    # ==================== LOG METHODS ====================
-    
-    def add_giveaway_log(self, giveaway_id, action, performed_by=None, details=None):
-        """Menambah log giveaway"""
-        cursor = self.get_cursor()
-        try:
-            now = get_jakarta_time()
-            
-            cursor.execute("""
-            INSERT INTO giveaway_logs 
-            (giveaway_id, action, performed_by, details, created_at)
-            VALUES (?, ?, ?, ?, ?)
-            """, (
-                giveaway_id,
-                action,
-                performed_by,
-                json.dumps(details) if details else None,
-                now
-            ))
-            
-            self.conn.commit()
-            return True
-            
-        except Exception as e:
-            log_error(f"Error adding giveaway log: {e}")
-            return False
-        finally:
-            cursor.close()
-    
-    def get_giveaway_logs(self, giveaway_id, limit=50):
-        """Mendapatkan log giveaway"""
-        cursor = self.get_cursor()
-        try:
-            cursor.execute("""
-            SELECT * FROM giveaway_logs 
-            WHERE giveaway_id = ?
-            ORDER BY created_at DESC
-            LIMIT ?
-            """, (giveaway_id, limit))
-            
-            logs = cursor.fetchall()
-            result = []
-            for log in logs:
-                log_dict = dict(log)
-                if log_dict.get('details'):
-                    try:
-                        log_dict['details'] = json.loads(log_dict['details'])
-                    except:
-                        pass
-                result.append(log_dict)
-            return result
-            
-        except Exception as e:
-            log_error(f"Error getting giveaway logs: {e}")
-            return []
-        finally:
-            cursor.close()
-    
-    # ==================== STATS METHODS ====================
-    
-    def get_giveaway_stats(self):
-        """Mendapatkan statistik giveaway"""
-        cursor = self.get_cursor()
-        try:
-            stats = {}
-            
-            # Total giveaways
-            cursor.execute("SELECT COUNT(*) FROM giveaways")
-            stats['total'] = cursor.fetchone()[0]
-            
-            # Active giveaways
-            cursor.execute("SELECT COUNT(*) FROM giveaways WHERE status = 'active'")
-            stats['active'] = cursor.fetchone()[0]
-            
-            # Ended giveaways
-            cursor.execute("SELECT COUNT(*) FROM giveaways WHERE status = 'ended'")
-            stats['ended'] = cursor.fetchone()[0]
-            
-            # Total participants
-            cursor.execute("SELECT COUNT(*) FROM participants")
-            stats['total_participants'] = cursor.fetchone()[0]
-            
-            # Total winners
-            cursor.execute("SELECT COUNT(*) FROM winners")
-            stats['total_winners'] = cursor.fetchone()[0]
-            
-            return stats
-            
-        except Exception as e:
-            log_error(f"Error getting giveaway stats: {e}")
-            return {}
-        finally:
-            cursor.close()
-
-    # ==================== GIVEAWAY METHODS - TAMBAHKAN ====================
     
     def get_user_giveaways(self, user_id, status='all', limit=50, offset=0):
         """Mendapatkan semua giveaway yang dibuat oleh user tertentu"""
@@ -986,24 +460,19 @@ class Database:
         try:
             if status == 'all':
                 cursor.execute("""
-                SELECT * FROM giveaways 
-                WHERE creator_user_id = ?
-                ORDER BY created_at DESC
-                LIMIT ? OFFSET ?
+                SELECT * FROM giveaways WHERE creator_user_id = ?
+                ORDER BY created_at DESC LIMIT ? OFFSET ?
                 """, (user_id, limit, offset))
             else:
                 cursor.execute("""
-                SELECT * FROM giveaways 
-                WHERE creator_user_id = ? AND status = ?
-                ORDER BY created_at DESC
-                LIMIT ? OFFSET ?
+                SELECT * FROM giveaways WHERE creator_user_id = ? AND status = ?
+                ORDER BY created_at DESC LIMIT ? OFFSET ?
                 """, (user_id, status, limit, offset))
             
             giveaways = cursor.fetchall()
             result = []
             for g in giveaways:
                 g_dict = dict(g)
-                # Parse JSON fields
                 for field in ['prizes', 'channels', 'links', 'requirements']:
                     if g_dict.get(field):
                         try:
@@ -1012,23 +481,6 @@ class Database:
                             g_dict[field] = []
                 result.append(g_dict)
             return result
-            
-        except Exception as e:
-            log_error(f"Error getting user giveaways: {e}")
-            return []
-        finally:
-            cursor.close()
-    
-    def get_giveaway_count(self):
-        """Mendapatkan total jumlah giveaway"""
-        cursor = self.get_cursor()
-        try:
-            cursor.execute("SELECT COUNT(*) FROM giveaways")
-            count = cursor.fetchone()[0]
-            return count
-        except Exception as e:
-            log_error(f"Error getting giveaway count: {e}")
-            return 0
         finally:
             cursor.close()
     
@@ -1038,16 +490,12 @@ class Database:
         try:
             if status == 'all':
                 cursor.execute("""
-                SELECT * FROM giveaways 
-                ORDER BY created_at DESC
-                LIMIT ? OFFSET ?
+                SELECT * FROM giveaways ORDER BY created_at DESC LIMIT ? OFFSET ?
                 """, (limit, offset))
             else:
                 cursor.execute("""
-                SELECT * FROM giveaways 
-                WHERE status = ?
-                ORDER BY created_at DESC
-                LIMIT ? OFFSET ?
+                SELECT * FROM giveaways WHERE status = ?
+                ORDER BY created_at DESC LIMIT ? OFFSET ?
                 """, (status, limit, offset))
             
             giveaways = cursor.fetchall()
@@ -1062,10 +510,6 @@ class Database:
                             g_dict[field] = []
                 result.append(g_dict)
             return result
-            
-        except Exception as e:
-            log_error(f"Error getting all giveaways: {e}")
-            return []
         finally:
             cursor.close()
     
@@ -1075,29 +519,21 @@ class Database:
         try:
             now = get_jakarta_time()
             
-            # Build update query
             update_fields = []
             params = []
             
             if 'prizes' in data:
                 update_fields.append("prizes = ?")
                 params.append(json.dumps(data['prizes']))
-            
             if 'requirements' in data:
                 update_fields.append("requirements = ?")
                 params.append(json.dumps(data['requirements']))
-            
             if 'giveaway_text' in data:
                 update_fields.append("giveaway_text = ?")
                 params.append(data['giveaway_text'])
-            
             if 'status' in data:
                 update_fields.append("status = ?")
                 params.append(data['status'])
-            
-            if 'captcha_enabled' in data:
-                update_fields.append("captcha_enabled = ?")
-                params.append(data['captcha_enabled'])
             
             update_fields.append("updated_at = ?")
             params.append(now)
@@ -1105,22 +541,13 @@ class Database:
             if not update_fields:
                 return True
             
-            query = f"""
-            UPDATE giveaways 
-            SET {', '.join(update_fields)}
-            WHERE giveaway_id = ?
-            """
+            query = f"UPDATE giveaways SET {', '.join(update_fields)} WHERE giveaway_id = ?"
             params.append(giveaway_id)
             
             cursor.execute(query, params)
             self.conn.commit()
-            
             log_info(f"Giveaway {giveaway_id} updated")
             return True
-            
-        except Exception as e:
-            log_error(f"Error updating giveaway: {e}")
-            return False
         finally:
             cursor.close()
     
@@ -1136,8 +563,7 @@ class Database:
             cursor.execute("""
             SELECT * FROM giveaways 
             WHERE prizes LIKE ? OR giveaway_text LIKE ?
-            ORDER BY created_at DESC
-            LIMIT ?
+            ORDER BY created_at DESC LIMIT ?
             """, (search_term, search_term, limit))
             
             giveaways = cursor.fetchall()
@@ -1152,13 +578,204 @@ class Database:
                             g_dict[field] = []
                 result.append(g_dict)
             return result
-            
-        except Exception as e:
-            log_error(f"Error searching giveaways: {e}")
-            return []
         finally:
             cursor.close()
-
+    
+    def get_giveaway_count(self):
+        """Mendapatkan total jumlah giveaway"""
+        cursor = self.get_cursor()
+        try:
+            cursor.execute("SELECT COUNT(*) FROM giveaways")
+            return cursor.fetchone()[0]
+        finally:
+            cursor.close()
+    
+    def get_giveaway_stats(self):
+        """Mendapatkan statistik giveaway"""
+        cursor = self.get_cursor()
+        try:
+            stats = {}
+            cursor.execute("SELECT COUNT(*) FROM giveaways")
+            stats['total'] = cursor.fetchone()[0]
+            cursor.execute("SELECT COUNT(*) FROM giveaways WHERE status = 'active'")
+            stats['active'] = cursor.fetchone()[0]
+            cursor.execute("SELECT COUNT(*) FROM giveaways WHERE status = 'ended'")
+            stats['ended'] = cursor.fetchone()[0]
+            cursor.execute("SELECT COUNT(*) FROM participants")
+            stats['total_participants'] = cursor.fetchone()[0]
+            cursor.execute("SELECT COUNT(*) FROM winners")
+            stats['total_winners'] = cursor.fetchone()[0]
+            return stats
+        finally:
+            cursor.close()
+    
+    # ==================== PARTICIPANT METHODS ====================
+    def add_participant(self, giveaway_id, user_id, tickets=1):
+        """Menambah peserta giveaway"""
+        cursor = self.get_cursor()
+        try:
+            now = get_jakarta_time()
+            cursor.execute("""
+            INSERT OR REPLACE INTO participants 
+            (giveaway_id, user_id, tickets, joined_at)
+            VALUES (?, ?, ?, ?)
+            """, (giveaway_id, user_id, tickets, now))
+            
+            self.conn.commit()
+            self.update_user_stats(user_id, participated=True)
+            log_info(f"User {user_id} joined giveaway {giveaway_id}")
+            return True
+        finally:
+            cursor.close()
+    
+    def get_participants(self, giveaway_id):
+        """Mendapatkan semua peserta giveaway"""
+        cursor = self.get_cursor()
+        try:
+            cursor.execute("""
+            SELECT p.*, u.fullname, u.username, u.is_premium
+            FROM participants p
+            JOIN users u ON p.user_id = u.user_id
+            WHERE p.giveaway_id = ?
+            ORDER BY p.joined_at ASC
+            """, (giveaway_id,))
+            
+            return [dict(p) for p in cursor.fetchall()]
+        finally:
+            cursor.close()
+    
+    def get_participant_count(self, giveaway_id):
+        """Mendapatkan jumlah peserta giveaway"""
+        cursor = self.get_cursor()
+        try:
+            cursor.execute("SELECT COUNT(*) FROM participants WHERE giveaway_id = ?", (giveaway_id,))
+            return cursor.fetchone()[0]
+        finally:
+            cursor.close()
+    
+    def check_participant(self, giveaway_id, user_id):
+        """Cek apakah user sudah ikut giveaway"""
+        cursor = self.get_cursor()
+        try:
+            cursor.execute("""
+            SELECT * FROM participants 
+            WHERE giveaway_id = ? AND user_id = ?
+            """, (giveaway_id, user_id))
+            return cursor.fetchone() is not None
+        finally:
+            cursor.close()
+    
+    # ==================== WINNER METHODS ====================
+    def add_winners(self, giveaway_id, winners):
+        """Menambah pemenang giveaway"""
+        cursor = self.get_cursor()
+        try:
+            now = get_jakarta_time()
+            jakarta_tz = pytz.timezone('Asia/Jakarta')
+            claim_deadline = (datetime.now(jakarta_tz) + timedelta(days=3)).strftime('%Y-%m-%d %H:%M:%S')
+            
+            for winner in winners:
+                cursor.execute("""
+                INSERT INTO winners 
+                (giveaway_id, user_id, win_position, announced_at, claim_deadline)
+                VALUES (?, ?, ?, ?, ?)
+                """, (giveaway_id, winner['user_id'], winner.get('position'), now, claim_deadline))
+                
+                self.update_user_stats(winner['user_id'], won=True)
+                
+                cursor.execute("""
+                UPDATE participants SET is_winner = 1, win_position = ?
+                WHERE giveaway_id = ? AND user_id = ?
+                """, (winner.get('position'), giveaway_id, winner['user_id']))
+            
+            cursor.execute("""
+            UPDATE giveaways SET winners_count = winners_count + ?, updated_at = ?
+            WHERE giveaway_id = ?
+            """, (len(winners), now, giveaway_id))
+            
+            self.conn.commit()
+            log_info(f"{len(winners)} winners added to giveaway {giveaway_id}")
+            return True
+        finally:
+            cursor.close()
+    
+    def get_winners(self, giveaway_id):
+        """Mendapatkan pemenang giveaway"""
+        cursor = self.get_cursor()
+        try:
+            cursor.execute("""
+            SELECT w.*, u.fullname, u.username, u.is_premium
+            FROM winners w
+            JOIN users u ON w.user_id = u.user_id
+            WHERE w.giveaway_id = ?
+            ORDER BY w.win_position ASC
+            """, (giveaway_id,))
+            
+            return [dict(w) for w in cursor.fetchall()]
+        finally:
+            cursor.close()
+    
+    def claim_prize(self, giveaway_id, user_id):
+        """User mengklaim hadiah"""
+        cursor = self.get_cursor()
+        try:
+            now = get_jakarta_time()
+            cursor.execute("""
+            UPDATE winners SET claimed_at = ?, delivery_status = 'claimed'
+            WHERE giveaway_id = ? AND user_id = ?
+            """, (now, giveaway_id, user_id))
+            
+            cursor.execute("""
+            UPDATE participants SET has_claimed = 1, claimed_at = ?
+            WHERE giveaway_id = ? AND user_id = ?
+            """, (now, giveaway_id, user_id))
+            
+            self.conn.commit()
+            log_info(f"User {user_id} claimed prize for giveaway {giveaway_id}")
+            return True
+        finally:
+            cursor.close()
+    
+    # ==================== LOG METHODS ====================
+    def add_giveaway_log(self, giveaway_id, action, performed_by=None, details=None):
+        """Menambah log giveaway"""
+        cursor = self.get_cursor()
+        try:
+            now = get_jakarta_time()
+            cursor.execute("""
+            INSERT INTO giveaway_logs 
+            (giveaway_id, action, performed_by, details, created_at)
+            VALUES (?, ?, ?, ?, ?)
+            """, (giveaway_id, action, performed_by, json.dumps(details) if details else None, now))
+            
+            self.conn.commit()
+            return True
+        finally:
+            cursor.close()
+    
+    def get_giveaway_logs(self, giveaway_id, limit=50):
+        """Mendapatkan log giveaway"""
+        cursor = self.get_cursor()
+        try:
+            cursor.execute("""
+            SELECT * FROM giveaway_logs WHERE giveaway_id = ?
+            ORDER BY created_at DESC LIMIT ?
+            """, (giveaway_id, limit))
+            
+            logs = cursor.fetchall()
+            result = []
+            for log in logs:
+                log_dict = dict(log)
+                if log_dict.get('details'):
+                    try:
+                        log_dict['details'] = json.loads(log_dict['details'])
+                    except:
+                        pass
+                result.append(log_dict)
+            return result
+        finally:
+            cursor.close()
+    
     def close(self):
         """Menutup koneksi database"""
         if self.conn:
