@@ -4,6 +4,8 @@ from flask_cors import CORS
 import socket
 import json
 import os
+import time
+import threading
 from config import Config
 from database import Database
 from utils import log_info, log_error, get_jakarta_time
@@ -20,20 +22,97 @@ chatid_bp = Blueprint('chatid', __name__, url_prefix='/api/chatid')
 
 CORS(app, origins=Config.ALLOWED_ORIGINS, supports_credentials=True)
 
-db = Database()
+# ==================== DATABASE MANAGER ====================
+class DatabaseManager:
+    """Manager untuk mengelola koneksi database dengan auto-reconnect"""
+    
+    _instance = None
+    _lock = threading.Lock()
+    
+    def __new__(cls):
+        with cls._lock:
+            if cls._instance is None:
+                cls._instance = super().__new__(cls)
+                cls._instance._initialized = False
+            return cls._instance
+    
+    def __init__(self):
+        if self._initialized:
+            return
+        self._initialized = True
+        
+        self.db = None
+        self.last_modified = None
+        self.last_check = 0
+        self.check_interval = 2  # Cek setiap 2 detik
+        self.db_path = Config.DB_PATH
+        self._connect()
+    
+    def _connect(self):
+        """Membuat koneksi database baru"""
+        try:
+            if self.db:
+                try:
+                    self.db.close()
+                except:
+                    pass
+            self.db = Database()
+            if os.path.exists(self.db_path):
+                self.last_modified = os.path.getmtime(self.db_path)
+            log_info("✅ Database connected")
+        except Exception as e:
+            log_error(f"❌ Database connection error: {e}")
+            self.db = None
+    
+    def get_db(self):
+        """Mendapatkan instance database dengan auto-reconnect jika file berubah"""
+        now = time.time()
+        
+        # Cek apakah perlu memeriksa file
+        if now - self.last_check < self.check_interval:
+            return self.db
+        
+        self.last_check = now
+        
+        # Jika database belum terkoneksi
+        if self.db is None:
+            self._connect()
+            return self.db
+        
+        # Cek apakah file database ada
+        if not os.path.exists(self.db_path):
+            log_warning("⚠️ Database file not found, reconnecting...")
+            self._connect()
+            return self.db
+        
+        # Cek apakah file database berubah
+        try:
+            current_mtime = os.path.getmtime(self.db_path)
+            
+            if self.last_modified is None:
+                self.last_modified = current_mtime
+            elif current_mtime != self.last_modified:
+                log_info("🔄 Database file changed, reconnecting...")
+                self._connect()
+                self.last_modified = current_mtime
+        except Exception as e:
+            log_error(f"Error checking database file: {e}")
+        
+        return self.db
+    
+    def force_reconnect(self):
+        """Memaksa reconnect database"""
+        log_info("🔄 Forcing database reconnect...")
+        self._connect()
+        return self.db
 
-@app.after_request
-def after_request(response):
-    """Middleware untuk menambahkan headers CORS"""
-    origin = request.headers.get('Origin')
-    if origin in Config.ALLOWED_ORIGINS:
-        response.headers.add('Access-Control-Allow-Origin', origin)
-        response.headers.add('Access-Control-Allow-Headers', 
-                           'Content-Type,Accept,Authorization')
-        response.headers.add('Access-Control-Allow-Methods', 
-                           'GET,POST,PUT,DELETE,OPTIONS')
-        response.headers.add('Access-Control-Allow-Credentials', 'true')
-    return response
+# Inisialisasi database manager (singleton)
+db_manager = DatabaseManager()
+
+# Fungsi helper untuk mendapatkan database
+def get_db():
+    """Mendapatkan instance database dari manager"""
+    return db_manager.get_db()
 
 # ==================== UTILITY FUNCTIONS ====================
 def generate_avatar_url(name):
@@ -130,8 +209,9 @@ def index():
 def health_check():
     """Health check endpoint"""
     try:
-        user_count = db.get_user_count()
-        giveaway_count = db.get_giveaway_count()
+        current_db = get_db()
+        user_count = current_db.get_user_count()
+        giveaway_count = current_db.get_giveaway_count()
         
         return jsonify({
             'status': 'healthy',
@@ -162,10 +242,11 @@ def health_check():
 def get_all_users():
     """Get all users with pagination"""
     try:
+        current_db = get_db()
         limit = request.args.get('limit', 100, type=int)
         offset = request.args.get('offset', 0, type=int)
         
-        users = db.get_all_users(limit=limit, offset=offset)
+        users = current_db.get_all_users(limit=limit, offset=offset)
         
         for user in users:
             user['avatar'] = generate_avatar_url(user['fullname'])
@@ -186,6 +267,7 @@ def get_all_users():
 def create_user():
     """Create new user or update existing"""
     try:
+        current_db = get_db()
         data = request.json
         log_info(f"Received user data: {data}")
         
@@ -197,7 +279,7 @@ def create_user():
                     'error': f'Field {field} is required'
                 }), 400
         
-        success = db.add_user(
+        success = current_db.add_user(
             user_id=data['user_id'],
             fullname=data['fullname'],
             username=data.get('username'),
@@ -208,7 +290,7 @@ def create_user():
         )
         
         if success:
-            user = db.get_user(data['user_id'])
+            user = current_db.get_user(data['user_id'])
             if user:
                 user['avatar'] = generate_avatar_url(user['fullname'])
             
@@ -231,7 +313,8 @@ def create_user():
 def get_user(user_id):
     """Get user by ID"""
     try:
-        user = db.get_user(user_id)
+        current_db = get_db()
+        user = current_db.get_user(user_id)
         
         if user:
             user['avatar'] = generate_avatar_url(user['fullname'])
@@ -253,7 +336,8 @@ def get_user(user_id):
 def get_user_by_username(username):
     """Get user by username"""
     try:
-        user = db.get_user_by_username(username)
+        current_db = get_db()
+        user = current_db.get_user_by_username(username)
         
         if user:
             user['avatar'] = generate_avatar_url(user['fullname'])
@@ -275,14 +359,15 @@ def get_user_by_username(username):
 def update_user_stats(user_id):
     """Update user statistics"""
     try:
+        current_db = get_db()
         data = request.json
         participated = data.get('participated', False)
         won = data.get('won', False)
         
-        success = db.update_user_stats(user_id, participated, won)
+        success = current_db.update_user_stats(user_id, participated, won)
         
         if success:
-            user = db.get_user(user_id)
+            user = current_db.get_user(user_id)
             return jsonify({
                 'success': True,
                 'message': 'User stats updated',
@@ -302,6 +387,7 @@ def update_user_stats(user_id):
 def search_users():
     """Search users by name or username"""
     try:
+        current_db = get_db()
         query = request.args.get('q', '')
         if len(query) < 2:
             return jsonify({
@@ -309,7 +395,7 @@ def search_users():
                 'error': 'Search query must be at least 2 characters'
             }), 400
         
-        users = db.search_users(query)
+        users = current_db.search_users(query)
         
         for user in users:
             user['avatar'] = generate_avatar_url(user['fullname'])
@@ -329,7 +415,8 @@ def search_users():
 def get_user_count():
     """Get total number of users"""
     try:
-        count = db.get_user_count()
+        current_db = get_db()
+        count = current_db.get_user_count()
         
         return jsonify({
             'success': True,
@@ -345,8 +432,9 @@ def get_user_count():
 def get_active_users():
     """Get number of active users in last X days"""
     try:
+        current_db = get_db()
         days = request.args.get('days', 7, type=int)
-        count = db.get_active_users(days)
+        count = current_db.get_active_users(days)
         
         return jsonify({
             'success': True,
@@ -363,9 +451,10 @@ def get_active_users():
 def get_top_users():
     """Get top users by total participations"""
     try:
+        current_db = get_db()
         limit = request.args.get('limit', 10, type=int)
         
-        cursor = db.get_cursor()
+        cursor = current_db.get_cursor()
         cursor.execute("""
         SELECT user_id, fullname, username, total_participations, total_wins
         FROM users
@@ -402,6 +491,7 @@ def get_top_users():
 def create_giveaway():
     """Create new giveaway"""
     try:
+        current_db = get_db()
         data = request.json
         log_info(f"Received giveaway data: {data}")
         
@@ -426,13 +516,13 @@ def create_giveaway():
                 end_date_str += ':00'
             end_time = end_date_str
         
-        db.add_user(
+        current_db.add_user(
             user_id=data['creator_user_id'],
             fullname=data.get('fullname', 'Unknown'),
             username=data.get('username')
         )
         
-        success = db.create_giveaway(
+        success = current_db.create_giveaway(
             giveaway_id=giveaway_id,
             creator_user_id=data['creator_user_id'],
             prizes=data['prizes'],
@@ -470,11 +560,12 @@ def create_giveaway():
 def get_all_giveaways():
     """Get all giveaways with optional filters"""
     try:
+        current_db = get_db()
         status = request.args.get('status', 'active')
         limit = request.args.get('limit', 50, type=int)
         offset = request.args.get('offset', 0, type=int)
         
-        giveaways = db.get_all_giveaways(status=status, limit=limit, offset=offset)
+        giveaways = current_db.get_all_giveaways(status=status, limit=limit, offset=offset)
         
         return jsonify({
             'success': True,
@@ -493,10 +584,11 @@ def get_all_giveaways():
 def get_giveaway(giveaway_id):
     """Get giveaway by ID"""
     try:
-        giveaway = db.get_giveaway(giveaway_id)
+        current_db = get_db()
+        giveaway = current_db.get_giveaway(giveaway_id)
         
         if giveaway:
-            creator = db.get_user(giveaway['creator_user_id'])
+            creator = current_db.get_user(giveaway['creator_user_id'])
             if creator:
                 giveaway['creator'] = {
                     'fullname': creator['fullname'],
@@ -522,11 +614,12 @@ def get_giveaway(giveaway_id):
 def get_user_giveaways(user_id):
     """Get all giveaways created by a specific user"""
     try:
+        current_db = get_db()
         status = request.args.get('status', 'all')
         limit = request.args.get('limit', 50, type=int)
         offset = request.args.get('offset', 0, type=int)
         
-        giveaways = db.get_user_giveaways(user_id, status=status, limit=limit, offset=offset)
+        giveaways = current_db.get_user_giveaways(user_id, status=status, limit=limit, offset=offset)
         
         return jsonify({
             'success': True,
@@ -544,19 +637,20 @@ def get_user_giveaways(user_id):
 def update_giveaway(giveaway_id):
     """Update giveaway details"""
     try:
+        current_db = get_db()
         data = request.json
         
-        existing = db.get_giveaway(giveaway_id)
+        existing = current_db.get_giveaway(giveaway_id)
         if not existing:
             return jsonify({
                 'success': False,
                 'error': 'Giveaway not found'
             }), 404
         
-        success = db.update_giveaway(giveaway_id, data)
+        success = current_db.update_giveaway(giveaway_id, data)
         
         if success:
-            updated = db.get_giveaway(giveaway_id)
+            updated = current_db.get_giveaway(giveaway_id)
             return jsonify({
                 'success': True,
                 'message': 'Giveaway updated successfully',
@@ -576,14 +670,15 @@ def update_giveaway(giveaway_id):
 def delete_giveaway(giveaway_id):
     """Delete giveaway (soft delete)"""
     try:
-        existing = db.get_giveaway(giveaway_id)
+        current_db = get_db()
+        existing = current_db.get_giveaway(giveaway_id)
         if not existing:
             return jsonify({
                 'success': False,
                 'error': 'Giveaway not found'
             }), 404
         
-        success = db.delete_giveaway(giveaway_id)
+        success = current_db.delete_giveaway(giveaway_id)
         
         if success:
             return jsonify({
@@ -604,6 +699,7 @@ def delete_giveaway(giveaway_id):
 def search_giveaways():
     """Search giveaways by prize or text"""
     try:
+        current_db = get_db()
         query = request.args.get('q', '')
         if len(query) < 2:
             return jsonify({
@@ -613,7 +709,7 @@ def search_giveaways():
         
         limit = request.args.get('limit', 20, type=int)
         
-        giveaways = db.search_giveaways(query, limit=limit)
+        giveaways = current_db.search_giveaways(query, limit=limit)
         
         return jsonify({
             'success': True,
@@ -630,7 +726,8 @@ def search_giveaways():
 def get_giveaway_stats():
     """Get giveaway statistics"""
     try:
-        stats = db.get_giveaway_stats()
+        current_db = get_db()
+        stats = current_db.get_giveaway_stats()
         
         return jsonify({
             'success': True,
@@ -647,6 +744,7 @@ def get_giveaway_stats():
 def save_chat_data():
     """Menyimpan data chat ID dari bot"""
     try:
+        current_db = get_db()
         data = request.get_json()
         
         if not data:
@@ -665,7 +763,7 @@ def save_chat_data():
             chat_username = None
         
         now = get_jakarta_time()
-        cursor = db.get_cursor()
+        cursor = current_db.get_cursor()
         
         cursor.execute("""
         INSERT INTO chatid_data (
@@ -723,7 +821,7 @@ def save_chat_data():
                     now
                 ))
         
-        db.conn.commit()
+        current_db.conn.commit()
         cursor.close()
         
         log_info(f"✅ Chat data saved for ID: {chat_id}")
@@ -737,10 +835,11 @@ def save_chat_data():
 def get_chat_by_username(username):
     """Mendapatkan data chat berdasarkan username"""
     try:
+        current_db = get_db()
         clean_username = username.replace('@', '').strip().lower()
         log_info(f"🔍 Looking up chat by username: '{clean_username}'")
         
-        cursor = db.get_cursor()
+        cursor = current_db.get_cursor()
         cursor.execute("SELECT * FROM chatid_data WHERE LOWER(chat_username) = ?", (clean_username,))
         chat_data = cursor.fetchone()
         
@@ -769,11 +868,12 @@ def get_chat_by_username(username):
 def sync_chat_from_bot(username):
     """Memanggil bot untuk sync data channel/group"""
     try:
+        current_db = get_db()
         clean_username = username.replace('@', '').strip().lower()
         log_info(f"📡 Sync requested for @{clean_username}")
         
         # Cek apakah channel sudah ada
-        cursor = db.get_cursor()
+        cursor = current_db.get_cursor()
         cursor.execute("SELECT * FROM chatid_data WHERE LOWER(chat_username) = ?", (clean_username,))
         existing = cursor.fetchone()
         cursor.close()
@@ -811,10 +911,11 @@ def sync_chat_from_bot(username):
 def check_sync_status(username):
     """Cek status sinkronisasi"""
     try:
+        current_db = get_db()
         clean_username = username.replace('@', '').strip().lower()
         
         # Cek di database
-        cursor = db.get_cursor()
+        cursor = current_db.get_cursor()
         cursor.execute("SELECT * FROM chatid_data WHERE LOWER(chat_username) = ?", (clean_username,))
         chat_data = cursor.fetchone()
         cursor.close()
@@ -861,10 +962,11 @@ def check_sync_status(username):
 def check_user_role(username, user_id):
     """Cek apakah user adalah admin atau owner di channel"""
     try:
+        current_db = get_db()
         clean_username = username.replace('@', '').strip().lower()
         log_info(f"🔍 Checking role for user {user_id} in @{clean_username}")
         
-        cursor = db.get_cursor()
+        cursor = current_db.get_cursor()
         
         # Cari chat berdasarkan username
         cursor.execute("SELECT chat_id FROM chatid_data WHERE LOWER(chat_username) = ?", (clean_username,))
@@ -916,11 +1018,12 @@ def check_user_role(username, user_id):
 def search_chats():
     """Mencari chat berdasarkan query"""
     try:
+        current_db = get_db()
         query = request.args.get('q', '')
         if not query:
             return jsonify({'error': 'Query parameter required'}), 400
             
-        cursor = db.get_cursor()
+        cursor = current_db.get_cursor()
         search_term = f"%{query}%"
         
         cursor.execute("""
@@ -955,6 +1058,7 @@ if __name__ == "__main__":
     ║  📦 Version: 1.0.0                       ║
     ║  🗄️  Database: SQLite3                    ║
     ║  👥 Feature: Users & Giveaways            ║
+    ║  🔄 Auto-reconnect: Active                ║
     ╚══════════════════════════════════════════╝
     """)
     
@@ -975,6 +1079,7 @@ if __name__ == "__main__":
     print(f"🎁 Giveaways endpoint: http://{Config.HOST}:{port}/api/giveaways")
     print(f"💬 Chat endpoint: http://{Config.HOST}:{port}/api/chatid")
     print(f"   • GET /api/chatid/check-role/<username>/<user_id> - Check if user is admin/owner")
+    print(f"🔄 Auto-reconnect: Active (cek setiap 2 detik)")
     print(f"\n📌 Press CTRL+C to stop\n")
     
     app.run(host=Config.HOST, port=port, debug=Config.DEBUG, threaded=True)
