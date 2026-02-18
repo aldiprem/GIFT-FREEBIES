@@ -793,6 +793,48 @@ def get_chat_by_username(username):
         log_error(f"Error getting chat by username: {e}")
         return jsonify({'error': str(e)}), 500
 
+# app.py - Tambahkan endpoint baru
+
+@chatid_bp.route('/api/chatid/sync-status/<username>', methods=['GET'])
+def check_sync_request_status(username):
+    """Cek apakah ada request sync yang sedang diproses"""
+    try:
+        clean_username = username.replace('@', '').strip().lower()
+        
+        import os
+        import glob
+        
+        # Cek apakah ada file request
+        request_files = glob.glob(f"/tmp/sync_{clean_username}.request")
+        
+        if request_files:
+            return jsonify({
+                'success': True,
+                'has_request': True,
+                'message': 'Request sync sedang dalam antrian'
+            })
+        
+        # Cek apakah ada file done
+        done_files = glob.glob(f"/tmp/sync_{clean_username}.done")
+        
+        if done_files:
+            return jsonify({
+                'success': True,
+                'has_request': False,
+                'has_result': True,
+                'message': 'Sync sudah selesai'
+            })
+        
+        return jsonify({
+            'success': True,
+            'has_request': False,
+            'has_result': False,
+            'message': 'Tidak ada request sync'
+        })
+        
+    except Exception as e:
+        log_error(f"Error checking sync status: {e}")
+        return jsonify({'error': str(e)}), 500
 
 # app.py - Ganti endpoint sync_chat_from_bot
 
