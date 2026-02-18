@@ -1716,37 +1716,42 @@
     }, 50);
   }
 
+    // Di js/create.js, ganti fungsi-fungsi loading modal dengan yang ini
+    
     let typingInterval = null;
     let currentTypingIndex = 0;
     let typingLines = [];
+    let startTime = null;
+    let modal = null;
     
     function showLoadingModal(username) {
-      // Hapus modal yang sudah ada
-      const existingModal = document.querySelector('.sync-loading-modal');
-      if (existingModal) {
-        existingModal.remove();
-      }
-    
-      // Hentikan typing interval jika ada
-      if (typingInterval) {
-        clearInterval(typingInterval);
-        typingInterval = null;
-      }
-    
-      // Reset state
-      currentTypingIndex = 0;
-      typingLines = [
-        { text: `📡 Memulai sinkronisasi untuk @${username}...`, delay: 500 },
-        { text: `🔍 Mencari data channel @${username}...`, delay: 800 },
-        { text: `✅ Entity ditemukan!`, delay: 600 },
-        { text: `📊 Mengambil informasi channel...`, delay: 700 },
-        { text: `👥 Mengambil data anggota...`, delay: 900 }
+        // Hapus modal yang sudah ada
+        const existingModal = document.querySelector('.sync-loading-modal');
+        if (existingModal) {
+            existingModal.remove();
+        }
+        
+        // Hentikan typing interval jika ada
+        if (typingInterval) {
+            clearInterval(typingInterval);
+            typingInterval = null;
+        }
+        
+        // Reset state
+        currentTypingIndex = 0;
+        startTime = Date.now();
+        
+        // Lines awal - hanya 3 baris sederhana
+        typingLines = [
+            { text: `📡 Menghubungi server untuk @${username}...`, delay: 300 },
+            { text: `🔍 Mengambil data dari Telegram...`, delay: 400 },
+            { text: `⏳ Mohon tunggu sebentar...`, delay: 500 }
         ];
-    
-      // Buat modal
-      const modal = document.createElement('div');
-      modal.className = 'sync-loading-modal';
-      modal.innerHTML = `
+        
+        // Buat modal
+        modal = document.createElement('div');
+        modal.className = 'sync-loading-modal';
+        modal.innerHTML = `
             <div class="sync-loading-content">
                 <div class="sync-loading-header">
                     <div class="sync-loading-title">⏳ Memuat Data Channel</div>
@@ -1759,164 +1764,410 @@
                     <div class="sync-progress-bar">
                         <div class="sync-progress-fill" id="progressFill"></div>
                     </div>
-                    <div class="sync-status" id="syncStatus">Menghubungi server...</div>
+                    <div class="sync-status" id="syncStatus">Memulai...</div>
                 </div>
             </div>
         `;
-    
-      document.body.appendChild(modal);
-    
-      // Animasi masuk
-      setTimeout(() => {
-        modal.classList.add('active');
-      }, 10);
-    
-      // Mulai typing effect
-      startTypingEffect();
-    
-      return modal;
+        
+        document.body.appendChild(modal);
+        
+        // Animasi masuk
+        setTimeout(() => {
+            modal.classList.add('active');
+        }, 10);
+        
+        // Mulai typing effect sederhana
+        startTypingEffect();
+        
+        return modal;
     }
     
     function startTypingEffect() {
-      const typingContent = document.getElementById('typingContent');
-      if (!typingContent) return;
-    
-      typingContent.innerHTML = '';
-      currentTypingIndex = 0;
-    
-      function typeNextLine() {
-        if (currentTypingIndex >= typingLines.length) {
-          // Selesai semua line, update status
-          updateSyncStatus('Menyimpan data ke database...');
-          return;
-        }
-    
-        const line = typingLines[currentTypingIndex];
-        const lineElement = document.createElement('div');
-        lineElement.className = 'sync-typing-line';
-        lineElement.style.opacity = '0';
-        typingContent.appendChild(lineElement);
-    
-        // Animasi fade in
-        setTimeout(() => {
-          lineElement.style.opacity = '1';
-        }, 50);
-    
-        // Typing effect per karakter
-        let charIndex = 0;
-        const text = line.text;
-        lineElement.textContent = '';
-    
-        function typeChar() {
-          if (charIndex < text.length) {
-            lineElement.textContent += text.charAt(charIndex);
-            charIndex++;
-    
-            // Scroll otomatis
-            typingContent.scrollTop = typingContent.scrollHeight;
-    
-            // Kecepatan typing random (30-80ms) untuk efek natural
-            const nextDelay = 30 + Math.random() * 50;
-            setTimeout(typeChar, nextDelay);
-          } else {
-            // Selesai satu line, lanjut ke next line
-            currentTypingIndex++;
-    
-            // Update progress bar
-            const progress = (currentTypingIndex / typingLines.length) * 100;
-            updateProgressBar(progress);
-    
-            // Update status berdasarkan line terakhir
-            if (currentTypingIndex === 1) {
-              updateSyncStatus('Mencari channel di Telegram...');
-            } else if (currentTypingIndex === 2) {
-              updateSyncStatus('Channel ditemukan!');
-            } else if (currentTypingIndex === 3) {
-              updateSyncStatus('Mengambil detail channel...');
+        const typingContent = document.getElementById('typingContent');
+        if (!typingContent) return;
+        
+        typingContent.innerHTML = '';
+        currentTypingIndex = 0;
+        
+        function typeNextLine() {
+            if (currentTypingIndex >= typingLines.length) {
+                // Update status
+                updateSyncStatus('Menyimpan data...');
+                updateProgressBar(50);
+                return;
             }
-    
+            
+            const line = typingLines[currentTypingIndex];
+            const lineElement = document.createElement('div');
+            lineElement.className = 'sync-typing-line';
+            lineElement.style.opacity = '0';
+            typingContent.appendChild(lineElement);
+            
+            // Animasi fade in
+            setTimeout(() => {
+                lineElement.style.opacity = '1';
+            }, 50);
+            
+            // Tampilkan langsung tanpa typing per karakter (lebih cepat)
+            lineElement.textContent = line.text;
+            
+            // Update progress bar
+            const progress = ((currentTypingIndex + 1) / typingLines.length) * 40;
+            updateProgressBar(progress);
+            
+            // Update status
+            if (currentTypingIndex === 0) {
+                updateSyncStatus('Menghubungi server...');
+            } else if (currentTypingIndex === 1) {
+                updateSyncStatus('Mengambil data...');
+            }
+            
+            currentTypingIndex++;
+            
             // Lanjut ke line berikutnya setelah delay
-            setTimeout(typeNextLine, line.delay || 500);
-          }
+            setTimeout(typeNextLine, line.delay || 400);
         }
-    
-        typeChar();
-      }
-    
-      typeNextLine();
+        
+        typeNextLine();
     }
     
     function updateSyncStatus(status) {
-      const statusEl = document.getElementById('syncStatus');
-      if (statusEl) {
-        statusEl.textContent = status;
-      }
+        const statusEl = document.getElementById('syncStatus');
+        if (statusEl) {
+            statusEl.textContent = status;
+        }
     }
     
     function updateProgressBar(percent) {
-      const progressFill = document.getElementById('progressFill');
-      if (progressFill) {
-        progressFill.style.width = `${percent}%`;
-      }
+        const progressFill = document.getElementById('progressFill');
+        if (progressFill) {
+            progressFill.style.width = `${percent}%`;
+        }
     }
     
     function updateLoadingModalWithData(data) {
-      const typingContent = document.getElementById('typingContent');
-      if (!typingContent) return;
-    
-      // Tambahkan line-line baru dengan data real
-      const dataLines = [
-        { text: `✅ Chat ID: ${data.chat_id}`, delay: 300 },
-        { text: `📢 Nama: ${data.chat_title}`, delay: 300 },
-        { text: `🔗 Username: @${data.chat_username}`, delay: 300 },
-        { text: `👥 Jumlah Anggota: ${data.participants_count || 'Tidak diketahui'}`, delay: 300 },
-        { text: `✅ Verified: ${data.is_verified ? 'Ya' : 'Tidak'}`, delay: 300 },
-        { text: `📎 Invite Link: ${data.invite_link || 'Tidak tersedia'}`, delay: 400 }
+        const typingContent = document.getElementById('typingContent');
+        if (!typingContent) return;
+        
+        // Hitung waktu yang telah berlalu
+        const elapsedTime = Math.round((Date.now() - startTime) / 1000);
+        
+        // Tambahkan line-line data real
+        const dataLines = [
+            { text: `✅ Chat ID: ${data.chat_id}`, delay: 200 },
+            { text: `📢 Nama: ${data.chat_title}`, delay: 200 },
+            { text: `🔗 Username: @${data.chat_username}`, delay: 200 },
+            { text: `👥 Anggota: ${data.participants_count || 'Tidak diketahui'}`, delay: 200 }
         ];
-    
-      // Tambahkan ke typing lines
-      typingLines = [...typingLines, ...dataLines];
-    
-      // Update progress bar
-      updateProgressBar(80);
-      updateSyncStatus('Data berhasil diambil!');
+        
+        // Tambahkan satu per satu dengan cepat
+        let dataIndex = 0;
+        
+        function addNextDataLine() {
+            if (dataIndex < dataLines.length) {
+                const line = dataLines[dataIndex];
+                const lineElement = document.createElement('div');
+                lineElement.className = 'sync-typing-line success';
+                lineElement.style.opacity = '0';
+                lineElement.textContent = line.text;
+                typingContent.appendChild(lineElement);
+                
+                setTimeout(() => {
+                    lineElement.style.opacity = '1';
+                }, 50);
+                
+                // Scroll otomatis
+                typingContent.scrollTop = typingContent.scrollHeight;
+                
+                // Update progress
+                const progress = 50 + ((dataIndex + 1) / dataLines.length) * 30;
+                updateProgressBar(progress);
+                
+                dataIndex++;
+                
+                // Line berikutnya setelah delay singkat
+                setTimeout(addNextDataLine, line.delay || 150);
+            } else {
+                // Selesai semua data
+                updateProgressBar(90);
+                updateSyncStatus('Data berhasil diambil!');
+                
+                // Tambahkan line selesai
+                setTimeout(() => {
+                    const completeLine = document.createElement('div');
+                    completeLine.className = 'sync-typing-line success';
+                    completeLine.innerHTML = '✅ Selesai! Data siap digunakan.';
+                    typingContent.appendChild(completeLine);
+                    typingContent.scrollTop = typingContent.scrollHeight;
+                    
+                    updateProgressBar(100);
+                    updateSyncStatus('✅ Berhasil!');
+                }, 300);
+            }
+        }
+        
+        // Mulai menambahkan data lines
+        addNextDataLine();
     }
     
     function completeLoadingModal(success = true) {
-      const modal = document.querySelector('.sync-loading-modal');
-      if (!modal) return;
-    
-      // Hentikan typing
-      if (typingInterval) {
-        clearInterval(typingInterval);
-        typingInterval = null;
-      }
-    
-      // Update progress bar ke 100%
-      updateProgressBar(100);
-    
-      if (success) {
-        updateSyncStatus('✅ Selesai! Data siap digunakan.');
-    
-        // Tambahkan centang
-        const typingContent = document.getElementById('typingContent');
-        if (typingContent) {
-          const completeLine = document.createElement('div');
-          completeLine.className = 'sync-typing-line success';
-          completeLine.innerHTML = '✅ Semua data berhasil dimuat!';
-          typingContent.appendChild(completeLine);
+        if (!modal) return;
+        
+        // Update progress bar ke 100%
+        updateProgressBar(100);
+        
+        if (success) {
+            updateSyncStatus('✅ Selesai!');
+        } else {
+            updateSyncStatus('❌ Gagal memuat data');
         }
-      } else {
-        updateSyncStatus('❌ Gagal memuat data. Silakan coba lagi.');
-      }
-    
-      // Tutup modal setelah 2 detik
-      setTimeout(() => {
-        modal.classList.remove('active');
+        
+        // Tutup modal setelah 1.5 detik
         setTimeout(() => {
-          modal.remove();
-        }, 300);
-      }, 2000);
+            modal.classList.remove('active');
+            setTimeout(() => {
+                if (modal && modal.parentNode) {
+                    modal.remove();
+                }
+                modal = null;
+            }, 300);
+        }, 1500);
+    }
+    
+    // Update fungsi pollSyncStatus
+    async function pollSyncStatus(username, displayName) {
+        const maxAttempts = 15; // Turunkan jadi 15 kali (30 detik max)
+        let attempts = 0;
+        let pollInterval;
+    
+        return new Promise((resolve) => {
+            pollInterval = setInterval(async () => {
+                attempts++;
+                
+                console.log(`🔍 Polling for @${username} (${attempts}/${maxAttempts})`);
+    
+                try {
+                    const response = await fetch(`${API_BASE_URL}/api/chatid/username/${username}`);
+    
+                    if (response.ok) {
+                        const data = await response.json();
+                        
+                        clearInterval(pollInterval);
+                        
+                        // Update modal dengan data real
+                        if (modal) {
+                            updateLoadingModalWithData(data);
+                            
+                            // Tunggu sebentar lalu tutup
+                            setTimeout(() => {
+                                completeLoadingModal(true);
+                            }, 1500);
+                        }
+                        
+                        // Tambahkan ke channels
+                        const verifiedIcon = data.is_verified ? '✅' : '';
+                        const typeIcon = data.chat_type === 'channel' ? '📢' : '👥';
+                        const displayName = `${typeIcon} ${data.chat_title} ${verifiedIcon} (${data.chat_id})`;
+                        
+                        const channelData = {
+                            chat_id: data.chat_id,
+                            username: `@${username}`,
+                            title: data.chat_title,
+                            type: data.chat_type,
+                            invite_link: data.invite_link,
+                            admin_count: data.admin_count,
+                            participants_count: data.participants_count,
+                            is_verified: data.is_verified,
+                            displayName: displayName
+                        };
+                        
+                        if (!channels.some(c => c.chat_id === data.chat_id)) {
+                            channels.push(channelData);
+                            updateChannelsTags();
+                            hapticNotification('success');
+                            showToast(`✅ Data untuk @${username} berhasil diambil!`, 'success');
+                        }
+                        
+                        resolve(true);
+                        return;
+                    }
+                    
+                    if (attempts >= maxAttempts) {
+                        clearInterval(pollInterval);
+                        if (modal) {
+                            // Tambahkan line error
+                            const typingContent = document.getElementById('typingContent');
+                            if (typingContent) {
+                                const errorLine = document.createElement('div');
+                                errorLine.className = 'sync-typing-line';
+                                errorLine.style.borderLeftColor = '#ff6b6b';
+                                errorLine.innerHTML = '❌ Timeout! Silakan coba lagi.';
+                                typingContent.appendChild(errorLine);
+                            }
+                            updateSyncStatus('❌ Gagal');
+                            completeLoadingModal(false);
+                        }
+                        showToast(`⚠️ Timeout mengambil data untuk @${username}`, 'error');
+                        resolve(false);
+                    }
+                    
+                } catch (error) {
+                    console.error('Polling error:', error);
+                    if (attempts >= maxAttempts) {
+                        clearInterval(pollInterval);
+                        if (modal) {
+                            completeLoadingModal(false);
+                        }
+                        showToast(`⚠️ Gagal mengambil data untuk @${username}`, 'error');
+                        resolve(false);
+                    }
+                }
+            }, 2000); // Poll setiap 2 detik
+        });
+    }
+    
+    // Update fungsi addChannelFromInput
+    async function addChannelFromInput() {
+        let value = elements.channelInput.value.trim();
+    
+        if (value.endsWith(',')) {
+            value = value.slice(0, -1).trim();
+        }
+    
+        if (!value || value === '@') {
+            elements.channelInput.value = '@';
+            hapticNotification('error');
+            return;
+        }
+    
+        if (!value.startsWith('@')) {
+            value = '@' + value;
+        }
+    
+        const usernameRegex = /^@[a-zA-Z0-9_]+$/;
+        if (!usernameRegex.test(value)) {
+            hapticNotification('error');
+            alert('Format username tidak valid! Hanya boleh huruf, angka, dan underscore.');
+            return;
+        }
+    
+        hapticImpact('light');
+    
+        const newChannels = value.split(',').map(c => c.trim()).filter(c => c && c !== '@');
+    
+        elements.channelInput.disabled = true;
+        elements.channelInput.placeholder = 'Memvalidasi...';
+    
+        let validChannels = [];
+        let invalidChannels = [];
+        let syncStarted = false;
+    
+        for (const channel of newChannels) {
+            let cleanChannel = channel;
+            if (!cleanChannel.startsWith('@')) {
+                cleanChannel = '@' + cleanChannel;
+            }
+    
+            const cleanUsername = cleanChannel.replace('@', '');
+    
+            try {
+                // Cek apakah data sudah ada
+                let response = await fetch(`${API_BASE_URL}/api/chatid/username/${cleanUsername}`);
+    
+                if (response.status === 404) {
+                    console.log(`📡 Data for @${cleanUsername} not found, triggering sync...`);
+    
+                    // Tampilkan loading modal
+                    showLoadingModal(cleanUsername);
+    
+                    const syncResponse = await fetch(`${API_BASE_URL}/api/chatid/sync/${cleanUsername}`, {
+                        method: 'POST'
+                    });
+    
+                    if (syncResponse.status === 202) {
+                        syncStarted = true;
+                        invalidChannels.push(`${cleanChannel} (⏳ sync...)`);
+                        
+                        // Polling status - TUNGGU SAMPAI SELESAI
+                        const success = await pollSyncStatus(cleanUsername, cleanChannel);
+                        
+                        if (success) {
+                            // Data sudah ditambahkan oleh pollSyncStatus
+                            console.log(`✅ Data for @${cleanUsername} loaded successfully`);
+                        }
+                    } else {
+                        invalidChannels.push(cleanChannel);
+                        if (modal) {
+                            completeLoadingModal(false);
+                        }
+                    }
+                    continue;
+                }
+    
+                if (!response.ok) {
+                    invalidChannels.push(cleanChannel);
+                    continue;
+                }
+    
+                const result = await response.json();
+    
+                const verifiedIcon = result.is_verified ? '✅' : '';
+                const typeIcon = result.chat_type === 'channel' ? '📢' : '👥';
+                const displayName = `${typeIcon} ${result.chat_title} ${verifiedIcon} (${result.chat_id})`;
+    
+                const channelData = {
+                    chat_id: result.chat_id,
+                    username: cleanChannel,
+                    title: result.chat_title,
+                    type: result.chat_type,
+                    invite_link: result.invite_link,
+                    admin_count: result.admin_count,
+                    participants_count: result.participants_count,
+                    is_verified: result.is_verified,
+                    displayName: displayName
+                };
+    
+                if (!channels.some(c => c.chat_id === result.chat_id)) {
+                    channels.push(channelData);
+                    validChannels.push(displayName);
+                }
+    
+            } catch (error) {
+                console.error('Error checking channel:', error);
+                invalidChannels.push(cleanChannel);
+                if (modal) {
+                    completeLoadingModal(false);
+                }
+            }
+        }
+    
+        elements.channelInput.disabled = false;
+        elements.channelInput.placeholder = "Ketik username, tekan koma untuk menambah... (contoh: @channel1)";
+    
+        if (validChannels.length > 0) {
+            updateChannelsTags();
+            hapticNotification('success');
+        }
+    
+        if (invalidChannels.length > 0) {
+            hapticNotification('error');
+    
+            let message = `Channel/group tidak valid: ${invalidChannels.join(', ')}`;
+            if (syncStarted) {
+                message += '\n\nBeberapa channel sedang di-sync.';
+            }
+            // Tampilkan alert hanya jika ada channel yang benar-benar gagal
+            const failedChannels = invalidChannels.filter(c => !c.includes('sync'));
+            if (failedChannels.length > 0) {
+                alert(message);
+            }
+        }
+    
+        elements.channelInput.value = '@';
+    
+        setTimeout(() => {
+            elements.channelInput.setSelectionRange(1, 1);
+        }, 10);
     }
 
     function init() {
