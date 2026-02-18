@@ -813,6 +813,54 @@ def get_chat_by_username(username):
         log_error(f"Error getting chat by username: {e}")
         return jsonify({'error': str(e)}), 500
 
+# app.py - Tambah di bagian CHATID ENDPOINTS
+
+@chatid_bp.route('/api/chatid/fetch/<username>', methods=['GET'])
+def fetch_chat_from_bot(username):
+    """Memanggil bot untuk mengambil data channel/group secara langsung"""
+    try:
+        clean_username = username.replace('@', '')
+        
+        log_info(f"📡 Fetch requested for @{clean_username}")
+        
+        # Panggil fungsi sync dari bot (import module)
+        try:
+            # Import di sini supaya tidak circular import
+            import importlib.util
+            import sys
+            
+            # Load bot module
+            spec = importlib.util.spec_from_file_location("bot_module", "b.py")
+            bot_module = importlib.util.module_from_spec(spec)
+            sys.modules["bot_module"] = bot_module
+            spec.loader.exec_module(bot_module)
+            
+            # Panggil fungsi sync
+            result = asyncio.run(bot_module.sync_channel_data(clean_username))
+            
+            if result and result.get('success'):
+                return jsonify({
+                    'success': True,
+                    'message': f'Data untuk @{clean_username} berhasil diambil',
+                    'data': result.get('data')
+                })
+            else:
+                return jsonify({
+                    'success': False,
+                    'error': result.get('error', 'Gagal mengambil data channel')
+                }), 404
+                
+        except Exception as e:
+            log_error(f"Error calling bot sync: {e}")
+            return jsonify({
+                'success': False,
+                'error': f'Gagal memanggil bot: {str(e)}'
+            }), 500
+        
+    except Exception as e:
+        log_error(f"Error fetching chat from bot: {e}")
+        return jsonify({'error': str(e)}), 500
+
 @chatid_bp.route('/api/chatid/search', methods=['GET'])
 def search_chats():
     """Mencari chat berdasarkan query"""
