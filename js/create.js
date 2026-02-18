@@ -668,24 +668,35 @@
         elements.channelInput.addEventListener('input', handleChannelInput);
       }
     
-      // Channel tags remove
+      // Channel tags remove - Perbaikan dengan event delegation yang lebih spesifik
       if (elements.channelTags) {
-        elements.channelTags.addEventListener('click', (e) => {
-          // Cari elemen tag-remove yang diklik
+        const newChannelTags = elements.channelTags.cloneNode(true);
+        elements.channelTags.parentNode.replaceChild(newChannelTags, elements.channelTags);
+        elements.channelTags = newChannelTags;
+      
+        // Tambahkan event listener baru
+        elements.channelTags.addEventListener('click', function(e) {
+          // Cari elemen dengan class tag-remove
           const removeBtn = e.target.closest('.tag-remove');
+      
           if (removeBtn) {
             e.preventDefault();
             e.stopPropagation();
+            e.stopImmediatePropagation(); // Tambahkan ini untuk mencegah event lain
       
             hapticImpact('light');
       
             // Ambil channelId dari dataset
             const channelId = removeBtn.dataset.channel;
+            console.log('🗑️ Remove button clicked for channel:', channelId);
+      
             if (channelId) {
               removeChannel(channelId);
             }
+      
+            return false;
           }
-        });
+        }, { capture: true }); // Gunakan capture phase untuk memastikan event tertangkap
       }
     
       // Prize input
@@ -1918,16 +1929,19 @@
     function updateChannelsTags() {
       if (!elements.channelTags) return;
     
+      console.log('Updating channel tags. Channels:', channels);
+    
       let html = '';
       channels.forEach((channel, index) => {
         const bgColor = getRandomColor(index);
     
         if (typeof channel === 'string') {
           // Format lama
-          html += `<span class="channel-tag" data-channel-id="${channel}">
+          const channelId = channel.replace('@', '');
+          html += `<span class="channel-tag" data-channel-id="${channelId}">
                             <span class="prize-number" style="background: ${bgColor};">${index + 1}</span>
                             ${escapeHtml(channel)}
-                            <span class="tag-remove" data-channel="${channel}">×</span>
+                            <span class="tag-remove" data-channel="${channelId}">×</span>
                         </span>`;
         } else {
           // Format baru dengan data lengkap
@@ -1952,6 +1966,10 @@
     
       elements.channelTags.innerHTML = html;
     
+      // Debug: cek apakah tombol remove terpasang dengan benar
+      const removeButtons = elements.channelTags.querySelectorAll('.tag-remove');
+      console.log(`Added ${removeButtons.length} remove buttons`);
+    
       setTimeout(() => {
         const scrollContainer = document.querySelector('.channel-tags-scroll');
         if (scrollContainer) {
@@ -1961,21 +1979,34 @@
     }
 
     function removeChannel(channelId) {
+      console.log('🗑️ Removing channel:', channelId);
+      console.log('Current channels before removal:', channels);
+    
+      // Simpan panjang array sebelum filtering
+      const beforeLength = channels.length;
+    
+      // Hapus channel dari array
       channels = channels.filter(channel => {
         if (typeof channel === 'string') {
           return channel !== channelId;
         } else {
-          return channel.chat_id != channelId && channel.username !== channelId;
+          // Untuk channel object, bandingkan chat_id (sebagai number atau string)
+          const channelIdStr = String(channelId);
+          const chatIdStr = String(channel.chat_id);
+          const usernameStr = channel.username || '';
+    
+          return chatIdStr !== channelIdStr && usernameStr !== channelId && usernameStr !== `@${channelIdStr}`;
         }
       });
+    
+      console.log('Channels after removal:', channels);
+      console.log(`Removed ${beforeLength - channels.length} channel(s)`);
     
       // Update tampilan tags
       updateChannelsTags();
     
       // Haptic feedback
       hapticNotification('success');
-    
-      console.log(`✅ Channel removed: ${channelId}`);
     }
 
     // ==================== FUNGSI INIT ====================
