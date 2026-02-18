@@ -548,68 +548,77 @@
     }
     
     function restoreFormState() {
-        const savedState = sessionStorage.getItem('giftfreebies_form_state');
-        if (!savedState) return false;
-        
-        try {
-            const state = JSON.parse(savedState);
-            console.log('📥 Restoring form state:', state);
-            
-            if (state.prizes && state.prizes.length > 0) {
-                prizes = state.prizes;
-                updatePrizesTags();
-            }
-            
-            if (state.channels && state.channels.length > 0) {
-                channels = state.channels;
-                updateChannelsTags();
-            }
-            
-            if (state.selectedRequirements && state.selectedRequirements.length > 0) {
-                selectedRequirements = state.selectedRequirements;
-                document.querySelectorAll('input[name="requirements"]').forEach(cb => {
-                    cb.checked = selectedRequirements.includes(cb.value);
-                });
-                updateSelectedTags();
-                initSelectedOptions();
-            }
-            
-            if (state.giveawayText && elements.giveawayText) {
-                elements.giveawayText.value = state.giveawayText;
-            }
-            
-            if (state.durationDays !== undefined) durationDays = state.durationDays;
-            if (state.durationHours !== undefined) durationHours = state.durationHours;
-            if (state.durationMinutes !== undefined) durationMinutes = state.durationMinutes;
-            if (state.durationSeconds !== undefined) durationSeconds = state.durationSeconds;
-            
-            if (elements.daysDisplay) elements.daysDisplay.textContent = durationDays;
-            if (elements.hoursDisplay) elements.hoursDisplay.textContent = durationHours;
-            if (elements.minutesDisplay) elements.minutesDisplay.textContent = durationMinutes;
-            if (elements.secondsDisplay) elements.secondsDisplay.textContent = durationSeconds;
-            
-            generateWheelOptions('days', 0, 31, durationDays);
-            generateWheelOptions('hours', 0, 23, durationHours);
-            generateWheelOptions('minutes', 0, 59, durationMinutes);
-            generateWheelOptions('seconds', 0, 59, durationSeconds);
-            updateDurationDisplay();
-            
-            if (elements.captchaToggle && state.captchaEnabled !== undefined) {
-                elements.captchaToggle.checked = state.captchaEnabled;
-                if (elements.captchaLabel) {
-                    elements.captchaLabel.textContent = state.captchaEnabled ? 'Aktif' : 'Nonaktif';
-                }
-            }
-            
-            if (state.foldableStates) {
-                foldableStates = state.foldableStates;
-            }
-            
-            return true;
-        } catch (e) {
-            console.error('❌ Error restoring form state:', e);
-            return false;
+      const savedState = sessionStorage.getItem('giftfreebies_form_state');
+      if (!savedState) return false;
+    
+      try {
+        const state = JSON.parse(savedState);
+        console.log('📥 Restoring form state:', state);
+    
+        // Restore prizes
+        if (state.prizes && state.prizes.length > 0) {
+          prizes = state.prizes;
+          updatePrizesTags();
         }
+    
+        // Restore channels
+        if (state.channels && state.channels.length > 0) {
+          channels = state.channels;
+          updateChannelsTags();
+        }
+    
+        // Restore requirements
+        if (state.selectedRequirements && state.selectedRequirements.length > 0) {
+          selectedRequirements = state.selectedRequirements;
+          document.querySelectorAll('input[name="requirements"]').forEach(cb => {
+            cb.checked = selectedRequirements.includes(cb.value);
+          });
+          updateSelectedTags();
+          initSelectedOptions();
+        }
+    
+        // Restore giveaway text untuk editable
+        if (state.giveawayText && elements.giveawayText) {
+          const editable = document.getElementById('giveawayEditable');
+          if (editable) {
+            editable.innerHTML = state.giveawayText.replace(/\n/g, '<br>');
+            elements.giveawayText.value = state.giveawayText;
+          }
+        }
+    
+        // Restore duration
+        if (state.durationDays !== undefined) durationDays = state.durationDays;
+        if (state.durationHours !== undefined) durationHours = state.durationHours;
+        if (state.durationMinutes !== undefined) durationMinutes = state.durationMinutes;
+        if (state.durationSeconds !== undefined) durationSeconds = state.durationSeconds;
+    
+        if (elements.daysDisplay) elements.daysDisplay.textContent = durationDays;
+        if (elements.hoursDisplay) elements.hoursDisplay.textContent = durationHours;
+        if (elements.minutesDisplay) elements.minutesDisplay.textContent = durationMinutes;
+        if (elements.secondsDisplay) elements.secondsDisplay.textContent = durationSeconds;
+    
+        generateWheelOptions('days', 0, 31, durationDays);
+        generateWheelOptions('hours', 0, 23, durationHours);
+        generateWheelOptions('minutes', 0, 59, durationMinutes);
+        generateWheelOptions('seconds', 0, 59, durationSeconds);
+        updateDurationDisplay();
+    
+        if (elements.captchaToggle && state.captchaEnabled !== undefined) {
+          elements.captchaToggle.checked = state.captchaEnabled;
+          if (elements.captchaLabel) {
+            elements.captchaLabel.textContent = state.captchaEnabled ? 'Aktif' : 'Nonaktif';
+          }
+        }
+    
+        if (state.foldableStates) {
+          foldableStates = state.foldableStates;
+        }
+    
+        return true;
+      } catch (e) {
+        console.error('❌ Error restoring form state:', e);
+        return false;
+      }
     }
 
     // ==================== SETUP EVENT LISTENERS ====================
@@ -1985,139 +1994,199 @@
       }
     }
 
-    // ==================== FUNGSI FORMATTING TEXT NATIVE ====================
-    function setupNativeTextFormatting() {
-      const textarea = elements.giveawayText;
-      if (!textarea) return;
+    // ==================== FUNGSI FORMATTING TEXT ====================
+    function setupTextFormatting() {
+      const editable = document.getElementById('giveawayEditable');
+      const hiddenTextarea = elements.giveawayText;
     
-      // Simpan fungsi asli
-      const originalContextMenu = textarea.oncontextmenu;
+      if (!editable || !hiddenTextarea) return;
     
-      // Tangani event context menu (klik kanan)
-      textarea.addEventListener('contextmenu', (e) => {
-        // Hanya tampilkan menu kustom jika ada teks yang dipilih
-        if (textarea.selectionStart !== textarea.selectionEnd) {
-          e.preventDefault();
-          showNativeFormatMenu(e);
+      // Sinkronkan konten ke hidden textarea saat ada perubahan
+      function syncToTextarea() {
+        hiddenTextarea.value = editable.innerText || '';
+      }
+    
+      editable.addEventListener('input', syncToTextarea);
+      editable.addEventListener('blur', syncToTextarea);
+    
+      // Fungsi untuk mendapatkan teks yang dipilih
+      function getSelectedText() {
+        const selection = window.getSelection();
+        if (!selection.rangeCount) return null;
+    
+        const range = selection.getRangeAt(0);
+        if (!editable.contains(range.commonAncestorContainer)) return null;
+    
+        return {
+          range: range,
+          text: range.toString()
+        };
+      }
+    
+      // Fungsi untuk wrap teks dengan elemen tertentu
+      function wrapSelection(tagName, className = '', attributes = {}) {
+        const selection = window.getSelection();
+        if (!selection.rangeCount) return;
+    
+        const range = selection.getRangeAt(0);
+        if (!editable.contains(range.commonAncestorContainer)) return;
+    
+        if (range.collapsed) {
+          hapticNotification('warning');
+          return;
         }
-      });
     
-      // Fungsi untuk menampilkan menu native
-      function showNativeFormatMenu(event) {
-        const selectedText = textarea.value.substring(
-          textarea.selectionStart,
-          textarea.selectionEnd
-        );
+        // Buat elemen baru
+        const wrapper = document.createElement(tagName);
+        if (className) wrapper.className = className;
     
-        // Buat menu floating sementara
-        const menu = document.createElement('div');
-        menu.className = 'native-format-menu';
-        menu.innerHTML = `
-                <div class="native-format-menu-content">
-                    <button class="native-format-option" data-format="bold">Tebal</button>
-                    <button class="native-format-option" data-format="italic">Miring</button>
-                    <button class="native-format-option" data-format="underline">Garis Bawah</button>
-                    <button class="native-format-option" data-format="strikethrough">Coret</button>
-                    <button class="native-format-option" data-format="monospace">Monospace</button>
-                    <button class="native-format-option" data-format="spoiler">Spoiler</button>
-                    <button class="native-format-option" data-format="link">Tautan</button>
-                </div>
-            `;
-    
-        // Posisikan menu di dekat kursor
-        menu.style.position = 'fixed';
-        menu.style.left = event.clientX + 'px';
-        menu.style.top = event.clientY + 'px';
-        menu.style.zIndex = '999999';
-    
-        document.body.appendChild(menu);
-    
-        // Handler untuk tombol format
-        menu.querySelectorAll('.native-format-option').forEach(btn => {
-          btn.addEventListener('click', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-    
-            const format = btn.dataset.format;
-            applyNativeFormat(format, selectedText);
-    
-            // Hapus menu
-            menu.remove();
-    
-            // Haptic feedback
-            hapticImpact('light');
-          });
+        // Tambahkan atribut
+        Object.entries(attributes).forEach(([key, value]) => {
+          wrapper.setAttribute(key, value);
         });
     
-        // Tutup menu saat klik di luar
-        setTimeout(() => {
-          document.addEventListener('click', function closeMenu(e) {
-            if (!menu.contains(e.target)) {
-              menu.remove();
-              document.removeEventListener('click', closeMenu);
-            }
-          });
-        }, 100);
-      }
-    
-      // Fungsi untuk mengaplikasikan format
-      function applyNativeFormat(format, selectedText) {
-        const start = textarea.selectionStart;
-        const end = textarea.selectionEnd;
-    
-        let formattedText = '';
-        let cursorOffset = 0;
-    
-        switch (format) {
-          case 'bold':
-            formattedText = `**${selectedText}**`;
-            cursorOffset = 2;
-            break;
-          case 'italic':
-            formattedText = `__${selectedText}__`;
-            cursorOffset = 2;
-            break;
-          case 'underline':
-            formattedText = `__${selectedText}__`;
-            cursorOffset = 2;
-            break;
-          case 'strikethrough':
-            formattedText = `~~${selectedText}~~`;
-            cursorOffset = 2;
-            break;
-          case 'monospace':
-            formattedText = `\`${selectedText}\``;
-            cursorOffset = 1;
-            break;
-          case 'spoiler':
-            formattedText = `||${selectedText}||`;
-            cursorOffset = 2;
-            break;
-          case 'link':
-            const url = prompt('Masukkan URL:', 'https://');
-            if (url) {
-              formattedText = `[${selectedText}](${url})`;
-            } else {
-              return;
-            }
-            break;
+        // Wrap konten
+        try {
+          range.surroundContents(wrapper);
+        } catch (e) {
+          // Jika gagal (misal karena selection tidak kontinyu), gunakan pendekatan lain
+          const fragment = range.extractContents();
+          wrapper.appendChild(fragment);
+          range.insertNode(wrapper);
         }
     
-        // Apply formatting
-        textarea.value = textarea.value.substring(0, start) +
-          formattedText +
-          textarea.value.substring(end);
+        // Bersihkan selection
+        selection.removeAllRanges();
     
-        // Set cursor position
-        textarea.selectionStart = start + formattedText.length - cursorOffset;
-        textarea.selectionEnd = textarea.selectionStart;
+        // Sinkronkan ke textarea
+        syncToTextarea();
     
-        // Trigger event
-        textarea.dispatchEvent(new Event('input', { bubbles: true }));
-        textarea.focus();
+        hapticImpact('light');
       }
     
-      console.log('✅ Native text formatting initialized');
+      // Handler untuk tombol format
+      document.querySelectorAll('.format-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.preventDefault();
+    
+          const format = btn.dataset.format;
+          const selected = getSelectedText();
+    
+          if (!selected) {
+            hapticNotification('warning');
+            return;
+          }
+    
+          switch (format) {
+            case 'bold':
+              wrapSelection('b');
+              break;
+    
+            case 'italic':
+              wrapSelection('i');
+              break;
+    
+            case 'underline':
+              wrapSelection('u');
+              break;
+    
+            case 'strikethrough':
+              wrapSelection('s');
+              break;
+    
+            case 'code':
+              wrapSelection('code');
+              break;
+    
+            case 'spoiler':
+              wrapSelection('span', 'spoiler');
+              break;
+    
+            case 'quote':
+              wrapSelection('blockquote');
+              break;
+    
+            case 'link':
+              const url = prompt('Masukkan URL:', 'https://');
+              if (url) {
+                wrapSelection('a', '', {
+                  href: url,
+                  target: '_blank',
+                  rel: 'noopener noreferrer'
+                });
+              }
+              break;
+          }
+        });
+      });
+    
+      // Handle paste untuk membersihkan format tidak diinginkan
+      editable.addEventListener('paste', (e) => {
+        e.preventDefault();
+    
+        const text = e.clipboardData.getData('text/plain');
+        document.execCommand('insertText', false, text);
+    
+        syncToTextarea();
+      });
+    
+      console.log('✅ Text formatting initialized');
+    }
+    
+    // Modifikasi fungsi handleSubmit untuk mengambil dari editable
+    async function handleSubmit(e) {
+      e.preventDefault();
+    
+      if (prizes.length === 0) {
+        hapticNotification('error');
+        alert('Minimal 1 hadiah harus diisi!');
+        return;
+      }
+    
+      hapticImpact('heavy');
+      setButtonLoading(true);
+    
+      const requirements = selectedRequirements;
+    
+      const totalSeconds = (durationDays * 24 * 3600) +
+        (durationHours * 3600) +
+        (durationMinutes * 60) +
+        durationSeconds;
+    
+      // Ambil teks dari hidden textarea
+      const giveawayText = elements.giveawayText.value || 'Ikuti giveaway ini dan menangkan hadiah menarik! 🎁';
+    
+      const formData = {
+        creator_user_id: telegramUser?.id || 123456789,
+        fullname: telegramUser ? [telegramUser.first_name, telegramUser.last_name].filter(Boolean).join(' ') : 'Test User',
+        username: telegramUser?.username || 'testuser',
+        prizes: prizes,
+        giveaway_text: giveawayText,
+        requirements: requirements,
+        links: savedLinks,
+        duration: {
+          days: durationDays,
+          hours: durationHours,
+          minutes: durationMinutes,
+          seconds: durationSeconds,
+          total_seconds: totalSeconds
+        },
+        captcha_enabled: elements.captchaToggle.checked ? 1 : 0
+      };
+    
+      console.log('📤 Submitting giveaway:', formData);
+    
+      try {
+        await new Promise(resolve => setTimeout(resolve, 1500));
+        const giveawayId = generateGiveawayId();
+        setButtonLoading(false);
+        showSuccess(giveawayId);
+      } catch (error) {
+        console.error('❌ Error:', error);
+        hapticNotification('error');
+        setButtonLoading(false);
+        alert('Gagal membuat giveaway. Silakan coba lagi.');
+      }
     }
 
     function init() {
@@ -2139,8 +2208,8 @@
       setupDurationManager();
       setupEventListeners();
     
-      // GANTI dengan yang ini
-      setupNativeTextFormatting(); // ← bukan setupTextFormatting
+      // Formatting untuk text giveaway
+      setupTextFormatting();
     
       if (!restored) {
         durationDays = 10;
