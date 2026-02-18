@@ -1294,7 +1294,49 @@
       }
     }
     
-    function addChannelFromInput() {
+    // ==================== FUNGSI VALIDASI CHANNEL TELEGRAM ====================
+    async function validateTelegramChannel(username) {
+      try {
+        // Hapus @ dari depan
+        const cleanUsername = username.replace('@', '');
+    
+        // Panggil API backend untuk validasi
+        const response = await fetch(`${API_BASE_URL}/api/validate-channel`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            username: cleanUsername
+          })
+        });
+    
+        const data = await response.json();
+    
+        if (response.ok && data.valid) {
+          return {
+            valid: true,
+            name: data.name || cleanUsername,
+            id: data.id,
+            type: data.type // 'channel' atau 'group'
+          };
+        } else {
+          return {
+            valid: false,
+            error: data.error || 'Channel/group tidak ditemukan'
+          };
+        }
+      } catch (error) {
+        console.error('❌ Error validating channel:', error);
+        return {
+          valid: false,
+          error: 'Gagal terhubung ke server'
+        };
+      }
+    }
+    
+    // Update fungsi addChannelFromInput
+    async function addChannelFromInput() {
       let value = elements.channelInput.value.trim();
     
       if (value.endsWith(',')) {
@@ -1320,20 +1362,59 @@
     
       hapticImpact('light');
     
+      // Split dengan koma
       const newChannels = value.split(',').map(c => c.trim()).filter(c => c && c !== '@');
     
-      newChannels.forEach(channel => {
+      // Tampilkan loading state di input
+      elements.channelInput.disabled = true;
+      elements.channelInput.placeholder = 'Memvalidasi...';
+    
+      let validChannels = [];
+      let invalidChannels = [];
+    
+      for (const channel of newChannels) {
         let cleanChannel = channel;
         if (!cleanChannel.startsWith('@')) {
           cleanChannel = '@' + cleanChannel;
         }
     
-        if (usernameRegex.test(cleanChannel) && !channels.includes(cleanChannel)) {
-          channels.push(cleanChannel);
-        }
-      });
+        // Validasi ke API
+        const result = await validateTelegramChannel(cleanChannel);
     
-      updateChannelsTags();
+        if (result.valid) {
+          // Simpan dengan format: Nama (ID) - Tipe
+          const displayName = `${result.name} (${result.id})`;
+          const channelData = {
+            username: cleanChannel,
+            name: result.name,
+            id: result.id,
+            type: result.type,
+            displayName: displayName
+          };
+    
+          if (!channels.some(c => c.username === cleanChannel)) {
+            channels.push(channelData);
+            validChannels.push(displayName);
+          }
+        } else {
+          invalidChannels.push(cleanChannel);
+        }
+      }
+    
+      // Update UI
+      elements.channelInput.disabled = false;
+      elements.channelInput.placeholder = "Ketik username, tekan koma untuk menambah... (contoh: @channel1)";
+    
+      if (validChannels.length > 0) {
+        updateChannelsTags();
+        hapticNotification('success');
+      }
+    
+      if (invalidChannels.length > 0) {
+        hapticNotification('error');
+        alert(`Channel/group tidak valid: ${invalidChannels.join(', ')}`);
+      }
+    
       elements.channelInput.value = '@';
     
       setTimeout(() => {
@@ -1341,23 +1422,51 @@
       }, 10);
     }
     
-    function removeChannel(channel) {
-      channels = channels.filter(c => c !== channel);
+    // Update fungsi removeChannel
+    function removeChannel(channelData) {
+      channels = channels.filter(c => {
+        if (typeof c === 'string') {
+          return c !== channelData;
+        } else {
+          return c.username !== channelData;
+        }
+      });
       updateChannelsTags();
       hapticNotification('success');
     }
     
+    // Update fungsi updateChannelsTags
     function updateChannelsTags() {
       if (!elements.channelTags) return;
     
       let html = '';
       channels.forEach((channel, index) => {
         const bgColor = getRandomColor(index);
-        html += `<span class="channel-tag">
-                    <span class="prize-number" style="background: ${bgColor};">${index + 1}</span>
-                    ${channel} 
-                    <span class="tag-remove" data-channel="${channel}">×</span>
-                </span>`;
+    
+        let displayText = '';
+        let channelId = '';
+    
+        if (typeof channel === 'string') {
+          // Format lama (hanya username)
+          displayText = channel;
+          channelId = channel;
+        } else {
+          // Format baru (dengan data lengkap)
+          displayText = channel.displayName || channel.username;
+          channelId = channel.username;
+    
+          // Tambah icon berdasarkan tipe
+          const icon = channel.type === 'channel' ? '📢' : '👥';
+          displayText = `${icon} ${displayText}`;
+        }
+    
+        html += `<span class="channel-tag" data-channel-id="${channelId}">
+                        <span class="prize-number" style="background: ${bgColor};">${index + 1}</span>
+                        <span class="channel-info">
+                            <span class="channel-name">${escapeHtml(displayText)}</span>
+                        </span>
+                        <span class="tag-remove" data-channel="${channelId}">×</span>
+                    </span>`;
       });
     
       elements.channelTags.innerHTML = html;
