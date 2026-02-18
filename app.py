@@ -842,6 +842,8 @@ def search_chats():
         log_error(f"Error searching chats: {e}")
         return jsonify({'error': str(e)}), 500
 
+app.register_blueprint(chatid_bp)
+
 # ==================== MAIN ====================
 if __name__ == "__main__":
     print("""
