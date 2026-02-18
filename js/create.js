@@ -1299,12 +1299,61 @@
       try {
         const cleanUsername = username.replace('@', '');
     
-        const response = await fetch(`${API_BASE_URL}/api/chatid/username/${cleanUsername}`);
+        // Coba dulu dari database
+        let response = await fetch(`${API_BASE_URL}/api/chatid/username/${cleanUsername}`);
+    
+        // Kalau tidak ditemukan, minta bot untuk fetch data LANGSUNG
+        if (response.status === 404) {
+          console.log('📡 Data tidak ditemukan, memanggil bot untuk sync...');
+    
+          // Panggil endpoint fetch yang akan langsung ambil data
+          const fetchResponse = await fetch(`${API_BASE_URL}/api/chatid/fetch/${cleanUsername}`);
+    
+          if (fetchResponse.ok) {
+            const result = await fetchResponse.json();
+    
+            if (result.success) {
+              // Data berhasil diambil, tampilkan notifikasi sukses
+              hapticNotification('success');
+    
+              // Coba lagi ambil data yang baru saja disimpan
+              response = await fetch(`${API_BASE_URL}/api/chatid/username/${cleanUsername}`);
+    
+              if (response.ok) {
+                const data = await response.json();
+                return {
+                  valid: true,
+                  chat_id: data.chat_id,
+                  title: data.chat_title,
+                  username: data.chat_username,
+                  type: data.chat_type,
+                  invite_link: data.invite_link,
+                  admin_count: data.admin_count,
+                  participants_count: data.participants_count,
+                  is_verified: data.is_verified,
+                  admins: data.admins || []
+                };
+              }
+            } else {
+              // Gagal mengambil data
+              alert(`Gagal mengambil data untuk @${cleanUsername}: ${result.error || 'Unknown error'}`);
+              return {
+                valid: false,
+                error: result.error || 'Gagal mengambil data'
+              };
+            }
+          }
+    
+          return {
+            valid: false,
+            error: 'Channel/group tidak ditemukan'
+          };
+        }
     
         if (!response.ok) {
           return {
             valid: false,
-            error: 'Channel/group tidak ditemukan'
+            error: 'Channel/group tidak valid'
           };
         }
     
@@ -1331,152 +1380,161 @@
         };
       }
     }
-    
-    // Update fungsi addChannelFromInput
-    async function addChannelFromInput() {
-      let value = elements.channelInput.value.trim();
-    
-      if (value.endsWith(',')) {
-        value = value.slice(0, -1).trim();
+  
+  // Update fungsi addChannelFromInput
+  async function addChannelFromInput() {
+    let value = elements.channelInput.value.trim();
+  
+    if (value.endsWith(',')) {
+      value = value.slice(0, -1).trim();
+    }
+  
+    if (!value || value === '@') {
+      elements.channelInput.value = '@';
+      hapticNotification('error');
+      return;
+    }
+  
+    if (!value.startsWith('@')) {
+      value = '@' + value;
+    }
+  
+    const usernameRegex = /^@[a-zA-Z0-9_]+$/;
+    if (!usernameRegex.test(value)) {
+      hapticNotification('error');
+      alert('Format username tidak valid! Hanya boleh huruf, angka, dan underscore.');
+      return;
+    }
+  
+    hapticImpact('light');
+  
+    // Split dengan koma
+    const newChannels = value.split(',').map(c => c.trim()).filter(c => c && c !== '@');
+  
+    // Tampilkan loading state
+    elements.channelInput.disabled = true;
+    elements.channelInput.placeholder = 'Memvalidasi...';
+  
+    let validChannels = [];
+    let invalidChannels = [];
+    let needsReload = false;
+  
+    for (const channel of newChannels) {
+      let cleanChannel = channel;
+      if (!cleanChannel.startsWith('@')) {
+        cleanChannel = '@' + cleanChannel;
       }
-    
-      if (!value || value === '@') {
-        elements.channelInput.value = '@';
-        hapticNotification('error');
-        return;
-      }
-    
-      if (!value.startsWith('@')) {
-        value = '@' + value;
-      }
-    
-      const usernameRegex = /^@[a-zA-Z0-9_]+$/;
-      if (!usernameRegex.test(value)) {
-        hapticNotification('error');
-        alert('Format username tidak valid! Hanya boleh huruf, angka, dan underscore.');
-        return;
-      }
-    
-      hapticImpact('light');
-    
-      // Split dengan koma
-      const newChannels = value.split(',').map(c => c.trim()).filter(c => c && c !== '@');
-    
-      // Tampilkan loading state
-      elements.channelInput.disabled = true;
-      elements.channelInput.placeholder = 'Memvalidasi...';
-    
-      let validChannels = [];
-      let invalidChannels = [];
-    
-      for (const channel of newChannels) {
-        let cleanChannel = channel;
-        if (!cleanChannel.startsWith('@')) {
-          cleanChannel = '@' + cleanChannel;
+  
+      // Ambil data dari API
+      const result = await getChatData(cleanChannel);
+  
+      if (result.valid) {
+        // Format display name dengan info lengkap
+        const verifiedIcon = result.is_verified ? '✅' : '';
+        const typeIcon = result.type === 'channel' ? '📢' : '👥';
+        const displayName = `${typeIcon} ${result.title} ${verifiedIcon} (${result.chat_id})`;
+  
+        const channelData = {
+          chat_id: result.chat_id,
+          username: `@${result.username}`,
+          title: result.title,
+          type: result.type,
+          invite_link: result.invite_link,
+          admin_count: result.admin_count,
+          participants_count: result.participants_count,
+          is_verified: result.is_verified,
+          displayName: displayName
+        };
+  
+        // Cek duplikat
+        if (!channels.some(c => c.chat_id === result.chat_id)) {
+          channels.push(channelData);
+          validChannels.push(displayName);
         }
-    
-        // Ambil data dari API
-        const result = await getChatData(cleanChannel);
-    
-        if (result.valid) {
-          // Format display name dengan info lengkap
-          const verifiedIcon = result.is_verified ? '✅' : '';
-          const typeIcon = result.type === 'channel' ? '📢' : '👥';
-          const displayName = `${typeIcon} ${result.title} ${verifiedIcon} (${result.chat_id})`;
-    
-          const channelData = {
-            chat_id: result.chat_id,
-            username: `@${result.username}`,
-            title: result.title,
-            type: result.type,
-            invite_link: result.invite_link,
-            admin_count: result.admin_count,
-            participants_count: result.participants_count,
-            displayName: displayName
-          };
-    
-          // Cek duplikat
-          if (!channels.some(c => c.chat_id === result.chat_id)) {
-            channels.push(channelData);
-            validChannels.push(displayName);
-          }
-        } else {
-          invalidChannels.push(cleanChannel);
-        }
+      } else if (result.needsReload) {
+        needsReload = true;
+        invalidChannels.push(cleanChannel);
+      } else {
+        invalidChannels.push(cleanChannel);
       }
-    
-      // Update UI
-      elements.channelInput.disabled = false;
-      elements.channelInput.placeholder = "Ketik username, tekan koma untuk menambah... (contoh: @channel1)";
-    
-      if (validChannels.length > 0) {
-        updateChannelsTags();
-        hapticNotification('success');
-      }
-    
-      if (invalidChannels.length > 0) {
-        hapticNotification('error');
+    }
+  
+    // Update UI
+    elements.channelInput.disabled = false;
+    elements.channelInput.placeholder = "Ketik username, tekan koma untuk menambah... (contoh: @channel1)";
+  
+    if (validChannels.length > 0) {
+      updateChannelsTags();
+      hapticNotification('success');
+    }
+  
+    if (invalidChannels.length > 0) {
+      hapticNotification('error');
+      if (needsReload) {
+        alert(`Channel/group perlu di-reload: ${invalidChannels.join(', ')}\n\nPastikan bot sudah ditambahkan ke channel/group dan jalankan perintah /reload di channel tersebut.`);
+      } else {
         alert(`Channel/group tidak valid: ${invalidChannels.join(', ')}`);
       }
-    
-      elements.channelInput.value = '@';
-    
-      setTimeout(() => {
-        elements.channelInput.setSelectionRange(1, 1);
-      }, 10);
     }
-    
-    // Update fungsi updateChannelsTags
-    function updateChannelsTags() {
-      if (!elements.channelTags) return;
-    
-      let html = '';
-      channels.forEach((channel, index) => {
-        const bgColor = getRandomColor(index);
-    
-        let displayText = '';
-        let channelId = '';
-    
-        if (typeof channel === 'string') {
-          // Format lama
-          displayText = channel;
-          channelId = channel;
-          html += `<span class="channel-tag" data-channel-id="${channelId}">
-                            <span class="prize-number" style="background: ${bgColor};">${index + 1}</span>
-                            ${escapeHtml(displayText)}
-                            <span class="tag-remove" data-channel="${channelId}">×</span>
-                        </span>`;
-        } else {
-          // Format baru dengan data lengkap
-          channelId = channel.chat_id;
-          const typeIcon = channel.type === 'channel' ? '📢' : '👥';
-          const verifiedIcon = channel.is_verified ? ' ✅' : '';
-    
-          html += `<span class="channel-tag" data-channel-id="${channelId}" data-channel-data='${JSON.stringify(channel)}'>
-                            <span class="prize-number" style="background: ${bgColor};">${index + 1}</span>
-                            <div class="channel-info">
-                                <span class="channel-name">
-                                    ${typeIcon} ${escapeHtml(channel.title)}${verifiedIcon}
-                                </span>
-                                <span class="channel-details">
-                                    <span class="channel-id">${escapeHtml(channel.chat_id)}</span>
-                                    ${channel.participants_count ? `<span class="channel-members">👥 ${channel.participants_count}</span>` : ''}
-                                </span>
-                            </div>
-                            <span class="tag-remove" data-channel="${channelId}">×</span>
-                        </span>`;
-        }
-      });
-    
-      elements.channelTags.innerHTML = html;
-    
-      setTimeout(() => {
-        const scrollContainer = document.querySelector('.channel-tags-scroll');
-        if (scrollContainer) {
-          scrollContainer.scrollLeft = scrollContainer.scrollWidth;
-        }
-      }, 50);
-    }
+  
+    elements.channelInput.value = '@';
+  
+    setTimeout(() => {
+      elements.channelInput.setSelectionRange(1, 1);
+    }, 10);
+  }
+  
+  // Update fungsi updateChannelsTags
+  function updateChannelsTags() {
+    if (!elements.channelTags) return;
+  
+    let html = '';
+    channels.forEach((channel, index) => {
+      const bgColor = getRandomColor(index);
+  
+      let displayText = '';
+      let channelId = '';
+  
+      if (typeof channel === 'string') {
+        // Format lama
+        displayText = channel;
+        channelId = channel;
+        html += `<span class="channel-tag" data-channel-id="${channelId}">
+                          <span class="prize-number" style="background: ${bgColor};">${index + 1}</span>
+                          ${escapeHtml(displayText)}
+                          <span class="tag-remove" data-channel="${channelId}">×</span>
+                      </span>`;
+      } else {
+        // Format baru dengan data lengkap
+        channelId = channel.chat_id;
+        const typeIcon = channel.type === 'channel' ? '📢' : '👥';
+        const verifiedIcon = channel.is_verified ? ' ✅' : '';
+  
+        html += `<span class="channel-tag" data-channel-id="${channelId}" data-channel-data='${JSON.stringify(channel)}'>
+                          <span class="prize-number" style="background: ${bgColor};">${index + 1}</span>
+                          <div class="channel-info">
+                              <span class="channel-name">
+                                  ${typeIcon} ${escapeHtml(channel.title)}${verifiedIcon}
+                              </span>
+                              <span class="channel-details">
+                                  <span class="channel-id">${escapeHtml(channel.chat_id)}</span>
+                                  ${channel.participants_count ? `<span class="channel-members">👥 ${channel.participants_count}</span>` : ''}
+                              </span>
+                          </div>
+                          <span class="tag-remove" data-channel="${channelId}">×</span>
+                      </span>`;
+      }
+    });
+  
+    elements.channelTags.innerHTML = html;
+  
+    setTimeout(() => {
+      const scrollContainer = document.querySelector('.channel-tags-scroll');
+      if (scrollContainer) {
+        scrollContainer.scrollLeft = scrollContainer.scrollWidth;
+      }
+    }, 50);
+  }
 
     function init() {
       console.log('🚀 Initializing create giveaway form...');
