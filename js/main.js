@@ -37,7 +37,7 @@
   // ==================== STATE ====================
   let currentUser = null;
   let currentGiveawayType = 'active'; // 'active' atau 'ended'
-  let allGiveaways = []; // Menyimpan semua giveaway dari API
+  let allGiveaways = { active: [], ended: [] }; // Menyimpan semua giveaway dari API
 
   // ==================== GUEST USER DATA ====================
   const guestUser = {
@@ -125,15 +125,101 @@
     return div.innerHTML;
   }
 
+  /**
+   * Show toast notification
+   */
+  function showToast(message, type = 'info', duration = 2000) {
+    // Cek apakah sudah ada container toast
+    let toastContainer = document.querySelector('.toast-container');
+    
+    if (!toastContainer) {
+      toastContainer = document.createElement('div');
+      toastContainer.className = 'toast-container';
+      toastContainer.style.cssText = `
+        position: fixed;
+        bottom: 20px;
+        left: 20px;
+        right: 20px;
+        z-index: 9999;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        pointer-events: none;
+      `;
+      document.body.appendChild(toastContainer);
+    }
+    
+    const toast = document.createElement('div');
+    toast.className = `toast toast-${type}`;
+    toast.style.cssText = `
+      background: ${type === 'success' ? '#10b981' : type === 'error' ? '#ef4444' : type === 'warning' ? '#f59e0b' : '#3b82f6'};
+      color: white;
+      padding: 12px 16px;
+      border-radius: 12px;
+      font-size: 14px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      animation: slideUp 0.3s ease;
+      pointer-events: auto;
+      text-align: center;
+    `;
+    toast.textContent = message;
+    
+    toastContainer.appendChild(toast);
+    
+    setTimeout(() => {
+      toast.style.animation = 'fadeOut 0.3s ease';
+      setTimeout(() => {
+        toast.remove();
+        if (toastContainer.children.length === 0) {
+          toastContainer.remove();
+        }
+      }, 300);
+    }, duration);
+  }
+
+  // Tambahkan CSS animations jika belum ada
+  if (!document.querySelector('#toast-styles')) {
+    const style = document.createElement('style');
+    style.id = 'toast-styles';
+    style.textContent = `
+      @keyframes slideUp {
+        from {
+          transform: translateY(100%);
+          opacity: 0;
+        }
+        to {
+          transform: translateY(0);
+          opacity: 1;
+        }
+      }
+      
+      @keyframes fadeOut {
+        to {
+          opacity: 0;
+          transform: translateY(100%);
+        }
+      }
+    `;
+    document.head.appendChild(style);
+  }
+
   // ==================== API CALLS ====================
   async function fetchUserFromApi(userId) {
     try {
+      console.log(`📡 Fetching user data for ID: ${userId}`);
       const res = await fetch(`${API_BASE_URL}/api/users/${userId}`, {
         headers: { 'Accept': 'application/json' },
         mode: 'cors'
       });
-      if (!res.ok) return null;
+      
+      if (!res.ok) {
+        console.log(`API response not OK: ${res.status}`);
+        return null;
+      }
+      
       const data = await res.json();
+      console.log('📥 User data response:', data);
+      
       return data.success ? data.user : (data.user || null);
     } catch (error) {
       console.log('API fetch error:', error);
@@ -156,38 +242,54 @@
     }
   }
 
-  // ==================== FUNGSI BARU: FETCH ALL GIVEAWAYS ====================
+  // ==================== FUNGSI: FETCH ALL GIVEAWAYS ====================
   async function fetchAllGiveaways() {
     try {
       console.log('📡 Fetching all giveaways...');
-  
+      console.log('API URL:', API_BASE_URL);
+
       // Ambil active giveaways
-      const activeRes = await fetch(`${API_BASE_URL}/api/giveaways?status=active&limit=50`, {
+      const activeUrl = `${API_BASE_URL}/api/giveaways?status=active&limit=50`;
+      console.log('Active URL:', activeUrl);
+      
+      const activeRes = await fetch(activeUrl, {
         headers: { 'Accept': 'application/json' },
         mode: 'cors'
       });
-  
+
       // Ambil ended giveaways
-      const endedRes = await fetch(`${API_BASE_URL}/api/giveaways?status=ended&limit=50`, {
+      const endedUrl = `${API_BASE_URL}/api/giveaways?status=ended&limit=50`;
+      console.log('Ended URL:', endedUrl);
+      
+      const endedRes = await fetch(endedUrl, {
         headers: { 'Accept': 'application/json' },
         mode: 'cors'
       });
-  
+
       console.log('Active response status:', activeRes.status);
       console.log('Ended response status:', endedRes.status);
-  
-      const activeData = activeRes.ok ? await activeRes.json() : { giveaways: [] };
-      const endedData = endedRes.ok ? await endedRes.json() : { giveaways: [] };
-  
-      console.log('Active data:', activeData);
-      console.log('Ended data:', endedData);
-  
-      // PERHATIKAN: API mengembalikan { success: true, giveaways: [...] }
-      const activeGiveaways = activeData.giveaways || [];
-      const endedGiveaways = endedData.giveaways || [];
-  
+
+      let activeGiveaways = [];
+      let endedGiveaways = [];
+
+      if (activeRes.ok) {
+        const activeData = await activeRes.json();
+        console.log('Active data:', activeData);
+        activeGiveaways = activeData.giveaways || [];
+      } else {
+        console.warn('Failed to fetch active giveaways:', activeRes.status);
+      }
+
+      if (endedRes.ok) {
+        const endedData = await endedRes.json();
+        console.log('Ended data:', endedData);
+        endedGiveaways = endedData.giveaways || [];
+      } else {
+        console.warn('Failed to fetch ended giveaways:', endedRes.status);
+      }
+
       console.log(`✅ Loaded ${activeGiveaways.length} active, ${endedGiveaways.length} ended giveaways`);
-  
+
       return {
         active: activeGiveaways,
         ended: endedGiveaways
@@ -224,19 +326,19 @@
       if (type === 'active') {
         const timeRemaining = formatTimeRemaining(giveaway.end_date);
         html += `
-                  <div class="giveaway-item" data-id="${giveawayId}">
-                      <h3>${escapeHtml(prizeText)}</h3>
-                      <p>👥 ${participants} participants • ⏱️ Ends in ${timeRemaining}</p>
-                  </div>
-              `;
+          <div class="giveaway-item" data-id="${giveawayId}">
+            <h3>${escapeHtml(prizeText)}</h3>
+            <p>👥 ${participants} participants • ⏱️ Ends in ${timeRemaining}</p>
+          </div>
+        `;
       } else {
         const winners = giveaway.winners_count || 0;
         html += `
-                  <div class="giveaway-item" data-id="${giveawayId}">
-                      <h3>${escapeHtml(prizeText)}</h3>
-                      <p>🏆 ${winners} winners • Ended</p>
-                  </div>
-              `;
+          <div class="giveaway-item" data-id="${giveawayId}">
+            <h3>${escapeHtml(prizeText)}</h3>
+            <p>🏆 ${winners} winners • Ended</p>
+          </div>
+        `;
       }
     });
   
@@ -256,15 +358,20 @@
   // ==================== FUNGSI: FETCH GIVEAWAY DETAIL ====================
   async function fetchGiveawayDetail(id) {
     try {
+      console.log(`📡 Fetching giveaway detail for ID: ${id}`);
       const response = await fetch(`${API_BASE_URL}/api/giveaways/${id}`, {
         headers: { 'Accept': 'application/json' },
         mode: 'cors'
       });
+      
       if (!response.ok) {
         if (response.status === 404) throw new Error('Giveaway tidak ditemukan');
         throw new Error(`Gagal memuat data: ${response.status}`);
       }
+      
       const result = await response.json();
+      console.log('📥 Giveaway detail response:', result);
+      
       if (result.success && result.giveaway) {
         return result.giveaway;
       } else {
@@ -533,57 +640,315 @@
     showProfile();
   }
 
+  /**
+   * Menerapkan tema Telegram ke CSS variables
+   */
+  function applyTelegramTheme(tg) {
+    if (!tg || !tg.themeParams) return;
+    
+    try {
+      const theme = tg.themeParams;
+      console.log('🎨 Applying Telegram theme');
+      
+      if (theme.bg_color) {
+        document.documentElement.style.setProperty('--tg-theme-bg-color', theme.bg_color);
+      }
+      if (theme.text_color) {
+        document.documentElement.style.setProperty('--tg-theme-text-color', theme.text_color);
+      }
+      if (theme.hint_color) {
+        document.documentElement.style.setProperty('--tg-theme-hint-color', theme.hint_color);
+      }
+      if (theme.link_color) {
+        document.documentElement.style.setProperty('--tg-theme-link-color', theme.link_color);
+      }
+      if (theme.button_color) {
+        document.documentElement.style.setProperty('--tg-theme-button-color', theme.button_color);
+      }
+      if (theme.button_text_color) {
+        document.documentElement.style.setProperty('--tg-theme-button-text-color', theme.button_text_color);
+      }
+    } catch (themeError) {
+      console.warn('⚠️ Error applying Telegram theme:', themeError);
+    }
+  }
+
+  /**
+   * Setup event listeners tambahan
+   */
+  function setupAdditionalEventListeners() {
+    // Handle tombol back browser
+    window.addEventListener('popstate', (event) => {
+      console.log('📍 Popstate event:', event);
+      // Refresh data saat user navigasi
+      if (!window.location.search.includes('search=')) {
+        // Jika tidak ada parameter search, refresh halaman utama
+        window.location.reload();
+      }
+    });
+    
+    // Handle visibility change (misal user switch tab)
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') {
+        console.log('👀 Tab menjadi aktif - refresh data jika perlu');
+        // Refresh data jika diperlukan
+        if (!window.location.search.includes('search=')) {
+          // Refresh giveaway list
+          fetchAllGiveaways().then(giveaways => {
+            allGiveaways = giveaways;
+            displayGiveaways(currentGiveawayType);
+          });
+        }
+      }
+    });
+    
+    // Handle online/offline
+    window.addEventListener('online', () => {
+      console.log('🌐 Koneksi internet tersambung kembali');
+      showToast('Koneksi internet tersambung kembali', 'success', 2000);
+      
+      // Refresh data
+      if (!window.location.search.includes('search=')) {
+        fetchAllGiveaways().then(giveaways => {
+          allGiveaways = giveaways;
+          displayGiveaways(currentGiveawayType);
+        });
+      }
+    });
+    
+    window.addEventListener('offline', () => {
+      console.log('📡 Koneksi internet terputus');
+      showToast('Koneksi internet terputus', 'warning', 3000);
+    });
+  }
+
   // ==================== INIT UTAMA ====================
   async function init() {
-    // Cek parameter URL
-    const urlParams = new URLSearchParams(window.location.search);
-    const giveawayIdFromUrl = urlParams.get('search');
-
-    if (giveawayIdFromUrl) {
-      // === MODE DETAIL GIVEAWAY ===
-      console.log('🔍 Menampilkan detail giveaway untuk ID:', giveawayIdFromUrl);
+    console.log('🚀 INITIALIZING APPLICATION...');
+    
+    try {
+      // ==================== CEK KONEKSI API ====================
+      console.log('🔍 Checking API connection...');
+      let apiConnected = false;
+      
       try {
-        const giveawayData = await fetchGiveawayDetail(giveawayIdFromUrl);
-        if (elements.loading) elements.loading.style.display = 'none';
-        renderGiveawayDetail(giveawayData);
-      } catch (error) {
-        console.error('Gagal memuat detail giveaway:', error);
-        showError(error.message || 'Gagal memuat giveaway', true);
+        const healthCheck = await fetch(`${API_BASE_URL}/api/health`, {
+          method: 'GET',
+          headers: { 'Accept': 'application/json' },
+          mode: 'cors'
+        });
+        
+        if (healthCheck.ok) {
+          const healthData = await healthCheck.json();
+          console.log('✅ API Connected:', healthData);
+          apiConnected = true;
+        } else {
+          console.warn('⚠️ API health check failed:', healthCheck.status);
+        }
+      } catch (healthError) {
+        console.warn('⚠️ API connection error:', healthError.message);
       }
-      return;
-    }
-
-    // === MODE PROFIL (TANPA PARAMETER) ===
-    console.log('👤 Mode profil');
-    let user = null;
-
-    // Cek apakah di dalam Telegram
-    if (!window.Telegram || !window.Telegram.WebApp) {
-      console.log('⚠️ Not in Telegram, using guest mode');
-      user = guestUser;
-    } else {
-      const tg = window.Telegram.WebApp;
-      tg.expand();
-      tg.ready();
-
-      const telegramUser = tg.initDataUnsafe?.user;
-      if (!telegramUser) {
-        console.log('⚠️ No Telegram user data, using guest mode');
-        user = guestUser;
+      
+      if (!apiConnected) {
+        console.warn('⚠️ Using application in offline mode - some features may be limited');
+        showToast('⚠️ Koneksi ke server terputus. Beberapa fitur mungkin tidak berfungsi.', 'warning', 3000);
+      }
+      
+      // ==================== CEK PARAMETER URL ====================
+      const urlParams = new URLSearchParams(window.location.search);
+      const giveawayIdFromUrl = urlParams.get('search');
+      console.log('🔍 URL search param:', giveawayIdFromUrl);
+    
+      // ==================== CEK PARAMETER TELEGRAM ====================
+      let telegramStartParam = null;
+      let telegramUserData = null;
+      
+      if (window.Telegram?.WebApp) {
+        console.log('📱 Running inside Telegram Web App');
+        const tg = window.Telegram.WebApp;
+        
+        // Expand dan ready kan Web App
+        tg.expand();
+        tg.ready();
+        
+        // Ambil start_param
+        if (tg.initDataUnsafe?.start_param) {
+          telegramStartParam = tg.initDataUnsafe.start_param;
+          console.log('📱 Telegram start_param:', telegramStartParam);
+        }
+        
+        // Ambil data user
+        if (tg.initDataUnsafe?.user) {
+          telegramUserData = tg.initDataUnsafe.user;
+          console.log('📱 Telegram user data:', telegramUserData);
+        }
+        
+        // Terapkan tema Telegram
+        applyTelegramTheme(tg);
       } else {
-        const apiUser = await fetchUserFromApi(telegramUser.id);
-        user = apiUser ? { ...telegramUser, ...apiUser } : telegramUser;
+        console.log('🌐 Running in standalone web browser');
+      }
+    
+      // ==================== PRIORITASKAN ID GIVEAWAY ====================
+      // Prioritaskan: URL param > Telegram start_param
+      const finalGiveawayId = giveawayIdFromUrl || telegramStartParam;
+    
+      if (finalGiveawayId) {
+        // === MODE DETAIL GIVEAWAY ===
+        console.log('🎯 Menampilkan detail giveaway untuk ID:', finalGiveawayId);
+        
+        try {
+          // Tampilkan loading
+          if (elements.loading) {
+            elements.loading.style.display = 'flex';
+            const loadingText = elements.loading.querySelector('p');
+            if (loadingText) loadingText.textContent = 'Memuat detail giveaway...';
+          }
+          
+          // Sembunyikan error jika sebelumnya muncul
+          if (elements.error) elements.error.style.display = 'none';
+          
+          // Fetch data giveaway
+          console.log('📡 Fetching giveaway detail...');
+          const giveawayData = await fetchGiveawayDetail(finalGiveawayId);
+          
+          if (!giveawayData) {
+            throw new Error('Data giveaway tidak ditemukan');
+          }
+          
+          console.log('✅ Giveaway data loaded:', giveawayData);
+          
+          // Sembunyikan loading
+          if (elements.loading) elements.loading.style.display = 'none';
+          
+          // Render detail giveaway
+          renderGiveawayDetail(giveawayData);
+          
+        } catch (error) {
+          console.error('❌ Gagal memuat detail giveaway:', error);
+          
+          // Sembunyikan loading
+          if (elements.loading) elements.loading.style.display = 'none';
+          
+          // Tampilkan error
+          showError(
+            error.message || 'Gagal memuat detail giveaway. Pastikan koneksi internet Anda stabil.',
+            true
+          );
+        }
+        
+        return; // STOP EKSEKUSI DI SINI
+      }
+    
+      // ==================== MODE PROFIL (TANPA PARAMETER) ====================
+      console.log('👤 Mode profil - menampilkan halaman utama');
+      
+      let user = null;
+      
+      // ==================== AMBIL DATA USER ====================
+      if (telegramUserData) {
+        // Ada user Telegram
+        console.log('📱 Menggunakan data user Telegram');
+        
+        try {
+          // Coba ambil data user dari API
+          const apiUser = await fetchUserFromApi(telegramUserData.id);
+          
+          if (apiUser) {
+            // Gabungkan data dari Telegram dan API
+            user = { 
+              ...telegramUserData, 
+              ...apiUser,
+              // Pastikan field-field penting ada
+              fullname: apiUser.fullname || [telegramUserData.first_name, telegramUserData.last_name].filter(Boolean).join(' '),
+              username: apiUser.username || telegramUserData.username,
+              is_premium: apiUser.is_premium || telegramUserData.is_premium || false
+            };
+            console.log('✅ Data user dari API:', apiUser);
+          } else {
+            // Fallback ke data Telegram saja
+            user = telegramUserData;
+            console.log('ℹ️ Menggunakan data user Telegram (tanpa data API)');
+          }
+        } catch (userError) {
+          console.error('❌ Error fetching user from API:', userError);
+          // Fallback ke data Telegram
+          user = telegramUserData;
+          console.log('ℹ️ Fallback ke data user Telegram karena error API');
+        }
+        
+      } else {
+        // Guest mode (tidak di Telegram atau tidak ada data user)
+        console.log('👤 Menggunakan guest mode');
+        user = { ...guestUser }; // Copy guest user
+      }
+      
+      // ==================== UPDATE UI PROFIL ====================
+      try {
+        await updateUI(user);
+        console.log('✅ UI profil berhasil diupdate');
+      } catch (uiError) {
+        console.error('❌ Error updating UI:', uiError);
+        showError('Gagal menampilkan profil. Silakan refresh halaman.', false);
+      }
+      
+      // ==================== FETCH GIVEAWAYS ====================
+      try {
+        console.log('📡 Fetching all giveaways...');
+        allGiveaways = await fetchAllGiveaways();
+        
+        if (allGiveaways.active.length === 0 && allGiveaways.ended.length === 0) {
+          console.log('ℹ️ Tidak ada giveaway ditemukan');
+          showToast('Belum ada giveaway yang tersedia', 'info', 2000);
+        } else {
+          console.log(`✅ Loaded ${allGiveaways.active.length} active, ${allGiveaways.ended.length} ended giveaways`);
+        }
+      } catch (giveawaysError) {
+        console.error('❌ Error fetching giveaways:', giveawaysError);
+        allGiveaways = { active: [], ended: [] };
+        showToast('Gagal memuat daftar giveaway', 'error', 3000);
+      }
+      
+      // ==================== TAMPILKAN GIVEAWAY ====================
+      try {
+        // Aktifkan tombol active secara default
+        if (elements.activeBtn) elements.activeBtn.classList.add('active');
+        if (elements.endedBtn) elements.endedBtn.classList.remove('active');
+        
+        // Tampilkan giveaway active
+        displayGiveaways('active');
+        console.log('✅ Giveaway ditampilkan');
+      } catch (displayError) {
+        console.error('❌ Error displaying giveaways:', displayError);
+        if (elements.giveawayContent) {
+          elements.giveawayContent.innerHTML = `
+            <div class="empty-message">
+              <p>Gagal menampilkan giveaway</p>
+              <button onclick="location.reload()" class="retry-btn">Coba Lagi</button>
+            </div>
+          `;
+        }
+      }
+      
+      // ==================== SETUP EVENT LISTENERS TAMBAHAN ====================
+      setupAdditionalEventListeners();
+      
+      console.log('🎉 Inisialisasi selesai!');
+      
+    } catch (fatalError) {
+      // Fatal error - sesuatu yang sangat salah
+      console.error('💥 Fatal error in init():', fatalError);
+      
+      // Tampilkan error di UI
+      if (elements.loading) elements.loading.style.display = 'none';
+      if (elements.error) {
+        elements.error.style.display = 'flex';
+        const errorDiv = elements.error.querySelector('div');
+        if (errorDiv) {
+          errorDiv.textContent = '❌ Terjadi kesalahan fatal. Silakan refresh halaman.';
+        }
       }
     }
-
-    // Update UI profil
-    await updateUI(user);
-    
-    // Fetch semua giveaway dari API
-    allGiveaways = await fetchAllGiveaways();
-    
-    // Tampilkan giveaway active secara default
-    displayGiveaways('active');
   }
 
   // ==================== EVENT LISTENERS ====================
