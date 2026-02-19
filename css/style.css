@@ -1541,14 +1541,25 @@ em, i {
     overflow: hidden; /* Mencegah scroll di root */
 }
 
-/* 9.2. Detail Header */
+/* 9.2. Detail Header - TANPA LOGO */
 .giveaway-detail-header {
-    padding: 12px 16px;
+    padding: 8px 16px;
     background: rgba(15, 25, 40, 0.2);
     backdrop-filter: blur(20px) saturate(200%);
     -webkit-backdrop-filter: blur(20px) saturate(200%);
     border-bottom: 1.5px solid rgba(0, 170, 255, 0.25);
-    flex-shrink: 0; /* Header tetap di atas */
+    flex-shrink: 0;
+    min-height: 52px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end; /* Tombol back di kanan */
+}
+
+.detail-back-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: scale(1.05);
+    border-color: rgba(255, 255, 255, 0.3);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
 }
 
 .giveaway-detail-header .logo-box {
@@ -1574,15 +1585,14 @@ em, i {
     border: 1.5px solid rgba(255, 255, 255, 0.2);
     border-radius: var(--radius-pill);
     color: white;
-    width: 36px;
-    height: 36px;
-    font-size: 18px;
+    width: 42px;
+    height: 42px;
+    font-size: 20px;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
     transition: all 0.2s ease;
-    margin-left: auto;
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
