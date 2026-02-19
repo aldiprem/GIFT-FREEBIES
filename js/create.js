@@ -530,17 +530,18 @@
             }
         });
         
+        // Di dalam fungsi saveFormState, bagian formState:
         const formState = {
-            prizes: prizes,
-            channels: channels,
-            selectedRequirements: selectedRequirements,
-            giveawayText: elements.giveawayText?.value || '',
-            durationDays: durationDays,
-            durationHours: durationHours,
-            durationMinutes: durationMinutes,
-            durationSeconds: durationSeconds,
-            captchaEnabled: elements.captchaToggle?.checked || true,
-            foldableStates: foldableStates
+          prizes: prizes,
+          channels: channels,
+          selectedRequirements: selectedRequirements,
+          giveawayText: elements.giveawayText?.value || '',
+          durationDays: durationDays,
+          durationHours: durationHours,
+          durationMinutes: durationMinutes,
+          durationSeconds: durationSeconds,
+          captchaEnabled: elements.captchaToggle?.checked || true,
+          foldableStates: foldableStates
         };
         
         sessionStorage.setItem('giftfreebies_form_state', JSON.stringify(formState));
@@ -807,70 +808,112 @@
         }
     }
 
-    // ==================== PRIZE HANDLERS ====================
+    // ==================== PRIZE HANDLERS (DIPERBAIKI UNTUK DUPLIKAT) ====================
     function handlePrizeInput(e) {
-        if (e.key === ',' || e.key === 'Enter') {
-            e.preventDefault();
-            hapticImpact('soft');
-            addPrizeFromInput();
-        }
-    }
-
-    function handlePrizeBlur() {
+      if (e.key === ',' || e.key === 'Enter') {
+        e.preventDefault();
+        hapticImpact('soft');
         addPrizeFromInput();
+      }
     }
-
+    
+    function handlePrizeBlur() {
+      // Jangan auto-add di blur untuk menghindari kebingungan
+      // addPrizeFromInput();
+    }
+    
     function addPrizeFromInput() {
-        const value = elements.prizeInput.value.trim();
-        if (value) {
-            hapticImpact('light');
-            const newPrizes = value.split(',').map(p => p.trim()).filter(p => p);
-            newPrizes.forEach(prize => {
-                if (prize && !prizes.includes(prize)) {
-                    prizes.push(prize);
-                }
-            });
-            updatePrizesTags();
-            elements.prizeInput.value = '';
-        }
-    }
-
-    function removePrize(prize) {
-        prizes = prizes.filter(p => p !== prize);
+      const value = elements.prizeInput.value.trim();
+      if (value) {
+        hapticImpact('light');
+    
+        // Split berdasarkan koma dan filter yang tidak kosong
+        const newPrizes = value.split(',').map(p => p.trim()).filter(p => p);
+    
+        // PERBAIKAN: Hapus pengecekan duplikat (!prizes.includes(prize))
+        // Sekarang semua input akan ditambahkan meskipun duplikat
+        newPrizes.forEach(prize => {
+          if (prize) { // Hanya cek apakah tidak kosong
+            prizes.push(prize);
+          }
+        });
+    
         updatePrizesTags();
+        elements.prizeInput.value = '';
+      }
+    }
+    
+    function removePrize(prize) {
+      // Hapus berdasarkan index untuk menghindari masalah dengan duplikat
+      const index = prizes.indexOf(prize);
+      if (index > -1) {
+        prizes.splice(index, 1);
+      }
+      updatePrizesTags();
     }
     
     // ==================== FUNGSI RANDOM COLOR ====================
     function getRandomColor(index) {
-        const colors = [
+      const colors = [
             '#FF6B6B', '#4ECDC4', '#FFD166', '#A06CD5', '#F7B731',
             '#45AAF2', '#FC5C65', '#26DE81', '#A55EEA', '#FF9F1C',
             '#2E86C1', '#E67E22', '#E74C3C', '#3498DB', '#9B59B6',
             '#1ABC9C', '#F1C40F', '#E67E22', '#E74C3C', '#2C3E50'
         ];
-        return colors[index % colors.length];
+      return colors[index % colors.length];
     }
-
+    
     function updatePrizesTags() {
-        if (!elements.prizesTags) return;
-        
-        let html = '';
-        prizes.forEach((prize, index) => {
-            const bgColor = getRandomColor(index);
-            html += `<span class="prize-tag">
+      if (!elements.prizesTags) return;
+    
+      let html = '';
+      prizes.forEach((prize, index) => {
+        const bgColor = getRandomColor(index);
+    
+        // Escape HTML untuk keamanan
+        const escapedPrize = escapeHtml(prize);
+    
+        // Gunakan index sebagai identifier karena prize bisa duplikat
+        html += `<span class="prize-tag" data-prize-index="${index}">
                 <span class="prize-number" style="background: ${bgColor}; box-shadow: 0 0 10px ${bgColor}80;">${index + 1}</span>
-                ${escapeHtml(prize)} 
-                <span class="tag-remove" data-prize="${prize}">×</span>
+                ${escapedPrize} 
+                <span class="tag-remove" data-prize="${escapedPrize}" data-index="${index}">×</span>
             </span>`;
+      });
+      elements.prizesTags.innerHTML = html;
+    
+      // Re-attach event listeners untuk tombol remove
+      const removeButtons = elements.prizesTags.querySelectorAll('.tag-remove');
+      removeButtons.forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+    
+          hapticImpact('light');
+    
+          // Gunakan index untuk menghapus, bukan teks prize
+          const index = btn.dataset.index;
+          if (index !== undefined) {
+            removePrizeByIndex(parseInt(index));
+          }
         });
-        elements.prizesTags.innerHTML = html;
-        
-        setTimeout(() => {
-            const scrollContainer = document.querySelector('.prize-tags-scroll');
-            if (scrollContainer) {
-                scrollContainer.scrollLeft = scrollContainer.scrollWidth;
-            }
-        }, 50);
+      });
+    
+      // Scroll ke kanan setelah update
+      setTimeout(() => {
+        const scrollContainer = document.querySelector('.prize-tags-scroll');
+        if (scrollContainer) {
+          scrollContainer.scrollLeft = scrollContainer.scrollWidth;
+        }
+      }, 50);
+    }
+    
+    // Fungsi baru untuk menghapus berdasarkan index
+    function removePrizeByIndex(index) {
+      if (index >= 0 && index < prizes.length) {
+        prizes.splice(index, 1);
+        updatePrizesTags();
+      }
     }
 
     // ==================== REQUIREMENTS HANDLERS ====================
