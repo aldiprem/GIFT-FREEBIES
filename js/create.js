@@ -1080,15 +1080,17 @@
     }
 
     function showSuccess(giveawayId) {
-        elements.submitBtn.classList.add('success');
-        elements.submitBtn.querySelector('.btn-text').textContent = 'Berhasil!';
-        
-        hapticNotification('success');
-        
-        setTimeout(() => {
-            alert(`✅ Giveaway berhasil dibuat!\n\nGiveaway ID: ${giveawayId}\n\nLink: ${API_BASE_URL}/giveaway/${giveawayId}`);
-            window.location.href = 'index.html';
-        }, 500);
+      elements.submitBtn.classList.add('success');
+      elements.submitBtn.querySelector('.btn-text').textContent = 'Berhasil!';
+    
+      hapticNotification('success');
+    
+      const giveawayUrl = `https://t.me/giftfreebies/giveaway?startapp=${giveawayId}`;
+    
+      setTimeout(() => {
+        alert(`✅ Giveaway berhasil dibuat!\n\nGiveaway ID: ${giveawayId}`);
+        window.location.href = 'index.html';
+      }, 500);
     }
 
     // ==================== FOLDABLE SECTIONS ====================
@@ -2023,8 +2025,176 @@
         };
       }
     
-      // Fungsi untuk wrap teks dengan elemen tertentu
-      function wrapSelection(tagName, className = '', attributes = {}) {
+      // Fungsi untuk mengecek apakah teks yang dipilih sudah memiliki format tertentu
+      function hasFormat(format) {
+        const selection = window.getSelection();
+        if (!selection.rangeCount) return false;
+        
+        const range = selection.getRangeAt(0);
+        const container = range.commonAncestorContainer;
+        
+        // Cari elemen parent yang memiliki format yang dimaksud
+        let node = container.nodeType === Node.TEXT_NODE ? container.parentNode : container;
+        
+        switch (format) {
+          case 'bold':
+            // Cek tag B, STRONG, atau font-weight bold
+            while (node && node !== editable) {
+              if (node.nodeName === 'B' || node.nodeName === 'STRONG') return true;
+              if (node.style && node.style.fontWeight === 'bold') return true;
+              node = node.parentNode;
+            }
+            return false;
+            
+          case 'italic':
+            while (node && node !== editable) {
+              if (node.nodeName === 'I' || node.nodeName === 'EM') return true;
+              if (node.style && node.style.fontStyle === 'italic') return true;
+              node = node.parentNode;
+            }
+            return false;
+            
+          case 'underline':
+            while (node && node !== editable) {
+              if (node.nodeName === 'U') return true;
+              if (node.style && node.style.textDecoration === 'underline') return true;
+              node = node.parentNode;
+            }
+            return false;
+            
+          case 'strikethrough':
+            while (node && node !== editable) {
+              if (node.nodeName === 'S' || node.nodeName === 'STRIKE') return true;
+              if (node.style && node.style.textDecoration === 'line-through') return true;
+              node = node.parentNode;
+            }
+            return false;
+            
+          case 'code':
+            while (node && node !== editable) {
+              if (node.nodeName === 'CODE') return true;
+              node = node.parentNode;
+            }
+            return false;
+            
+          case 'spoiler':
+            while (node && node !== editable) {
+              if (node.classList && node.classList.contains('spoiler')) return true;
+              node = node.parentNode;
+            }
+            return false;
+            
+          case 'quote':
+            while (node && node !== editable) {
+              if (node.nodeName === 'BLOCKQUOTE') return true;
+              node = node.parentNode;
+            }
+            return false;
+            
+          case 'link':
+            while (node && node !== editable) {
+              if (node.nodeName === 'A') return true;
+              node = node.parentNode;
+            }
+            return false;
+            
+          default:
+            return false;
+        }
+      }
+    
+      // Fungsi untuk menghapus format tertentu dari teks yang dipilih
+      function removeFormat(format) {
+        const selection = window.getSelection();
+        if (!selection.rangeCount) return;
+        
+        const range = selection.getRangeAt(0);
+        
+        // Fungsi untuk memproses node dan menghapus format
+        function processNode(node) {
+          if (!node || node === editable) return node;
+          
+          // Jika node adalah teks, kembali ke parent
+          if (node.nodeType === Node.TEXT_NODE) {
+            return processNode(node.parentNode);
+          }
+          
+          let shouldRemove = false;
+          
+          switch (format) {
+            case 'bold':
+              shouldRemove = node.nodeName === 'B' || node.nodeName === 'STRONG';
+              break;
+            case 'italic':
+              shouldRemove = node.nodeName === 'I' || node.nodeName === 'EM';
+              break;
+            case 'underline':
+              shouldRemove = node.nodeName === 'U';
+              break;
+            case 'strikethrough':
+              shouldRemove = node.nodeName === 'S' || node.nodeName === 'STRIKE';
+              break;
+            case 'code':
+              shouldRemove = node.nodeName === 'CODE';
+              break;
+            case 'spoiler':
+              shouldRemove = node.classList && node.classList.contains('spoiler');
+              break;
+            case 'quote':
+              shouldRemove = node.nodeName === 'BLOCKQUOTE';
+              break;
+            case 'link':
+              shouldRemove = node.nodeName === 'A';
+              break;
+          }
+          
+          if (shouldRemove) {
+            // Ganti node dengan isinya (hilangkan tag)
+            const fragment = document.createDocumentFragment();
+            while (node.firstChild) {
+              fragment.appendChild(node.firstChild);
+            }
+            node.parentNode.replaceChild(fragment, node);
+            return fragment;
+          }
+          
+          return node;
+        }
+        
+        // Extract konten dan proses semua node
+        const fragment = range.extractContents();
+        const walker = document.createTreeWalker(
+          fragment,
+          NodeFilter.SHOW_ELEMENT | NodeFilter.SHOW_TEXT,
+          null
+        );
+        
+        const nodesToRemove = [];
+        const nodesToProcess = [];
+        
+        // Kumpulkan semua node yang perlu diproses
+        let currentNode = walker.currentNode;
+        while (currentNode) {
+          if (currentNode.nodeType === Node.ELEMENT_NODE) {
+            nodesToProcess.push(currentNode);
+          }
+          currentNode = walker.nextNode();
+        }
+        
+        // Proses dari yang terdalam ke terluar
+        nodesToProcess.reverse().forEach(node => {
+          processNode(node);
+        });
+        
+        // Insert kembali
+        range.insertNode(fragment);
+        
+        // Gabungkan text nodes yang terpisah jika perlu
+        range.commonAncestorContainer.normalize();
+      }
+    
+      // Fungsi untuk wrap teks dengan elemen tertentu (toggle format)
+      function toggleFormat(tagName, formatType, className = '', attributes = {}) {
         const selection = window.getSelection();
         if (!selection.rangeCount) return;
     
@@ -2036,23 +2206,26 @@
           return;
         }
     
-        // Buat elemen baru
-        const wrapper = document.createElement(tagName);
-        if (className) wrapper.className = className;
+        // Cek apakah teks sudah memiliki format yang sama
+        if (hasFormat(formatType)) {
+          // Jika sudah ada, hapus formatnya
+          removeFormat(formatType);
+        } else {
+          // Jika belum ada, tambahkan format
+          const wrapper = document.createElement(tagName);
+          if (className) wrapper.className = className;
     
-        // Tambahkan atribut
-        Object.entries(attributes).forEach(([key, value]) => {
-          wrapper.setAttribute(key, value);
-        });
+          Object.entries(attributes).forEach(([key, value]) => {
+            wrapper.setAttribute(key, value);
+          });
     
-        // Wrap konten
-        try {
-          range.surroundContents(wrapper);
-        } catch (e) {
-          // Jika gagal (misal karena selection tidak kontinyu), gunakan pendekatan lain
-          const fragment = range.extractContents();
-          wrapper.appendChild(fragment);
-          range.insertNode(wrapper);
+          try {
+            range.surroundContents(wrapper);
+          } catch (e) {
+            const fragment = range.extractContents();
+            wrapper.appendChild(fragment);
+            range.insertNode(wrapper);
+          }
         }
     
         // Bersihkan selection
@@ -2063,6 +2236,90 @@
     
         hapticImpact('light');
       }
+    
+      // Fungsi untuk toggle format link
+      function toggleLink() {
+        const selected = getSelectedText();
+        if (!selected) {
+          hapticNotification('warning');
+          return;
+        }
+    
+        const selection = window.getSelection();
+        const range = selection.getRangeAt(0);
+        let node = range.commonAncestorContainer;
+        if (node.nodeType === Node.TEXT_NODE) node = node.parentNode;
+    
+        // Cek apakah sudah ada link di selection
+        let hasLink = false;
+        let linkNode = null;
+        
+        let tempNode = node;
+        while (tempNode && tempNode !== editable) {
+          if (tempNode.nodeName === 'A') {
+            hasLink = true;
+            linkNode = tempNode;
+            break;
+          }
+          tempNode = tempNode.parentNode;
+        }
+    
+        if (hasLink && linkNode) {
+          // Jika sudah ada link, hapus link
+          const fragment = document.createDocumentFragment();
+          while (linkNode.firstChild) {
+            fragment.appendChild(linkNode.firstChild);
+          }
+          linkNode.parentNode.replaceChild(fragment, linkNode);
+        } else {
+          // Jika belum ada link, tambahkan link
+          const url = prompt('Masukkan URL:', 'https://');
+          if (url) {
+            const wrapper = document.createElement('a');
+            wrapper.setAttribute('href', url);
+            wrapper.setAttribute('target', '_blank');
+            wrapper.setAttribute('rel', 'noopener noreferrer');
+    
+            try {
+              range.surroundContents(wrapper);
+            } catch (e) {
+              const fragment = range.extractContents();
+              wrapper.appendChild(fragment);
+              range.insertNode(wrapper);
+            }
+          }
+        }
+    
+        selection.removeAllRanges();
+        syncToTextarea();
+        hapticImpact('light');
+      }
+    
+      // Setup scroll shadow untuk toolbar
+      function setupScrollShadow() {
+        const toolbar = document.querySelector('.format-toolbar');
+        if (!toolbar) return;
+      
+        function checkScroll() {
+          const hasScroll = toolbar.scrollWidth > toolbar.clientWidth;
+          const canScrollRight = toolbar.scrollLeft < (toolbar.scrollWidth - toolbar.clientWidth - 5);
+      
+          if (hasScroll && canScrollRight) {
+            toolbar.classList.add('can-scroll-right');
+          } else {
+            toolbar.classList.remove('can-scroll-right');
+          }
+        }
+      
+        toolbar.addEventListener('scroll', checkScroll);
+        window.addEventListener('resize', checkScroll);
+        setTimeout(checkScroll, 100);
+        
+        const observer = new MutationObserver(checkScroll);
+        observer.observe(toolbar, { childList: true, subtree: true });
+      }
+      
+      setupScrollShadow();
     
       // Handler untuk tombol format
       document.querySelectorAll('.format-btn').forEach(btn => {
@@ -2079,42 +2336,35 @@
     
           switch (format) {
             case 'bold':
-              wrapSelection('b');
+              toggleFormat('b', 'bold');
               break;
     
             case 'italic':
-              wrapSelection('i');
+              toggleFormat('i', 'italic');
               break;
     
             case 'underline':
-              wrapSelection('u');
+              toggleFormat('u', 'underline');
               break;
     
             case 'strikethrough':
-              wrapSelection('s');
+              toggleFormat('s', 'strikethrough');
               break;
     
             case 'code':
-              wrapSelection('code');
+              toggleFormat('code', 'code');
               break;
     
             case 'spoiler':
-              wrapSelection('span', 'spoiler');
+              toggleFormat('span', 'spoiler', 'spoiler');
               break;
     
             case 'quote':
-              wrapSelection('blockquote');
+              toggleFormat('blockquote', 'quote');
               break;
     
             case 'link':
-              const url = prompt('Masukkan URL:', 'https://');
-              if (url) {
-                wrapSelection('a', '', {
-                  href: url,
-                  target: '_blank',
-                  rel: 'noopener noreferrer'
-                });
-              }
+              toggleLink();
               break;
           }
         });
@@ -2130,63 +2380,7 @@
         syncToTextarea();
       });
     
-      console.log('✅ Text formatting initialized');
-    }
-    
-    // Modifikasi fungsi handleSubmit untuk mengambil dari editable
-    async function handleSubmit(e) {
-      e.preventDefault();
-    
-      if (prizes.length === 0) {
-        hapticNotification('error');
-        alert('Minimal 1 hadiah harus diisi!');
-        return;
-      }
-    
-      hapticImpact('heavy');
-      setButtonLoading(true);
-    
-      const requirements = selectedRequirements;
-    
-      const totalSeconds = (durationDays * 24 * 3600) +
-        (durationHours * 3600) +
-        (durationMinutes * 60) +
-        durationSeconds;
-    
-      // Ambil teks dari hidden textarea
-      const giveawayText = elements.giveawayText.value || 'Ikuti giveaway ini dan menangkan hadiah menarik! 🎁';
-    
-      const formData = {
-        creator_user_id: telegramUser?.id || 123456789,
-        fullname: telegramUser ? [telegramUser.first_name, telegramUser.last_name].filter(Boolean).join(' ') : 'Test User',
-        username: telegramUser?.username || 'testuser',
-        prizes: prizes,
-        giveaway_text: giveawayText,
-        requirements: requirements,
-        links: savedLinks,
-        duration: {
-          days: durationDays,
-          hours: durationHours,
-          minutes: durationMinutes,
-          seconds: durationSeconds,
-          total_seconds: totalSeconds
-        },
-        captcha_enabled: elements.captchaToggle.checked ? 1 : 0
-      };
-    
-      console.log('📤 Submitting giveaway:', formData);
-    
-      try {
-        await new Promise(resolve => setTimeout(resolve, 1500));
-        const giveawayId = generateGiveawayId();
-        setButtonLoading(false);
-        showSuccess(giveawayId);
-      } catch (error) {
-        console.error('❌ Error:', error);
-        hapticNotification('error');
-        setButtonLoading(false);
-        alert('Gagal membuat giveaway. Silakan coba lagi.');
-      }
+      console.log('✅ Text formatting initialized with toggle functionality');
     }
 
     function init() {
@@ -2245,6 +2439,5 @@
       }, 500);
     }
 
-    // ==================== START ====================
     init();
 })();
