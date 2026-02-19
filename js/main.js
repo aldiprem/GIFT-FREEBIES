@@ -399,6 +399,10 @@
       
       // ===== PENTING: SEMBUNYIKAN SETTINGS BUTTON =====
       if (elements.settingsBtn) elements.settingsBtn.style.display = 'none';
+      
+      // ===== PENTING: SEMBUNYIKAN TOP CONTAINER (LOGO DAN PROFILE) =====
+      const topContainer = document.querySelector('.top-container');
+      if (topContainer) topContainer.style.display = 'none';
   
       const container = elements.giveawayContent;
       if (!container) return;
@@ -461,9 +465,10 @@
               const channelName = typeof ch === 'string' ? ch : (ch.title || ch.username || 'Channel');
               const username = typeof ch === 'string' ? ch.replace('@', '') : (ch.username || '').replace('@', '');
               const isVerified = typeof ch !== 'string' && ch.is_verified;
+              const channelUrl = `https://t.me/${username}`;
               
               channelsHtml += `
-                  <div class="panel-item channel-item" data-username="${username}">
+                  <a href="${channelUrl}" target="_blank" class="panel-item channel-item" data-url="${channelUrl}">
                       <div class="item-info">
                           <div class="item-icon">📢</div>
                           <div class="item-details">
@@ -475,7 +480,7 @@
                           </div>
                       </div>
                       <div class="item-selector"></div>
-                  </div>
+                  </a>
               `;
           });
       } else {
@@ -489,7 +494,7 @@
               const title = link.title || 'Tautan';
               const url = link.url || '#';
               linksHtml += `
-                  <div class="panel-item link-item" data-url="${escapeHtml(url)}">
+                  <a href="${escapeHtml(url)}" target="_blank" class="panel-item link-item" data-url="${escapeHtml(url)}">
                       <div class="item-info">
                           <div class="item-icon">🔗</div>
                           <div class="item-details">
@@ -498,7 +503,7 @@
                           </div>
                       </div>
                       <div class="item-selector"></div>
-                  </div>
+                  </a>
               `;
           });
       } else {
@@ -521,8 +526,6 @@
                   </div>
               `;
           }
-      } else {
-          mediaHtml = ''; // Tidak menampilkan media jika tidak ada
       }
   
       // Format tanggal akhir
@@ -551,9 +554,9 @@
       // Gabungkan semua HTML dengan struktur dari page.css
       const detailHtml = `
           <div class="giveaway-detail-container">
-              <!-- HEADER dengan tombol back -->
+              <!-- HEADER dengan tombol back (HANYA LOGO DAN BACK, TANPA BORDER TAMBAHAN) -->
               <div class="detail-header">
-                  <div class="logo-box">
+                  <div class="logo-box" style="background: transparent; border: none; box-shadow: none; padding: 8px 0;">
                       <img src="img/logo.png" class="logo-img" alt="logo" onerror="this.style.display='none'">
                       <span class="logo-text">GIFT FREEBIES</span>
                   </div>
@@ -780,27 +783,30 @@
           });
       }
   
-      // Klik pada item channel
+      // Klik pada item channel (sekarang menggunakan tag <a> jadi sudah otomatis membuka link)
+      // Tapi kita tetap ingin toggle selector
       document.querySelectorAll('.channel-item').forEach(item => {
-          item.addEventListener('click', function() {
-              // Toggle class selected pada selector
+          item.addEventListener('click', function(e) {
+              // Jangan prevent default karena kita ingin link tetap berfungsi
               const selector = this.querySelector('.item-selector');
               if (selector) {
                   selector.classList.toggle('selected');
               }
               vibrate(10);
+              // Link akan tetap terbuka di tab baru karena target="_blank"
           });
       });
   
       // Klik pada item link
       document.querySelectorAll('.link-item').forEach(item => {
-          item.addEventListener('click', function() {
-              // Toggle class selected pada selector
+          item.addEventListener('click', function(e) {
+              // Jangan prevent default karena kita ingin link tetap berfungsi
               const selector = this.querySelector('.item-selector');
               if (selector) {
                   selector.classList.toggle('selected');
               }
               vibrate(10);
+              // Link akan tetap terbuka di tab baru karena target="_blank"
           });
       });
   
@@ -827,28 +833,32 @@
           startDetailCountdown(giveaway.end_date);
       }
   }
-
-  // ==================== FUNGSI: KEMBALI KE INDEX ====================
+  
+  // ==================== FUNGSI: KEMBALI KE INDEX (DIPERBAIKI) ====================
   function goBackToIndex() {
-    // Tampilkan kembali elemen yang disembunyikan
-    if (elements.profileContent) elements.profileContent.style.display = 'block';
-    if (elements.giveawayButtons) elements.giveawayButtons.style.display = 'flex';
-    if (elements.settingsBtn) elements.settingsBtn.style.display = 'flex';
+      // Tampilkan kembali elemen yang disembunyikan
+      if (elements.profileContent) elements.profileContent.style.display = 'block';
+      if (elements.giveawayButtons) elements.giveawayButtons.style.display = 'flex';
+      if (elements.settingsBtn) elements.settingsBtn.style.display = 'flex';
+      
+      // Tampilkan kembali top container
+      const topContainer = document.querySelector('.top-container');
+      if (topContainer) topContainer.style.display = 'flex';
   
-    // Hapus konten detail
-    const container = elements.giveawayContent;
-    if (container) {
-      container.innerHTML = '';
-      container.style.display = 'block';
-    }
+      // Hapus konten detail
+      const container = elements.giveawayContent;
+      if (container) {
+          container.innerHTML = '';
+          container.style.display = 'block';
+      }
   
-    // Hentikan countdown
-    if (window.detailCountdownInterval) {
-      clearInterval(window.detailCountdownInterval);
-    }
+      // Hentikan countdown
+      if (window.detailCountdownInterval) {
+          clearInterval(window.detailCountdownInterval);
+      }
   
-    // Kembali ke index
-    window.location.href = 'index.html';
+      // Kembali ke index tanpa reload
+      window.history.pushState({}, '', 'index.html');
   }
 
   // ==================== FUNGSI: COUNTDOWN UNTUK DETAIL ====================
