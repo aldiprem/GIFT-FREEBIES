@@ -349,6 +349,7 @@
     }
   
     let html = '';
+  
     giveaways.forEach(giveaway => {
       // PERBAIKAN: Pastikan giveaway_id ada
       const giveawayId = giveaway.giveaway_id || giveaway.id;
@@ -357,22 +358,37 @@
         (giveaway.prizes || 'Giveaway');
       const participants = giveaway.participants_count || 0;
   
+      // Ambil deskripsi giveaway (ambil 100 karakter pertama)
+      const description = giveaway.giveaway_text || 'Tidak ada deskripsi';
+      const shortDescription = description.length > 100 ?
+        description.substring(0, 100) + '...' :
+        description;
+  
       if (type === 'active') {
-        const timeRemaining = formatTimeRemaining(giveaway.end_date);
+        // Tampilan GIVEAWAY ACTIVE - TANPA INFORMASI BERAKHIR
         html += `
-          <div class="giveaway-item" data-id="${giveawayId}">
-            <h3>${escapeHtml(prizeText)}</h3>
-            <p>👥 ${participants} participants • ⏱️ Ends in ${timeRemaining}</p>
-          </div>
-        `;
+                  <div class="giveaway-item" data-id="${giveawayId}">
+                      <h3>${escapeHtml(prizeText)}</h3>
+                      <p class="giveaway-description">${escapeHtml(shortDescription)}</p>
+                      <div class="giveaway-stats">
+                          <span class="stat-badge">👥 ${participants} peserta</span>
+                      </div>
+                  </div>
+              `;
       } else {
+        // Tampilan GIVEAWAY ENDED - Tampilkan hadiah, deskripsi, dan jumlah peserta
         const winners = giveaway.winners_count || 0;
         html += `
-          <div class="giveaway-item" data-id="${giveawayId}">
-            <h3>${escapeHtml(prizeText)}</h3>
-            <p>🏆 ${winners} winners • Ended</p>
-          </div>
-        `;
+                  <div class="giveaway-item ended" data-id="${giveawayId}">
+                      <h3>${escapeHtml(prizeText)}</h3>
+                      <p class="giveaway-description">${escapeHtml(shortDescription)}</p>
+                      <div class="giveaway-stats">
+                          <span class="stat-badge">👥 ${participants} peserta</span>
+                          <span class="stat-badge winner-badge">🏆 ${winners} pemenang</span>
+                      </div>
+                      <div class="ended-badge">SELESAI</div>
+                  </div>
+              `;
       }
     });
   
@@ -936,6 +952,9 @@
   function goBackToIndex() {
     console.log('🔙 Kembali ke index...');
   
+    // Reset state aplikasi
+    currentGiveawayType = 'active';
+  
     // Tampilkan kembali elemen yang disembunyikan
     if (elements.profileContent) {
       elements.profileContent.style.display = 'block';
@@ -971,13 +990,11 @@
     // Hapus parameter search dari URL
     const url = new URL(window.location.href);
     url.searchParams.delete('search');
-    window.history.pushState({}, '', url.toString());
   
-    // Refresh data giveaway
-    fetchAllGiveaways().then(giveaways => {
-      allGiveaways = giveaways;
-      displayGiveaways('active');
-    });
+    // CARA PALING MUDAH: Refresh halaman setelah menghapus parameter
+    window.location.href = url.toString();
+  
+    // Kode di bawah ini TIDAK AKAN dieksekusi karena redirect
   }
 
   // ==================== FUNGSI: COUNTDOWN UNTUK DETAIL ====================
