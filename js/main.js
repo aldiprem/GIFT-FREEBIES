@@ -355,7 +355,7 @@
     });
   }
 
-  // ==================== FUNGSI: FETCH GIVEAWAY DETAIL ====================
+  // ==================== FUNGSI: FETCH GIVEAWAY DETAIL (VERSI DIPERBAIKI) ====================
   async function fetchGiveawayDetail(id) {
     try {
       console.log(`📡 Fetching giveaway detail for ID: ${id}`);
@@ -363,18 +363,27 @@
         headers: { 'Accept': 'application/json' },
         mode: 'cors'
       });
-      
+  
       if (!response.ok) {
         if (response.status === 404) throw new Error('Giveaway tidak ditemukan');
         throw new Error(`Gagal memuat data: ${response.status}`);
       }
-      
+  
       const result = await response.json();
       console.log('📥 Giveaway detail response:', result);
-      
-      if (result.success && result.giveaway) {
+  
+      // PERBAIKAN: Handle berbagai format response
+      // Jika API mengembalikan langsung objek giveaway
+      if (result && result.giveaway_id) {
+        return result;
+      }
+      // Jika API mengembalikan dengan properti success dan giveaway
+      else if (result.success && result.giveaway) {
         return result.giveaway;
-      } else {
+      }
+      // Jika tidak ada format yang dikenal
+      else {
+        console.error('Format response tidak dikenal:', result);
         throw new Error('Data giveaway tidak valid');
       }
     } catch (error) {
