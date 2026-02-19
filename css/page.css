@@ -842,22 +842,45 @@ body::before {
     margin-bottom: 8px;
 }
 
+/* ------------------------------------------------------------------
+   PAGE.CSS - GIVEAWAY DETAIL PAGE (FINAL VERSION)
+   ------------------------------------------------------------------ */
 @keyframes timerPulse {
     0%, 100% { text-shadow: 0 0 15px rgba(0, 136, 255, 0.3); }
     50% { text-shadow: 0 0 25px rgba(0, 136, 255, 0.6); }
 }
 
-.timer-end-date {
-    font-size: 13px;
-    color: rgba(255, 255, 255, 0.5);
-    padding-top: 8px;
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
+/* Pastikan hidden class berfungsi */
+.hidden {
+    display: none !important;
 }
 
-.timer-end-date span {
+/* Pastikan panel item selector terlihat */
+.item-selector {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    background: transparent;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     color: white;
-    font-weight: 500;
-    margin-left: 4px;
+    font-size: 14px;
+    transition: all 0.2s ease;
+    margin-left: 12px;
+    flex-shrink: 0;
+}
+
+.item-selector.selected {
+    border-color: #10b981;
+    background: #10b981;
+}
+
+.item-selector.selected::after {
+    content: '✓';
+    color: white;
+    font-weight: bold;
 }
 
 /* ------------------------------------------------------------------
