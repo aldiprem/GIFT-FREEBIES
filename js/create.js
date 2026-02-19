@@ -1100,11 +1100,20 @@
     
       hapticNotification('success');
     
-      // Gunakan format URL dengan parameter search (sesuai main.js)
-      const giveawayUrl = `https://aldiprem.github.io/GIFT-FREEBIES/?search=${giveawayId}`;
+      // Link untuk akses langsung via web
+      const webLink = `https://aldiprem.github.io/GIFT-FREEBIES/?search=${giveawayId}`;
+    
+      // Link untuk dibuka di Telegram Mini App (gunakan domain dan path yang benar)
+      // Format: https://t.me/nama_bot/nama_app?startapp=parameter
+      const telegramAppLink = `https://t.me/freebiestbot/giveaway?startapp=${giveawayId}`;
     
       setTimeout(() => {
-        alert(`✅ Giveaway berhasil dibuat!\n\nGiveaway ID: ${giveawayId}\n\nLink: ${giveawayUrl}`);
+        alert(
+          `✅ Giveaway berhasil dibuat!\n\n` +
+          `Giveaway ID: ${giveawayId}\n\n` +
+          `📱 Buka di Telegram:\n${telegramAppLink}\n\n` +
+          `🌐 Buka di Web:\n${webLink}`
+        );
         window.location.href = 'index.html';
       }, 500);
     }
