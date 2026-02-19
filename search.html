@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Giveaway Details - GiftFreebies</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/search.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+</head>
+<body>
+    <div class="container">
+        
+        <div class="top-container">
+            
+            <!-- BORDER 1 : LOGO -->
+            <div class="logo-box">
+                <img src="img/logo.png" class="logo-img" alt="logo" onerror="this.style.display='none'">
+                <span class="logo-text">☘️ GIVEAWAY GIFT FREEBIES</span>
+            </div>
+            
+            <!-- GIVEAWAY DETAILS CONTAINER -->
+            <div class="giveaway-container">
+                
+                <!-- Loading State -->
+                <div id="loading" class="loading-state">
+                    <div class="spinner"></div>
+                    <p>Memuat data giveaway...</p>
+                </div>
+                
+                <!-- Error State -->
+                <div id="error" class="error-state" style="display: none;">
+                    <div class="error-icon">❌</div>
+                    <div class="error-title" id="errorTitle">Gagal memuat giveaway</div>
+                    <div class="error-message" id="errorMessage"></div>
+                    <button onclick="window.location.reload()" class="retry-btn">Coba Lagi</button>
+                    <button onclick="window.location.href='index.html'" class="back-btn">Kembali ke Beranda</button>
+                </div>
+                
+                <!-- Giveaway Content -->
+                <div id="giveawayContent" class="giveaway-content" style="display: none;">
+                    
+                    <!-- Header dengan Status -->
+                    <div class="giveaway-header">
+                        <div class="status-badge" id="statusBadge">Active</div>
+                        <div class="giveaway-id" id="giveawayIdDisplay"></div>
+                    </div>
+                    
+                    <!-- Creator Info -->
+                    <div class="creator-section" id="creatorSection">
+                        <div class="creator-avatar" id="creatorAvatar"></div>
+                        <div class="creator-info">
+                            <div class="creator-name" id="creatorName"></div>
+                            <div class="creator-username" id="creatorUsername"></div>
+                        </div>
+                    </div>
+                    
+                    <!-- Prizes Section -->
+                    <div class="section-title">
+                        <span class="section-icon">🎁</span>
+                        <span>Hadiah</span>
+                    </div>
+                    <div class="prizes-section" id="prizesSection"></div>
+                    
+                    <!-- Giveaway Text -->
+                    <div class="section-title">
+                        <span class="section-icon">📄</span>
+                        <span>Deskripsi Giveaway</span>
+                    </div>
+                    <div class="text-section" id="textSection"></div>
+                    
+                    <!-- Requirements -->
+                    <div class="section-title">
+                        <span class="section-icon">🔐</span>
+                        <span>Syarat Mengikuti</span>
+                    </div>
+                    <div class="requirements-section" id="requirementsSection"></div>
+                    
+                    <!-- Channels/Groups -->
+                    <div class="section-title" id="channelsTitle" style="display: none;">
+                        <span class="section-icon">📢</span>
+                        <span>Channel/Group yang Harus Diikuti</span>
+                    </div>
+                    <div class="channels-section" id="channelsSection" style="display: none;"></div>
+                    
+                    <!-- Links -->
+                    <div class="section-title" id="linksTitle" style="display: none;">
+                        <span class="section-icon">🔗</span>
+                        <span>Tautan Terkait</span>
+                    </div>
+                    <div class="links-section" id="linksSection" style="display: none;"></div>
+                    
+                    <!-- Duration & Time -->
+                    <div class="duration-section">
+                        <div class="duration-item">
+                            <div class="duration-label">Dibuat Pada</div>
+                            <div class="duration-value" id="createdAt"></div>
+                        </div>
+                        <div class="duration-item">
+                            <div class="duration-label">Berakhir Pada</div>
+                            <div class="duration-value" id="endDate"></div>
+                        </div>
+                        <div class="duration-item">
+                            <div class="duration-label">Sisa Waktu</div>
+                            <div class="duration-value countdown" id="countdown"></div>
+                        </div>
+                    </div>
+                    
+                    <!-- CAPTCHA Status -->
+                    <div class="captcha-section">
+                        <div class="captcha-item">
+                            <span class="captcha-label">CAPTCHA</span>
+                            <span class="captcha-status" id="captchaStatus">Aktif</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Stats Section -->
+                    <div class="stats-section">
+                        <div class="stat-item">
+                            <div class="stat-value" id="participantsCount">0</div>
+                            <div class="stat-label">Peserta</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value" id="winnersCount">0</div>
+                            <div class="stat-label">Pemenang</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value" id="ticketsCount">0</div>
+                            <div class="stat-label">Total Tiket</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Action Buttons -->
+                    <div class="action-buttons" id="actionButtons">
+                        <button class="btn btn-primary" id="joinBtn" style="display: none;">
+                            <span class="btn-icon">✓</span>
+                            <span class="btn-text">Ikuti Giveaway</span>
+                        </button>
+                        <button class="btn btn-secondary" id="shareBtn">
+                            <span class="btn-icon">📤</span>
+                            <span class="btn-text">Bagikan</span>
+                        </button>
+                        <button class="btn btn-secondary" id="backToHomeBtn">
+                            <span class="btn-icon">🏠</span>
+                            <span class="btn-text">Beranda</span>
+                        </button>
+                    </div>
+                    
+                    <!-- Join Modal (untuk verifikasi) -->
+                    <div class="join-modal" id="joinModal" style="display: none;">
+                        <div class="join-modal-content">
+                            <div class="join-modal-header">
+                                <span class="join-modal-title">Verifikasi Partisipasi</span>
+                                <button class="join-modal-close" id="closeJoinModal">✕</button>
+                            </div>
+                            <div class="join-modal-body">
+                                <p>Untuk mengikuti giveaway ini, Anda harus:</p>
+                                <ul class="verification-list" id="verificationList"></ul>
+                                
+                                <div class="captcha-container" id="captchaContainer" style="display: none;">
+                                    <div class="captcha-box">
+                                        <div class="captcha-question" id="captchaQuestion">5 + 3 = ?</div>
+                                        <input type="number" class="captcha-input" id="captchaAnswer" placeholder="Masukkan jawaban">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="join-modal-footer">
+                                <button class="btn btn-primary" id="verifyJoinBtn">Verifikasi & Ikuti</button>
+                                <button class="btn btn-secondary" id="cancelJoinBtn">Batal</button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Success Modal -->
+                    <div class="success-modal" id="successModal" style="display: none;">
+                        <div class="success-modal-content">
+                            <div class="success-icon">✅</div>
+                            <div class="success-title">Berhasil!</div>
+                            <div class="success-message">Anda telah berhasil mengikuti giveaway.</div>
+                            <div class="success-ticket" id="successTicket"></div>
+                            <button class="btn btn-primary" id="closeSuccessModal">Tutup</button>
+                        </div>
+                    </div>
+                    
+                </div>
+                
+            </div>
+            
+        </div>
+        
+    </div>
+    
+    <script src="js/search.js"></script>
+</body>
+</html>
