@@ -160,27 +160,34 @@
   async function fetchAllGiveaways() {
     try {
       console.log('📡 Fetching all giveaways...');
-      
+  
       // Ambil active giveaways
       const activeRes = await fetch(`${API_BASE_URL}/api/giveaways?status=active&limit=50`, {
         headers: { 'Accept': 'application/json' },
         mode: 'cors'
       });
-      
+  
       // Ambil ended giveaways
       const endedRes = await fetch(`${API_BASE_URL}/api/giveaways?status=ended&limit=50`, {
         headers: { 'Accept': 'application/json' },
         mode: 'cors'
       });
-      
+  
+      console.log('Active response status:', activeRes.status);
+      console.log('Ended response status:', endedRes.status);
+  
       const activeData = activeRes.ok ? await activeRes.json() : { giveaways: [] };
       const endedData = endedRes.ok ? await endedRes.json() : { giveaways: [] };
-      
+  
+      console.log('Active data:', activeData);
+      console.log('Ended data:', endedData);
+  
+      // PERHATIKAN: API mengembalikan { success: true, giveaways: [...] }
       const activeGiveaways = activeData.giveaways || [];
       const endedGiveaways = endedData.giveaways || [];
-      
+  
       console.log(`✅ Loaded ${activeGiveaways.length} active, ${endedGiveaways.length} ended giveaways`);
-      
+  
       return {
         active: activeGiveaways,
         ended: endedGiveaways
@@ -195,40 +202,46 @@
   function displayGiveaways(type) {
     vibrate(15);
     currentGiveawayType = type;
-    
+  
     const giveaways = allGiveaways[type] || [];
-    
+  
+    console.log(`Displaying ${type} giveaways:`, giveaways);
+  
     if (giveaways.length === 0) {
       elements.giveawayContent.innerHTML = `<div class="empty-message">Tidak ada ${type === 'active' ? 'giveaway aktif' : 'giveaway selesai'}</div>`;
       return;
     }
-    
+  
     let html = '';
     giveaways.forEach(giveaway => {
-      const prizeText = Array.isArray(giveaway.prizes) ? giveaway.prizes[0] : (giveaway.prizes || 'Giveaway');
+      // PERBAIKAN: Pastikan giveaway_id ada
+      const giveawayId = giveaway.giveaway_id || giveaway.id;
+      const prizeText = Array.isArray(giveaway.prizes) ?
+        (giveaway.prizes[0] || 'Giveaway') :
+        (giveaway.prizes || 'Giveaway');
       const participants = giveaway.participants_count || 0;
-      
+  
       if (type === 'active') {
         const timeRemaining = formatTimeRemaining(giveaway.end_date);
         html += `
-          <div class="giveaway-item" data-id="${giveaway.giveaway_id}">
-            <h3>${escapeHtml(prizeText)}</h3>
-            <p>👥 ${participants} participants • ⏱️ Ends in ${timeRemaining}</p>
-          </div>
-        `;
+                  <div class="giveaway-item" data-id="${giveawayId}">
+                      <h3>${escapeHtml(prizeText)}</h3>
+                      <p>👥 ${participants} participants • ⏱️ Ends in ${timeRemaining}</p>
+                  </div>
+              `;
       } else {
         const winners = giveaway.winners_count || 0;
         html += `
-          <div class="giveaway-item" data-id="${giveaway.giveaway_id}">
-            <h3>${escapeHtml(prizeText)}</h3>
-            <p>🏆 ${winners} winners • Ended</p>
-          </div>
-        `;
+                  <div class="giveaway-item" data-id="${giveawayId}">
+                      <h3>${escapeHtml(prizeText)}</h3>
+                      <p>🏆 ${winners} winners • Ended</p>
+                  </div>
+              `;
       }
     });
-    
+  
     elements.giveawayContent.innerHTML = html;
-    
+  
     // Tambahkan event listener ke setiap item giveaway
     document.querySelectorAll('.giveaway-item').forEach(item => {
       item.addEventListener('click', () => {
