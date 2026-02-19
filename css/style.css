@@ -1527,29 +1527,28 @@ em, i {
 }
 
 /* ------------------------------------------------------------------
-   9. GIVEAWAY DETAIL PAGE (NEW PREMIUM DESIGN)
+   9. GIVEAWAY DETAIL PAGE - FULL SCREEN (TANPA SCROLL)
    ------------------------------------------------------------------ */
 
 /* 9.1. Detail Page Container */
 .giveaway-detail-page {
-    min-height: 100vh;
+    height: 100vh;
     display: flex;
     flex-direction: column;
     position: relative;
     padding: 0;
     background: linear-gradient(135deg, var(--bg-gradient-start), var(--bg-gradient-end));
+    overflow: hidden; /* Mencegah scroll di root */
 }
 
 /* 9.2. Detail Header */
 .giveaway-detail-header {
-    padding: 16px 20px;
+    padding: 12px 16px;
     background: rgba(15, 25, 40, 0.2);
     backdrop-filter: blur(20px) saturate(200%);
     -webkit-backdrop-filter: blur(20px) saturate(200%);
     border-bottom: 1.5px solid rgba(0, 170, 255, 0.25);
-    position: sticky;
-    top: 0;
-    z-index: var(--z-sticky);
+    flex-shrink: 0; /* Header tetap di atas */
 }
 
 .giveaway-detail-header .logo-box {
@@ -1560,15 +1559,24 @@ em, i {
     padding: 0;
 }
 
+.giveaway-detail-header .logo-text {
+    font-size: 18px; /* Perkecil logo */
+}
+
+.giveaway-detail-header .logo-img {
+    width: 32px;
+    height: 32px;
+}
+
 /* 9.3. Detail Back Button */
 .detail-back-btn {
     background: rgba(255, 255, 255, 0.1);
     border: 1.5px solid rgba(255, 255, 255, 0.2);
     border-radius: var(--radius-pill);
     color: white;
-    width: 40px;
-    height: 40px;
-    font-size: 20px;
+    width: 36px;
+    height: 36px;
+    font-size: 18px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -1580,35 +1588,36 @@ em, i {
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
-.detail-back-btn:hover {
-    background: rgba(255, 255, 255, 0.2);
-    transform: scale(1.05);
-    border-color: rgba(255, 255, 255, 0.3);
-    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+/* 9.4. Detail Content Container - FLEX UNTUK MENGISI SISA HEIGHT */
+.detail-content-container {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden; /* Mencegah scroll */
+    padding: 12px 16px 0 16px;
 }
 
-.detail-back-btn:active {
-    transform: scale(0.95);
-}
-
-/* 9.4. Detail Main Card */
+/* 9.5. Detail Main Card - FLEX COLUMN DENGAN MIN HEIGHT 0 */
 .detail-main-card {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
     background: rgba(15, 25, 40, 0.2);
     backdrop-filter: blur(20px) saturate(200%);
     -webkit-backdrop-filter: blur(20px) saturate(200%);
     border: 1.5px solid rgba(0, 170, 255, 0.25);
-    border-radius: var(--radius-xxxl);
-    padding: 24px 20px;
+    border-radius: var(--radius-xxl);
+    padding: 16px 16px 12px 16px;
     box-shadow: 
         0 20px 40px -10px rgba(0, 0, 0, 0.4),
         inset 0 1px 2px rgba(255, 255, 255, 0.15),
         inset 0 -2px 2px rgba(0, 0, 0, 0.2);
     position: relative;
     overflow: hidden;
-    margin: 20px 16px 100px 16px;
-    animation: slideUp 0.5s ease;
+    min-height: 0; /* PENTING: Untuk flex child bisa mengecil */
 }
 
+/* Efek glossy */
 .detail-main-card::before {
     content: '';
     position: absolute;
@@ -1620,16 +1629,17 @@ em, i {
         rgba(255, 255, 255, 0.15) 0%, 
         rgba(255, 255, 255, 0.05) 40%, 
         transparent 100%);
-    border-radius: var(--radius-xxxl) var(--radius-xxxl) 50% 50%;
+    border-radius: var(--radius-xxl) var(--radius-xxl) 50% 50%;
     pointer-events: none;
     z-index: var(--z-elevate);
 }
 
+/* Efek border glow */
 .detail-main-card::after {
     content: '';
     position: absolute;
     inset: -1px;
-    border-radius: calc(var(--radius-xxxl) + 2px);
+    border-radius: calc(var(--radius-xxl) + 2px);
     padding: 2px;
     background: linear-gradient(135deg, 
         rgba(0, 170, 255, 0.5), 
@@ -1643,63 +1653,76 @@ em, i {
     pointer-events: none;
 }
 
-/* 9.5. Detail Status Badge */
+/* 9.6. Scroll Area - DENGAN SCROLL YANG HALUS */
+.detail-scroll-area {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding-right: 4px;
+    margin-right: -4px;
+    min-height: 0; /* PENTING: Untuk flex child */
+    scrollbar-width: thin;
+    scrollbar-color: var(--primary-blue) rgba(255, 255, 255, 0.05);
+}
+
+.detail-scroll-area::-webkit-scrollbar {
+    width: 4px;
+}
+
+.detail-scroll-area::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.detail-scroll-area::-webkit-scrollbar-thumb {
+    background: var(--primary-blue);
+    border-radius: 4px;
+}
+
+/* 9.7. Detail Status Badge - LEBIH KECIL */
 .detail-status-badge {
     display: inline-flex;
     align-items: center;
-    padding: 8px 20px;
+    padding: 4px 16px;
     background: rgba(0, 200, 83, 0.15);
     border: 1.5px solid rgba(0, 200, 83, 0.4);
     border-radius: var(--radius-pill);
     color: #00e676;
-    font-size: 14px;
+    font-size: 12px;
     font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 1px;
+    letter-spacing: 0.8px;
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
-    box-shadow: 0 8px 20px rgba(0, 200, 83, 0.2);
-    margin-bottom: 24px;
+    box-shadow: 0 4px 12px rgba(0, 200, 83, 0.2);
+    margin-bottom: 12px;
     position: relative;
     overflow: hidden;
-}
-
-.detail-status-badge::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 50%;
-    background: linear-gradient(to bottom, rgba(255, 255, 255, 0.2), transparent);
-    pointer-events: none;
 }
 
 .detail-status-badge.ended {
     background: rgba(255, 107, 107, 0.15);
     border-color: rgba(255, 107, 107, 0.4);
     color: #ff8a8a;
-    box-shadow: 0 8px 20px rgba(255, 107, 107, 0.2);
 }
 
 .detail-status-badge.expired {
     background: rgba(158, 158, 158, 0.15);
     border-color: rgba(158, 158, 158, 0.4);
     color: #bdbdbd;
-    box-shadow: 0 8px 20px rgba(158, 158, 158, 0.2);
 }
 
-/* 9.6. Detail Media Section */
+/* 9.8. Detail Media Section - DIPERKECIL */
 .detail-media-section {
     width: 100%;
-    margin-bottom: 28px;
-    border-radius: var(--radius-xl);
+    margin-bottom: 12px;
+    border-radius: var(--radius-lg);
     overflow: hidden;
     position: relative;
-    box-shadow: 0 15px 30px -5px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 8px 20px -5px rgba(0, 0, 0, 0.5);
     border: 1.5px solid rgba(255, 255, 255, 0.1);
     background: rgba(0, 0, 0, 0.2);
     aspect-ratio: 16 / 9;
+    max-height: 140px;
 }
 
 .detail-media-image {
@@ -1707,11 +1730,6 @@ em, i {
     height: 100%;
     object-fit: cover;
     display: block;
-    transition: transform 0.5s ease;
-}
-
-.detail-media-image:hover {
-    transform: scale(1.05);
 }
 
 .detail-media-video {
@@ -1721,249 +1739,158 @@ em, i {
     background: black;
 }
 
-/* 9.7. Detail Section Titles */
+/* 9.9. Detail Section Titles - LEBIH PADAT */
 .detail-section-title {
     display: flex;
     align-items: center;
-    gap: 10px;
-    margin: 28px 0 16px 0;
-    padding-bottom: 12px;
-    border-bottom: 2px solid rgba(0, 170, 255, 0.3);
+    gap: 8px;
+    margin: 8px 0 6px 0;
+    padding-bottom: 4px;
+    border-bottom: 1px solid rgba(0, 170, 255, 0.3);
     position: relative;
 }
 
 .detail-section-title::after {
     content: '';
     position: absolute;
-    bottom: -2px;
+    bottom: -1px;
     left: 0;
-    width: 80px;
+    width: 60px;
     height: 2px;
     background: linear-gradient(90deg, var(--primary-blue), transparent);
 }
 
 .detail-section-icon {
-    font-size: 24px;
+    font-size: 18px;
     background: rgba(0, 136, 255, 0.15);
-    width: 40px;
-    height: 40px;
+    width: 28px;
+    height: 28px;
     display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: var(--radius-md);
+    border-radius: var(--radius-sm);
     border: 1px solid rgba(0, 136, 255, 0.3);
     backdrop-filter: blur(5px);
     -webkit-backdrop-filter: blur(5px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 
 .detail-section-text {
-    font-size: 18px;
+    font-size: 14px;
     font-weight: 700;
     background: linear-gradient(135deg, #fff, #aaddff);
     -webkit-background-clip: text;
     background-clip: text;
     -webkit-text-fill-color: transparent;
     text-transform: uppercase;
-    letter-spacing: 1px;
+    letter-spacing: 0.8px;
 }
 
-/* 9.8. Detail Prizes Grid */
+/* 9.10. Detail Prizes Grid - LEBIH KOMPAK */
 .detail-prizes-grid {
     display: flex;
     flex-wrap: wrap;
-    gap: 12px;
-    margin-bottom: 16px;
+    gap: 6px;
+    margin-bottom: 6px;
 }
 
 .detail-prize-card {
     display: inline-flex;
     align-items: center;
-    gap: 10px;
-    padding: 12px 18px 12px 14px;
+    gap: 6px;
+    padding: 6px 12px 6px 8px;
     background: rgba(0, 136, 255, 0.12);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
     border: 1.5px solid rgba(0, 136, 255, 0.3);
     border-radius: var(--radius-pill);
     color: white;
-    font-size: 15px;
+    font-size: 13px;
     font-weight: 600;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all 0.2s ease;
     box-shadow: 
-        0 8px 16px -4px rgba(0, 0, 0, 0.4),
-        inset 0 1px 2px rgba(255, 255, 255, 0.2),
-        inset 0 -2px 4px rgba(0, 0, 0, 0.3);
-    transform: translateY(0);
-    position: relative;
-    overflow: hidden;
+        0 4px 8px -2px rgba(0, 0, 0, 0.4),
+        inset 0 1px 1px rgba(255, 255, 255, 0.2);
     animation: tagAppear 0.3s ease;
-}
-
-.detail-prize-card::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 50%;
-    background: linear-gradient(to bottom, rgba(255, 255, 255, 0.15), transparent);
-    pointer-events: none;
-}
-
-.detail-prize-card:hover {
-    transform: translateY(-4px) scale(1.02);
-    background: rgba(0, 136, 255, 0.2);
-    border-color: rgba(0, 136, 255, 0.5);
-    box-shadow: 
-        0 15px 25px -8px rgba(0, 136, 255, 0.4),
-        inset 0 1px 2px rgba(255, 255, 255, 0.3);
 }
 
 .detail-prize-number {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    min-width: 28px;
-    height: 28px;
+    min-width: 22px;
+    height: 22px;
     background: linear-gradient(135deg, var(--primary-blue), #4da6ff);
     border-radius: 50%;
-    font-size: 13px;
+    font-size: 11px;
     font-weight: 700;
     color: white;
-    box-shadow: 0 4px 10px rgba(0, 136, 255, 0.5);
+    box-shadow: 0 2px 6px rgba(0, 136, 255, 0.5);
     border: 1px solid rgba(255, 255, 255, 0.3);
 }
 
-/* 9.9. Detail Text Card */
+/* 9.11. Detail Text Card - LEBIH PADAT */
 .detail-text-card {
     background: rgba(10, 20, 30, 0.25);
-    backdrop-filter: blur(15px);
-    -webkit-backdrop-filter: blur(15px);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
     border: 1.5px solid rgba(255, 255, 255, 0.08);
-    border-radius: var(--radius-xxl);
-    padding: 20px;
-    margin-bottom: 16px;
+    border-radius: var(--radius-lg);
+    padding: 10px 14px;
+    margin-bottom: 6px;
     color: rgba(255, 255, 255, 0.95);
-    font-size: 15px;
-    line-height: 1.7;
+    font-size: 13px;
+    line-height: 1.5;
     box-shadow: 
-        inset 0 2px 4px rgba(0, 0, 0, 0.2),
-        0 10px 25px -8px rgba(0, 0, 0, 0.4);
+        inset 0 1px 2px rgba(0, 0, 0, 0.2),
+        0 6px 16px -6px rgba(0, 0, 0, 0.4);
     position: relative;
     overflow: hidden;
+    max-height: 80px; /* Batasi tinggi maksimal */
+    overflow-y: auto; /* Scroll jika terlalu panjang */
 }
 
-.detail-text-card::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 40%;
-    background: linear-gradient(to bottom, rgba(255, 255, 255, 0.05), transparent);
-    pointer-events: none;
-}
-
-/* Style untuk teks yang diformat */
-.detail-text-card b,
-.detail-text-card strong {
-    font-weight: 700;
-    color: #fff;
-}
-
-.detail-text-card i,
-.detail-text-card em {
-    font-style: italic;
-    color: #aaddff;
-}
-
-.detail-text-card u {
-    text-decoration: underline;
-}
-
-.detail-text-card s,
-.detail-text-card strike {
-    text-decoration: line-through;
-}
-
-.detail-text-card code {
-    font-family: 'SF Mono', 'Fira Code', monospace;
-    background: rgba(0, 0, 0, 0.3);
-    padding: 2px 6px;
-    border-radius: var(--radius-sm);
-    font-size: 13px;
-    color: #ffd700;
-    border: 1px solid rgba(255, 215, 0, 0.2);
-}
-
-.detail-text-card blockquote {
-    margin: 8px 0;
-    padding-left: 16px;
-    border-left: 3px solid var(--primary-blue);
-    color: rgba(255, 255, 255, 0.8);
-    font-style: italic;
-}
-
-.detail-text-card a {
-    color: var(--primary-blue);
-    text-decoration: none;
-    border-bottom: 1px dashed rgba(0, 136, 255, 0.3);
-    transition: all 0.2s ease;
-}
-
-.detail-text-card a:hover {
-    color: var(--primary-blue-light);
-    border-bottom-color: var(--primary-blue-light);
-}
-
-/* 9.10. Detail Requirements Chips */
+/* 9.12. Detail Requirements Chips - LEBIH KECIL */
 .detail-requirements-grid {
     display: flex;
     flex-wrap: wrap;
-    gap: 10px;
-    margin-bottom: 16px;
+    gap: 6px;
+    margin-bottom: 6px;
 }
 
 .detail-requirement-chip {
     display: inline-flex;
     align-items: center;
-    gap: 8px;
-    padding: 10px 18px;
+    gap: 6px;
+    padding: 5px 12px;
     background: rgba(255, 255, 255, 0.05);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
     border: 1.5px solid rgba(255, 255, 255, 0.1);
     border-radius: var(--radius-pill);
     color: rgba(255, 255, 255, 0.95);
-    font-size: 14px;
+    font-size: 12px;
     font-weight: 500;
     transition: all 0.2s ease;
-    box-shadow: 0 5px 12px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.2);
 }
 
-.detail-requirement-chip:hover {
-    background: rgba(255, 255, 255, 0.08);
-    border-color: rgba(255, 255, 255, 0.2);
-    transform: translateY(-2px);
-}
-
-/* 9.11. Detail Channel & Link Items */
+/* 9.13. Detail Channel & Link Items - LEBIH KOMPAK */
 .detail-channel-item,
 .detail-link-item {
     display: flex;
     align-items: center;
-    gap: 16px;
-    padding: 16px 20px;
+    gap: 12px;
+    padding: 10px 14px;
     background: rgba(10, 20, 30, 0.25);
-    backdrop-filter: blur(15px);
-    -webkit-backdrop-filter: blur(15px);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
     border: 1.5px solid rgba(0, 136, 255, 0.2);
-    border-radius: var(--radius-xxl);
-    margin-bottom: 12px;
-    transition: all 0.3s ease;
+    border-radius: var(--radius-lg);
+    margin-bottom: 6px;
+    transition: all 0.2s ease;
     box-shadow: 
-        0 8px 20px -5px rgba(0, 0, 0, 0.3),
+        0 4px 12px -4px rgba(0, 0, 0, 0.3),
         inset 0 1px 1px rgba(255, 255, 255, 0.1);
     cursor: pointer;
     position: relative;
@@ -1974,48 +1901,21 @@ em, i {
     border-color: rgba(255, 215, 0, 0.2);
 }
 
-.detail-channel-item::before,
-.detail-link-item::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 50%;
-    background: linear-gradient(to bottom, rgba(255, 255, 255, 0.1), transparent);
-    pointer-events: none;
-}
-
-.detail-channel-item:hover,
-.detail-link-item:hover {
-    transform: translateX(5px) translateY(-2px);
-    background: rgba(0, 136, 255, 0.15);
-    border-color: rgba(0, 136, 255, 0.4);
-    box-shadow: 
-        0 15px 25px -8px rgba(0, 136, 255, 0.3),
-        inset 0 1px 2px rgba(255, 255, 255, 0.2);
-}
-
-.detail-link-item:hover {
-    background: rgba(255, 215, 0, 0.15);
-    border-color: rgba(255, 215, 0, 0.4);
-}
-
 .detail-channel-icon,
 .detail-link-icon {
-    width: 48px;
-    height: 48px;
+    width: 36px;
+    height: 36px;
     background: rgba(0, 136, 255, 0.15);
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 24px;
+    font-size: 18px;
     border: 1px solid rgba(0, 136, 255, 0.3);
     backdrop-filter: blur(5px);
     -webkit-backdrop-filter: blur(5px);
     flex-shrink: 0;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 
 .detail-link-icon {
@@ -2032,19 +1932,19 @@ em, i {
 
 .detail-channel-name,
 .detail-link-title {
-    font-size: 16px;
+    font-size: 14px;
     font-weight: 700;
     color: white;
-    margin-bottom: 4px;
+    margin-bottom: 2px;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    text-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
 }
 
 .detail-channel-username,
 .detail-link-url {
-    font-size: 12px;
+    font-size: 10px;
     color: rgba(255, 255, 255, 0.5);
     white-space: nowrap;
     overflow: hidden;
@@ -2058,104 +1958,53 @@ em, i {
 }
 
 .detail-channel-btn {
-    padding: 8px 20px;
+    padding: 4px 14px;
     background: linear-gradient(135deg, #0088ff, #0066cc);
     border: none;
     border-radius: var(--radius-pill);
     color: white;
-    font-size: 13px;
+    font-size: 11px;
     font-weight: 600;
     text-decoration: none;
     transition: all 0.2s ease;
-    box-shadow: 0 5px 15px rgba(0, 136, 255, 0.3);
+    box-shadow: 0 3px 10px rgba(0, 136, 255, 0.3);
     white-space: nowrap;
     flex-shrink: 0;
-    position: relative;
-    overflow: hidden;
 }
 
-.detail-channel-btn::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 50%;
-    background: linear-gradient(to bottom, rgba(255, 255, 255, 0.3), transparent);
-    pointer-events: none;
-}
-
-.detail-channel-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 20px rgba(0, 136, 255, 0.5);
-}
-
-.detail-channel-btn:active {
-    transform: translateY(0);
-}
-
-/* 9.12. Detail Timer Card */
+/* 9.14. Detail Timer Card - LEBIH KOMPAK */
 .detail-timer-card {
     background: rgba(0, 136, 255, 0.1);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
     border: 1.5px solid rgba(0, 170, 255, 0.3);
-    border-radius: var(--radius-xxl);
-    padding: 20px;
-    margin: 24px 0;
+    border-radius: var(--radius-lg);
+    padding: 10px 12px;
+    margin: 8px 0 6px 0;
     text-align: center;
     box-shadow: 
-        0 15px 30px -5px rgba(0, 0, 0, 0.4),
+        0 10px 20px -8px rgba(0, 0, 0, 0.4),
         inset 0 1px 2px rgba(255, 255, 255, 0.2);
     position: relative;
     overflow: hidden;
 }
 
-.detail-timer-card::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 50%;
-    background: linear-gradient(to bottom, rgba(255, 255, 255, 0.15), transparent);
-    pointer-events: none;
-}
-
-.detail-timer-card::after {
-    content: '';
-    position: absolute;
-    inset: -1px;
-    border-radius: calc(var(--radius-xxl) + 2px);
-    padding: 2px;
-    background: linear-gradient(135deg, 
-        rgba(0, 170, 255, 0.5), 
-        rgba(100, 200, 255, 0.3), 
-        rgba(0, 170, 255, 0.5));
-    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-    -webkit-mask-composite: xor;
-    mask-composite: exclude;
-    opacity: 0.6;
-    pointer-events: none;
-}
-
 .detail-timer-label {
-    font-size: 14px;
+    font-size: 11px;
     color: rgba(255, 255, 255, 0.6);
     text-transform: uppercase;
-    letter-spacing: 2px;
-    margin-bottom: 12px;
+    letter-spacing: 1.5px;
+    margin-bottom: 4px;
 }
 
 .detail-timer-value {
-    font-size: 42px;
+    font-size: 28px;
     font-weight: 800;
     background: linear-gradient(135deg, #fff, #aaddff);
     -webkit-background-clip: text;
     background-clip: text;
     -webkit-text-fill-color: transparent;
-    text-shadow: 0 0 20px rgba(0, 136, 255, 0.5);
+    text-shadow: 0 0 15px rgba(0, 136, 255, 0.5);
     font-family: 'Inter', 'SF Mono', 'Fira Code', monospace;
     letter-spacing: 2px;
     animation: timerPulse 2s ease infinite;
@@ -2163,34 +2012,33 @@ em, i {
 }
 
 .detail-end-date {
-    font-size: 14px;
+    font-size: 11px;
     color: rgba(255, 255, 255, 0.5);
-    margin-top: 12px;
-    padding-top: 12px;
+    margin-top: 4px;
+    padding-top: 4px;
     border-top: 1px solid rgba(255, 255, 255, 0.1);
-    font-weight: 500;
 }
 
-/* 9.13. Detail CAPTCHA Badge */
+/* 9.15. Detail CAPTCHA Badge - LEBIH KECIL */
 .detail-captcha-badge {
     display: inline-flex;
     align-items: center;
-    gap: 10px;
-    padding: 12px 24px;
+    gap: 6px;
+    padding: 6px 16px;
     background: rgba(255, 255, 255, 0.03);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
     border: 1.5px solid rgba(255, 255, 255, 0.08);
     border-radius: var(--radius-pill);
-    margin: 16px 0;
+    margin: 4px 0;
 }
 
 .detail-captcha-icon {
-    font-size: 20px;
+    font-size: 16px;
 }
 
 .detail-captcha-text {
-    font-size: 14px;
+    font-size: 12px;
     font-weight: 600;
     color: white;
 }
@@ -2203,57 +2051,16 @@ em, i {
     color: rgba(255, 255, 255, 0.4);
 }
 
-/* 9.14. Detail Stats Mini */
-.detail-stats-mini {
-    display: flex;
-    justify-content: center;
-    gap: 30px;
-    margin: 24px 0;
-    padding: 16px;
-    background: rgba(0, 0, 0, 0.2);
-    border-radius: var(--radius-xl);
-    border: 1px solid rgba(255, 255, 255, 0.05);
-}
-
-.detail-stat-mini-item {
-    text-align: center;
-}
-
-.detail-stat-mini-value {
-    font-size: 24px;
-    font-weight: 800;
-    background: linear-gradient(135deg, #fff, #aaddff);
-    -webkit-background-clip: text;
-    background-clip: text;
-    -webkit-text-fill-color: transparent;
-    margin-bottom: 4px;
-    font-family: 'Inter', monospace;
-}
-
-.detail-stat-mini-label {
-    font-size: 12px;
-    color: rgba(255, 255, 255, 0.5);
-    text-transform: uppercase;
-    letter-spacing: 1px;
-}
-
-/* 9.15. Detail Action Fixed Buttons */
+/* 9.16. Detail Action Fixed Buttons - TETAP DI BAWAH */
 .detail-action-fixed {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
+    flex-shrink: 0; /* Tidak mengecil */
     display: flex;
-    gap: 12px;
-    padding: 16px 20px;
-    background: rgba(10, 15, 25, 0.85);
-    backdrop-filter: blur(30px) saturate(200%);
-    -webkit-backdrop-filter: blur(30px) saturate(200%);
-    border-top: 1.5px solid rgba(0, 170, 255, 0.3);
+    gap: 10px;
+    padding: 12px 16px 16px 16px;
+    background: transparent; /* Transparan agar tidak menutupi konten */
     z-index: var(--z-sticky);
     max-width: 480px;
     margin: 0 auto;
-    box-shadow: 0 -5px 20px rgba(0, 0, 0, 0.3);
 }
 
 .detail-action-btn {
@@ -2261,14 +2068,14 @@ em, i {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 12px;
-    padding: 16px 0;
+    gap: 8px;
+    padding: 12px 0;
     border: none;
     border-radius: var(--radius-pill);
-    font-size: 16px;
+    font-size: 14px;
     font-weight: 700;
     cursor: pointer;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all 0.2s ease;
     position: relative;
     overflow: hidden;
     letter-spacing: 0.5px;
@@ -2288,17 +2095,12 @@ em, i {
 .detail-action-btn.participate {
     background: linear-gradient(135deg, #0088ff, #6c5ce7);
     color: white;
-    box-shadow: 0 8px 25px rgba(0, 136, 255, 0.4);
+    box-shadow: 0 6px 16px rgba(0, 136, 255, 0.4);
 }
 
 .detail-action-btn.participate:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 15px 35px rgba(0, 136, 255, 0.6);
-}
-
-.detail-action-btn.participate:active {
-    transform: translateY(0);
-    box-shadow: 0 5px 15px rgba(0, 136, 255, 0.4);
+    transform: translateY(-2px);
+    box-shadow: 0 10px 24px rgba(0, 136, 255, 0.6);
 }
 
 .detail-action-btn.share {
@@ -2307,7 +2109,7 @@ em, i {
     -webkit-backdrop-filter: blur(10px);
     border: 1.5px solid rgba(255, 255, 255, 0.15);
     color: white;
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
 .detail-action-btn.share:hover {
@@ -2316,101 +2118,9 @@ em, i {
     border-color: rgba(255, 255, 255, 0.3);
 }
 
-.detail-action-btn.share:active {
-    transform: translateY(0);
-    background: rgba(255, 255, 255, 0.05);
-}
-
 .detail-action-icon {
-    font-size: 20px;
-    filter: drop-shadow(0 2px 5px rgba(0, 0, 0, 0.3));
-}
-
-/* 9.16. Detail Loading & Error States */
-.detail-loading {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    min-height: 60vh;
-}
-
-.detail-loading-spinner {
-    width: 60px;
-    height: 60px;
-    border: 4px solid rgba(0, 136, 255, 0.1);
-    border-top: 4px solid var(--primary-blue);
-    border-right: 4px solid rgba(0, 136, 255, 0.3);
-    border-radius: 50%;
-    animation: spin 1s cubic-bezier(0.68, -0.55, 0.265, 1.55) infinite;
-    margin-bottom: 20px;
-    box-shadow: 0 0 30px rgba(0, 136, 255, 0.3);
-}
-
-.detail-loading-text {
     font-size: 16px;
-    color: var(--text-secondary);
-    background: linear-gradient(135deg, #fff, #aaddff);
-    -webkit-background-clip: text;
-    background-clip: text;
-    -webkit-text-fill-color: transparent;
-    animation: pulse 1.5s ease infinite;
-}
-
-.detail-error {
-    text-align: center;
-    padding: 40px 20px;
-}
-
-.detail-error-icon {
-    font-size: 60px;
-    margin-bottom: 20px;
-    animation: shake 0.5s ease;
-}
-
-.detail-error-title {
-    font-size: 22px;
-    font-weight: 700;
-    color: #ff6b6b;
-    margin-bottom: 12px;
-    text-shadow: 0 0 15px rgba(255, 107, 107, 0.4);
-}
-
-.detail-error-message {
-    color: var(--text-secondary);
-    margin-bottom: 30px;
-    font-size: 15px;
-}
-
-.detail-error-btn {
-    padding: 14px 30px;
-    background: linear-gradient(135deg, #0088ff, #0066cc);
-    border: none;
-    border-radius: var(--radius-pill);
-    color: white;
-    font-size: 16px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    box-shadow: 0 8px 20px rgba(0, 136, 255, 0.3);
-    position: relative;
-    overflow: hidden;
-}
-
-.detail-error-btn::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 50%;
-    background: linear-gradient(to bottom, rgba(255, 255, 255, 0.2), transparent);
-    pointer-events: none;
-}
-
-.detail-error-btn:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 15px 30px rgba(0, 136, 255, 0.5);
+    filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.3));
 }
 
 /* ------------------------------------------------------------------
