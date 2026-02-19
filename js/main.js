@@ -396,12 +396,12 @@
     if (elements.loading) elements.loading.style.display = 'none';
     if (elements.error) elements.error.style.display = 'none';
   
-    // ===== SEMBUNYIKAN LOGO BUBBLE DAN PROFILE BOX =====
-    const logoBox = document.querySelector('.logo-box');
-    if (logoBox) logoBox.style.display = 'none';
+    // ===== SEMBUNYIKAN SEMUA ELEMEN YANG TIDAK DIPERLUKAN =====
+    const topContainer = document.querySelector('.top-container');
+    if (topContainer) topContainer.style.display = 'none';
   
-    const profileBox = document.querySelector('.profile-box');
-    if (profileBox) profileBox.style.display = 'none';
+    const giveawayButtons = document.querySelector('.giveaway-buttons');
+    if (giveawayButtons) giveawayButtons.style.display = 'none';
   
     // ===== PENTING: SEMBUNYIKAN SETTINGS BUTTON =====
     if (elements.settingsBtn) elements.settingsBtn.style.display = 'none';
@@ -533,7 +533,7 @@
       });
     }
   }
-  
+
   // ==================== FUNGSI: KEMBALI KE INDEX ====================
   function goBackToIndex() {
     // Tampilkan kembali elemen yang disembunyikan
@@ -541,12 +541,12 @@
     if (elements.giveawayButtons) elements.giveawayButtons.style.display = 'flex';
     if (elements.settingsBtn) elements.settingsBtn.style.display = 'flex';
   
-    // ===== TAMPILKAN KEMBALI LOGO DAN PROFILE BOX =====
-    const logoBox = document.querySelector('.logo-box');
-    if (logoBox) logoBox.style.display = 'flex'; // atau 'block' tergantung CSS
+    // ===== TAMPILKAN KEMBALI TOP CONTAINER DAN GIVEAWAY BUTTONS =====
+    const topContainer = document.querySelector('.top-container');
+    if (topContainer) topContainer.style.display = 'flex'; // atau 'block' tergantung CSS
   
-    const profileBox = document.querySelector('.profile-box');
-    if (profileBox) profileBox.style.display = 'block';
+    const giveawayButtons = document.querySelector('.giveaway-buttons');
+    if (giveawayButtons) giveawayButtons.style.display = 'flex';
   
     // Hapus konten detail
     const container = elements.giveawayContent;
