@@ -276,11 +276,17 @@
         const activeData = await activeRes.json();
         console.log('Active data:', activeData);
   
-        // Filter hanya yang status = 'active' (jika API mengembalikan semua)
         if (activeData.giveaways && Array.isArray(activeData.giveaways)) {
-          activeGiveaways = activeData.giveaways.filter(g =>
-            g.status === 'active' || g.status === 'Active'
-          );
+          activeGiveaways = activeData.giveaways;
+  
+          // Log untuk debugging
+          console.log(`📊 Active giveaways from API: ${activeGiveaways.length}`);
+          activeGiveaways.forEach((g, i) => {
+            const now = new Date();
+            const endDate = g.end_date ? new Date(g.end_date) : null;
+            const isExpired = endDate && now > endDate;
+            console.log(`  ${i+1}. ID: ${g.giveaway_id || g.id}, Status: ${g.status}, End: ${g.end_date}, Expired: ${isExpired}`);
+          });
         } else {
           activeGiveaways = [];
         }
@@ -292,11 +298,9 @@
         const endedData = await endedRes.json();
         console.log('Ended data:', endedData);
   
-        // Filter hanya yang status = 'ended' (jika API mengembalikan semua)
         if (endedData.giveaways && Array.isArray(endedData.giveaways)) {
-          endedGiveaways = endedData.giveaways.filter(g =>
-            g.status === 'ended' || g.status === 'Ended'
-          );
+          endedGiveaways = endedData.giveaways;
+          console.log(`📊 Ended giveaways from API: ${endedGiveaways.length}`);
         } else {
           endedGiveaways = [];
         }
@@ -373,7 +377,20 @@
       const prizeText = Array.isArray(giveaway.prizes) ?
         (giveaway.prizes[0] || 'Giveaway') :
         (giveaway.prizes || 'Giveaway');
+  
+      // PERBAIKAN: participants_count adalah jumlah peserta giveaway, bukan jumlah anggota channel
+      // Jika API mengirim participants_count di level giveaway, gunakan itu
+      // Jika tidak ada, gunakan 0
       const participants = giveaway.participants_count || 0;
+  
+      // PERBAIKAN: Hitung total anggota channel jika ingin ditampilkan
+      // Tapi ini bukan jumlah peserta giveaway!
+      let totalChannelMembers = 0;
+      if (giveaway.channels && Array.isArray(giveaway.channels)) {
+        giveaway.channels.forEach(ch => {
+          totalChannelMembers += ch.participants_count || 0;
+        });
+      }
   
       // Ambil deskripsi giveaway (ambil 100 karakter pertama)
       const description = giveaway.giveaway_text || 'Tidak ada deskripsi';
@@ -381,33 +398,50 @@
         description.substring(0, 100) + '...' :
         description;
   
+      // Tentukan apakah giveaway sudah expired berdasarkan end_date
+      const now = new Date();
+      const endDate = giveaway.end_date ? new Date(giveaway.end_date) : null;
+      const isExpired = endDate && now > endDate;
+  
+      // PERBAIKAN: Jika status dari API adalah 'active' tapi sudah expired,
+      // maka harus masuk ke tab ENDED, bukan ACTIVE
       if (type === 'active') {
-        // Tampilan GIVEAWAY ACTIVE - TANPA INFORMASI BERAKHIR
-        html += `
-                  <div class="giveaway-item" data-id="${giveawayId}">
-                      <h3>${escapeHtml(prizeText)}</h3>
-                      <p class="giveaway-description">${escapeHtml(shortDescription)}</p>
-                      <div class="giveaway-stats">
-                          <span class="stat-badge">👥 ${participants} peserta</span>
+        // Hanya tampilkan yang benar-benar active (belum expired)
+        if (!isExpired) {
+          html += `
+                      <div class="giveaway-item" data-id="${giveawayId}">
+                          <h3>${escapeHtml(prizeText)}</h3>
+                          <p class="giveaway-description">${escapeHtml(shortDescription)}</p>
+                          <div class="giveaway-stats">
+                              <span class="stat-badge">👥 ${participants} peserta</span>
+                          </div>
                       </div>
-                  </div>
-              `;
-      } else {
-        // Tampilan GIVEAWAY ENDED - Tampilkan hadiah, deskripsi, dan jumlah peserta
-        const winners = giveaway.winners_count || 0;
-        html += `
-                  <div class="giveaway-item ended" data-id="${giveawayId}">
-                      <h3>${escapeHtml(prizeText)}</h3>
-                      <p class="giveaway-description">${escapeHtml(shortDescription)}</p>
-                      <div class="giveaway-stats">
-                          <span class="stat-badge">👥 ${participants} peserta</span>
-                          <span class="stat-badge winner-badge">🏆 ${winners} pemenang</span>
+                  `;
+        }
+      } else if (type === 'ended') {
+        // Hanya tampilkan yang sudah expired atau status ended
+        if (isExpired || giveaway.status === 'ended') {
+          const winners = giveaway.winners_count || 0;
+          html += `
+                      <div class="giveaway-item ended" data-id="${giveawayId}">
+                          <h3>${escapeHtml(prizeText)}</h3>
+                          <p class="giveaway-description">${escapeHtml(shortDescription)}</p>
+                          <div class="giveaway-stats">
+                              <span class="stat-badge">👥 ${participants} peserta</span>
+                              <span class="stat-badge winner-badge">🏆 ${winners} pemenang</span>
+                          </div>
+                          <div class="ended-badge">SELESAI</div>
                       </div>
-                      <div class="ended-badge">SELESAI</div>
-                  </div>
-              `;
+                  `;
+        }
       }
     });
+  
+    // Jika setelah filter tidak ada yang ditampilkan, tampilkan pesan kosong
+    if (html === '') {
+      elements.giveawayContent.innerHTML = `<div class="empty-message">Tidak ada ${type === 'active' ? 'giveaway aktif' : 'giveaway selesai'}</div>`;
+      return;
+    }
   
     elements.giveawayContent.innerHTML = html;
   
