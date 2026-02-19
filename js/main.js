@@ -457,7 +457,7 @@
     }
   
   // ==================== FUNGSI: RENDER GIVEAWAY DETAIL ====================
-  function renderGiveawayDetail(giveaway) {
+  async function renderGiveawayDetail(giveaway) {
       // Sembunyikan elemen profil dan tombol giveaway
       if (elements.profileContent) elements.profileContent.style.display = 'none';
       if (elements.giveawayButtons) elements.giveawayButtons.style.display = 'none';
@@ -500,6 +500,61 @@
       const requirements = Array.isArray(giveaway.requirements) ? giveaway.requirements : [];
       const channels = Array.isArray(giveaway.channels) ? giveaway.channels : [];
       const links = Array.isArray(giveaway.links) ? giveaway.links : [];
+  
+      // ===== AMBIL DATA WINNERS DAN PARTICIPANTS DARI API =====
+      let winners = [];
+      let participants = [];
+      
+      if (isEnded) {
+          try {
+              // Ambil data pemenang (anda perlu membuat endpoint ini)
+              const winnersResponse = await fetch(`${API_BASE_URL}/api/giveaways/${giveaway.giveaway_id}/winners`, {
+                  headers: { 'Accept': 'application/json' },
+                  mode: 'cors'
+              });
+              
+              if (winnersResponse.ok) {
+                  const winnersData = await winnersResponse.json();
+                  winners = winnersData.winners || [];
+                  console.log('🏆 Winners loaded:', winners);
+              }
+              
+              // Ambil data partisipan
+              const participantsResponse = await fetch(`${API_BASE_URL}/api/giveaways/${giveaway.giveaway_id}/participants`, {
+                  headers: { 'Accept': 'application/json' },
+                  mode: 'cors'
+              });
+              
+              if (participantsResponse.ok) {
+                  const participantsData = await participantsResponse.json();
+                  participants = participantsData.participants || [];
+                  console.log('👥 Participants loaded:', participants);
+              }
+              
+          } catch (error) {
+              console.error('❌ Error fetching winners/participants:', error);
+              // Gunakan data dummy jika error
+              winners = [
+                  {
+                      id: 123456789,
+                      first_name: 'John',
+                      last_name: 'Doe',
+                      username: 'johndoe',
+                      photo_url: null,
+                      prize_index: 0
+                  }
+              ];
+              participants = [
+                  {
+                      id: 111111111,
+                      first_name: 'Alice',
+                      last_name: 'Johnson',
+                      username: 'alicej',
+                      photo_url: null
+                  }
+              ];
+          }
+      }
   
       // Buat HTML untuk syarat (tanpa bubble, hanya text)
       let reqHtml = '';
@@ -622,26 +677,6 @@
           }
       }
   
-      // Data dummy untuk pemenang (nanti diganti dengan data real dari API)
-      const winners = [
-          {
-              id: 123456789,
-              first_name: 'John',
-              last_name: 'Doe',
-              username: 'johndoe',
-              photo_url: null,
-              prize_index: 0 // Pemenang untuk hadiah pertama
-          },
-          {
-              id: 987654321,
-              first_name: 'Jane',
-              last_name: 'Smith',
-              username: 'janesmith',
-              photo_url: null,
-              prize_index: 1 // Pemenang untuk hadiah kedua
-          }
-      ];
-  
       // Fungsi untuk generate inisial dari nama
       function getInitials(name) {
           if (!name) return 'U';
@@ -654,12 +689,12 @@
               '#FF6B6B', '#4ECDC4', '#FFD166', '#A06CD5', '#F7B731',
               '#45AAF2', '#FC5C65', '#26DE81', '#A55EEA', '#FF9F1C'
           ];
-          return colors[userId % colors.length];
+          return colors[Math.abs(userId) % colors.length];
       }
   
       // Buat HTML untuk pemenang (hanya untuk ended giveaway)
       let winnersHtml = '';
-      if (isEnded) {
+      if (isEnded && winners.length > 0) {
           // Kelompokkan pemenang berdasarkan hadiah
           const winnersByPrize = {};
           winners.forEach(winner => {
@@ -715,46 +750,7 @@
           });
       }
   
-      // Data dummy untuk partisipan
-      const participants = [
-          {
-              id: 111111111,
-              first_name: 'Alice',
-              last_name: 'Johnson',
-              username: 'alicej',
-              photo_url: null
-          },
-          {
-              id: 222222222,
-              first_name: 'Bob',
-              last_name: 'Williams',
-              username: 'bobw',
-              photo_url: null
-          },
-          {
-              id: 333333333,
-              first_name: 'Charlie',
-              last_name: 'Brown',
-              username: 'charlieb',
-              photo_url: null
-          },
-          {
-              id: 444444444,
-              first_name: 'Diana',
-              last_name: 'Prince',
-              username: 'dianap',
-              photo_url: null
-          },
-          {
-              id: 555555555,
-              first_name: 'Eve',
-              last_name: 'Adams',
-              username: 'evea',
-              photo_url: null
-          }
-      ];
-  
-      // Buat HTML untuk partisipan (dengan tombol mata)
+      // Buat HTML untuk partisipan
       let participantsHtml = '';
       participants.forEach(participant => {
           const fullName = [participant.first_name, participant.last_name].filter(Boolean).join(' ') || 'User';
@@ -1011,219 +1007,219 @@
         }
       });
     }
-  
-    // Tombol mata untuk Channel
-    const toggleChannelBtn = document.getElementById('toggleChannelBtn');
-    const channelPanelContainer = document.getElementById('channelPanelContainer');
-    const closeChannelPanelBtn = document.getElementById('closeChannelPanelBtn');
-  
-    if (toggleChannelBtn && channelPanelContainer) {
-      toggleChannelBtn.addEventListener('click', (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-  
-        // Tutup panel link jika terbuka
-        const toggleLinkBtn = document.getElementById('toggleLinkBtn');
-        const linkPanelContainer = document.getElementById('linkPanelContainer');
-  
-        if (linkPanelContainer && !linkPanelContainer.classList.contains('hidden')) {
-          linkPanelContainer.classList.add('hidden');
-          if (toggleLinkBtn) toggleLinkBtn.classList.remove('active');
-        }
-  
-        // Tutup panel participants jika terbuka
-        if (participantsPanelContainer && !participantsPanelContainer.classList.contains('hidden')) {
-          participantsPanelContainer.classList.add('hidden');
-          if (toggleParticipantsBtn) toggleParticipantsBtn.classList.remove('active');
-        }
-  
-        // Toggle panel channel
-        channelPanelContainer.classList.toggle('hidden');
-  
-        // Toggle active state tombol
-        toggleChannelBtn.classList.toggle('active');
-  
-        vibrate(15);
-      });
-    }
-  
-    if (closeChannelPanelBtn && channelPanelContainer) {
-      closeChannelPanelBtn.addEventListener('click', (e) => {
-        e.preventDefault();
-        e.stopPropagation();
+
+  // Tombol mata untuk Channel
+  const toggleChannelBtn = document.getElementById('toggleChannelBtn');
+  const channelPanelContainer = document.getElementById('channelPanelContainer');
+  const closeChannelPanelBtn = document.getElementById('closeChannelPanelBtn');
+
+  if (toggleChannelBtn && channelPanelContainer) {
+    toggleChannelBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+
+      // Tutup panel link jika terbuka
+      const toggleLinkBtn = document.getElementById('toggleLinkBtn');
+      const linkPanelContainer = document.getElementById('linkPanelContainer');
+
+      if (linkPanelContainer && !linkPanelContainer.classList.contains('hidden')) {
+        linkPanelContainer.classList.add('hidden');
+        if (toggleLinkBtn) toggleLinkBtn.classList.remove('active');
+      }
+
+      // Tutup panel participants jika terbuka
+      if (participantsPanelContainer && !participantsPanelContainer.classList.contains('hidden')) {
+        participantsPanelContainer.classList.add('hidden');
+        if (toggleParticipantsBtn) toggleParticipantsBtn.classList.remove('active');
+      }
+
+      // Toggle panel channel
+      channelPanelContainer.classList.toggle('hidden');
+
+      // Toggle active state tombol
+      toggleChannelBtn.classList.toggle('active');
+
+      vibrate(15);
+    });
+  }
+
+  if (closeChannelPanelBtn && channelPanelContainer) {
+    closeChannelPanelBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      channelPanelContainer.classList.add('hidden');
+      if (toggleChannelBtn) {
+        toggleChannelBtn.classList.remove('active');
+      }
+    });
+  }
+
+  // Tombol mata untuk Link
+  const toggleLinkBtn = document.getElementById('toggleLinkBtn');
+  const linkPanelContainer = document.getElementById('linkPanelContainer');
+  const closeLinkPanelBtn = document.getElementById('closeLinkPanelBtn');
+
+  if (toggleLinkBtn && linkPanelContainer) {
+    toggleLinkBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+
+      // Tutup panel channel jika terbuka
+      if (channelPanelContainer && !channelPanelContainer.classList.contains('hidden')) {
         channelPanelContainer.classList.add('hidden');
         if (toggleChannelBtn) {
           toggleChannelBtn.classList.remove('active');
         }
-      });
-    }
-  
-    // Tombol mata untuk Link
-    const toggleLinkBtn = document.getElementById('toggleLinkBtn');
-    const linkPanelContainer = document.getElementById('linkPanelContainer');
-    const closeLinkPanelBtn = document.getElementById('closeLinkPanelBtn');
-  
-    if (toggleLinkBtn && linkPanelContainer) {
-      toggleLinkBtn.addEventListener('click', (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-  
-        // Tutup panel channel jika terbuka
-        if (channelPanelContainer && !channelPanelContainer.classList.contains('hidden')) {
-          channelPanelContainer.classList.add('hidden');
-          if (toggleChannelBtn) {
-            toggleChannelBtn.classList.remove('active');
-          }
-        }
-  
-        // Tutup panel participants jika terbuka
-        if (participantsPanelContainer && !participantsPanelContainer.classList.contains('hidden')) {
-          participantsPanelContainer.classList.add('hidden');
-          if (toggleParticipantsBtn) toggleParticipantsBtn.classList.remove('active');
-        }
-  
-        // Toggle panel link
-        linkPanelContainer.classList.toggle('hidden');
-  
-        // Toggle active state tombol
-        toggleLinkBtn.classList.toggle('active');
-  
+      }
+
+      // Tutup panel participants jika terbuka
+      if (participantsPanelContainer && !participantsPanelContainer.classList.contains('hidden')) {
+        participantsPanelContainer.classList.add('hidden');
+        if (toggleParticipantsBtn) toggleParticipantsBtn.classList.remove('active');
+      }
+
+      // Toggle panel link
+      linkPanelContainer.classList.toggle('hidden');
+
+      // Toggle active state tombol
+      toggleLinkBtn.classList.toggle('active');
+
+      vibrate(15);
+    });
+  }
+
+  if (closeLinkPanelBtn && linkPanelContainer) {
+    closeLinkPanelBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      linkPanelContainer.classList.add('hidden');
+      if (toggleLinkBtn) {
+        toggleLinkBtn.classList.remove('active');
+      }
+    });
+  }
+
+  // Expand deskripsi
+  const expandDescBtn = document.getElementById('expandDescriptionBtn');
+  const descContent = document.getElementById('descriptionContent');
+
+  if (expandDescBtn && descContent) {
+    expandDescBtn.addEventListener('click', () => {
+      const isCollapsed = descContent.classList.contains('collapsed');
+
+      if (isCollapsed) {
+        descContent.classList.remove('collapsed');
+        descContent.classList.add('expanded');
+        expandDescBtn.textContent = 'Tutup';
+      } else {
+        descContent.classList.add('collapsed');
+        descContent.classList.remove('expanded');
+        expandDescBtn.textContent = 'Lihat Lengkap';
+      }
+
+      vibrate(10);
+    });
+  }
+
+  // Expand hadiah
+  const expandPrizesBtn = document.getElementById('expandPrizesBtn');
+  const prizesList = document.getElementById('prizesList');
+
+  if (expandPrizesBtn && prizesList) {
+    expandPrizesBtn.addEventListener('click', () => {
+      const isCollapsed = prizesList.classList.contains('collapsed');
+
+      if (isCollapsed) {
+        prizesList.classList.remove('collapsed');
+        prizesList.classList.add('expanded');
+        expandPrizesBtn.textContent = 'Tutup';
+      } else {
+        prizesList.classList.add('collapsed');
+        prizesList.classList.remove('expanded');
+        expandPrizesBtn.textContent = 'Lihat Semua';
+      }
+
+      vibrate(10);
+    });
+  }
+
+  // Expand participants (jika ada)
+  const expandParticipantsBtn = document.getElementById('expandParticipantsBtn');
+  const participantsList = document.getElementById('participantsList');
+
+  if (expandParticipantsBtn && participantsList) {
+    let isParticipantsExpanded = false;
+
+    expandParticipantsBtn.addEventListener('click', () => {
+      if (!isParticipantsExpanded) {
+        participantsList.classList.add('expanded');
+        expandParticipantsBtn.textContent = 'Tutup';
+      } else {
+        participantsList.classList.remove('expanded');
+        expandParticipantsBtn.textContent = 'Lihat Semua';
+      }
+      isParticipantsExpanded = !isParticipantsExpanded;
+      vibrate(10);
+    });
+  }
+
+  // Klik pada item channel
+  document.querySelectorAll('.channel-item').forEach(item => {
+    // Hapus event listener lama dengan clone
+    const newItem = item.cloneNode(true);
+    item.parentNode.replaceChild(newItem, item);
+
+    newItem.addEventListener('click', function(e) {
+      // Biarkan link berfungsi normal
+      const selector = this.querySelector('.item-selector');
+      if (selector) {
+        selector.classList.toggle('selected');
+      }
+      vibrate(10);
+    });
+  });
+
+  // Klik pada item link
+  document.querySelectorAll('.link-item').forEach(item => {
+    // Hapus event listener lama dengan clone
+    const newItem = item.cloneNode(true);
+    item.parentNode.replaceChild(newItem, item);
+
+    newItem.addEventListener('click', function(e) {
+      // Biarkan link berfungsi normal
+      const selector = this.querySelector('.item-selector');
+      if (selector) {
+        selector.classList.toggle('selected');
+      }
+      vibrate(10);
+    });
+  });
+
+  // Tombol partisipasi (hanya untuk active)
+  if (!isEnded) {
+    const participateBtn = document.getElementById('detailParticipateBtn');
+    if (participateBtn) {
+      participateBtn.addEventListener('click', () => {
         vibrate(15);
+        alert('Fitur partisipasi sedang dalam pengembangan.');
       });
     }
-  
-    if (closeLinkPanelBtn && linkPanelContainer) {
-      closeLinkPanelBtn.addEventListener('click', (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        linkPanelContainer.classList.add('hidden');
-        if (toggleLinkBtn) {
-          toggleLinkBtn.classList.remove('active');
-        }
-      });
-    }
-  
-    // Expand deskripsi
-    const expandDescBtn = document.getElementById('expandDescriptionBtn');
-    const descContent = document.getElementById('descriptionContent');
-  
-    if (expandDescBtn && descContent) {
-      expandDescBtn.addEventListener('click', () => {
-        const isCollapsed = descContent.classList.contains('collapsed');
-  
-        if (isCollapsed) {
-          descContent.classList.remove('collapsed');
-          descContent.classList.add('expanded');
-          expandDescBtn.textContent = 'Tutup';
-        } else {
-          descContent.classList.add('collapsed');
-          descContent.classList.remove('expanded');
-          expandDescBtn.textContent = 'Lihat Lengkap';
-        }
-  
+
+    // Tombol share (hanya untuk active)
+    const shareBtn = document.getElementById('detailShareBtn');
+    if (shareBtn) {
+      shareBtn.addEventListener('click', () => {
         vibrate(10);
+        shareGiveaway(window.location.href, prizes[0] || 'Giveaway');
       });
-    }
-  
-    // Expand hadiah
-    const expandPrizesBtn = document.getElementById('expandPrizesBtn');
-    const prizesList = document.getElementById('prizesList');
-  
-    if (expandPrizesBtn && prizesList) {
-      expandPrizesBtn.addEventListener('click', () => {
-        const isCollapsed = prizesList.classList.contains('collapsed');
-  
-        if (isCollapsed) {
-          prizesList.classList.remove('collapsed');
-          prizesList.classList.add('expanded');
-          expandPrizesBtn.textContent = 'Tutup';
-        } else {
-          prizesList.classList.add('collapsed');
-          prizesList.classList.remove('expanded');
-          expandPrizesBtn.textContent = 'Lihat Semua';
-        }
-  
-        vibrate(10);
-      });
-    }
-  
-    // Expand participants (jika ada)
-    const expandParticipantsBtn = document.getElementById('expandParticipantsBtn');
-    const participantsList = document.getElementById('participantsList');
-  
-    if (expandParticipantsBtn && participantsList) {
-      let isParticipantsExpanded = false;
-  
-      expandParticipantsBtn.addEventListener('click', () => {
-        if (!isParticipantsExpanded) {
-          participantsList.classList.add('expanded');
-          expandParticipantsBtn.textContent = 'Tutup';
-        } else {
-          participantsList.classList.remove('expanded');
-          expandParticipantsBtn.textContent = 'Lihat Semua';
-        }
-        isParticipantsExpanded = !isParticipantsExpanded;
-        vibrate(10);
-      });
-    }
-  
-    // Klik pada item channel
-    document.querySelectorAll('.channel-item').forEach(item => {
-      // Hapus event listener lama dengan clone
-      const newItem = item.cloneNode(true);
-      item.parentNode.replaceChild(newItem, item);
-  
-      newItem.addEventListener('click', function(e) {
-        // Biarkan link berfungsi normal
-        const selector = this.querySelector('.item-selector');
-        if (selector) {
-          selector.classList.toggle('selected');
-        }
-        vibrate(10);
-      });
-    });
-  
-    // Klik pada item link
-    document.querySelectorAll('.link-item').forEach(item => {
-      // Hapus event listener lama dengan clone
-      const newItem = item.cloneNode(true);
-      item.parentNode.replaceChild(newItem, item);
-  
-      newItem.addEventListener('click', function(e) {
-        // Biarkan link berfungsi normal
-        const selector = this.querySelector('.item-selector');
-        if (selector) {
-          selector.classList.toggle('selected');
-        }
-        vibrate(10);
-      });
-    });
-  
-    // Tombol partisipasi (hanya untuk active)
-    if (!isEnded) {
-      const participateBtn = document.getElementById('detailParticipateBtn');
-      if (participateBtn) {
-        participateBtn.addEventListener('click', () => {
-          vibrate(15);
-          alert('Fitur partisipasi sedang dalam pengembangan.');
-        });
-      }
-  
-      // Tombol share (hanya untuk active)
-      const shareBtn = document.getElementById('detailShareBtn');
-      if (shareBtn) {
-        shareBtn.addEventListener('click', () => {
-          vibrate(10);
-          shareGiveaway(window.location.href, prizes[0] || 'Giveaway');
-        });
-      }
-    }
-  
-    // Mulai countdown jika aktif
-    if (countdownActive && giveaway.end_date) {
-      startDetailCountdown(giveaway.end_date);
     }
   }
+
+  // Mulai countdown jika aktif
+  if (countdownActive && giveaway.end_date) {
+    startDetailCountdown(giveaway.end_date);
+  }
+}
   
   // ==================== FUNGSI: KEMBALI KE INDEX (DIPERBAIKI) ====================
   function goBackToIndex() {
