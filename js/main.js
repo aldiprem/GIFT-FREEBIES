@@ -242,220 +242,220 @@
     }
   }
 
-  // ==================== FUNGSI: FETCH ALL GIVEAWAYS ====================
-  async function fetchAllGiveaways() {
-    try {
-      console.log('📡 Fetching all giveaways...');
-      console.log('API URL:', API_BASE_URL);
-  
-      // Ambil active giveaways
-      const activeUrl = `${API_BASE_URL}/api/giveaways?status=active&limit=50`;
-      console.log('Active URL:', activeUrl);
-  
-      const activeRes = await fetch(activeUrl, {
-        headers: { 'Accept': 'application/json' },
-        mode: 'cors'
-      });
-  
-      // Ambil ended giveaways
-      const endedUrl = `${API_BASE_URL}/api/giveaways?status=ended&limit=50`;
-      console.log('Ended URL:', endedUrl);
-  
-      const endedRes = await fetch(endedUrl, {
-        headers: { 'Accept': 'application/json' },
-        mode: 'cors'
-      });
-  
-      console.log('Active response status:', activeRes.status);
-      console.log('Ended response status:', endedRes.status);
-  
-      let activeGiveaways = [];
-      let endedGiveaways = [];
-  
-      if (activeRes.ok) {
-        const activeData = await activeRes.json();
-        console.log('Active data:', activeData);
-  
-        if (activeData.giveaways && Array.isArray(activeData.giveaways)) {
-          activeGiveaways = activeData.giveaways;
-  
-          // Log untuk debugging
-          console.log(`📊 Active giveaways from API: ${activeGiveaways.length}`);
-          activeGiveaways.forEach((g, i) => {
-            const now = new Date();
-            const endDate = g.end_date ? new Date(g.end_date) : null;
-            const isExpired = endDate && now > endDate;
-            console.log(`  ${i+1}. ID: ${g.giveaway_id || g.id}, Status: ${g.status}, End: ${g.end_date}, Expired: ${isExpired}`);
-          });
-        } else {
-          activeGiveaways = [];
-        }
-      } else {
-        console.warn('Failed to fetch active giveaways:', activeRes.status);
-      }
-  
-      if (endedRes.ok) {
-        const endedData = await endedRes.json();
-        console.log('Ended data:', endedData);
-  
-        if (endedData.giveaways && Array.isArray(endedData.giveaways)) {
-          endedGiveaways = endedData.giveaways;
-          console.log(`📊 Ended giveaways from API: ${endedGiveaways.length}`);
-        } else {
-          endedGiveaways = [];
-        }
-      } else {
-        console.warn('Failed to fetch ended giveaways:', endedRes.status);
-      }
-  
-      console.log(`✅ Loaded ${activeGiveaways.length} active, ${endedGiveaways.length} ended giveaways`);
-  
-      return {
-        active: activeGiveaways,
-        ended: endedGiveaways
-      };
-    } catch (error) {
-      console.error('❌ Error fetching giveaways:', error);
-      return { active: [], ended: [] };
-    }
-  }
-
-  // ==================== FUNGSI: FETCH GIVEAWAY DETAIL (DIPINDAHKAN KE ATAS) ====================
-  async function fetchGiveawayDetail(id) {
-    try {
-      console.log(`📡 Fetching giveaway detail for ID: ${id}`);
-      const response = await fetch(`${API_BASE_URL}/api/giveaways/${id}`, {
-        headers: { 'Accept': 'application/json' },
-        mode: 'cors'
-      });
-      
-      if (!response.ok) {
-        if (response.status === 404) throw new Error('Giveaway tidak ditemukan');
-        throw new Error(`Gagal memuat data: ${response.status}`);
-      }
-      
-      const result = await response.json();
-      console.log('📥 Giveaway detail response:', result);
-      
-      // Handle berbagai format response
-      if (result && result.giveaway_id) {
-        // Jika langsung objek giveaway
-        return result;
-      } else if (result.success && result.giveaway) {
-        // Jika dengan properti success
-        return result.giveaway;
-      } else {
-        console.error('Format response tidak dikenal:', result);
-        throw new Error('Data giveaway tidak valid');
-      }
-    } catch (error) {
-      console.error('❌ Error fetching giveaway:', error);
-      throw error;
-    }
-  }
-
-  // ==================== FUNGSI: DISPLAY GIVEAWAYS ====================
-  function displayGiveaways(type) {
-    vibrate(15);
-    currentGiveawayType = type;
-  
-    const giveaways = allGiveaways[type] || [];
-  
-    console.log(`Displaying ${type} giveaways:`, giveaways);
-    console.log(`Total ${type} giveaways:`, giveaways.length);
-  
-    if (giveaways.length === 0) {
-      elements.giveawayContent.innerHTML = `<div class="empty-message">Tidak ada ${type === 'active' ? 'giveaway aktif' : 'giveaway selesai'}</div>`;
-      return;
-    }
-  
-    let html = '';
-  
-    giveaways.forEach(giveaway => {
-      // PERBAIKAN: Pastikan giveaway_id ada
-      const giveawayId = giveaway.giveaway_id || giveaway.id;
-      const prizeText = Array.isArray(giveaway.prizes) ?
-        (giveaway.prizes[0] || 'Giveaway') :
-        (giveaway.prizes || 'Giveaway');
-  
-      // PERBAIKAN: participants_count adalah jumlah peserta giveaway, bukan jumlah anggota channel
-      // Jika API mengirim participants_count di level giveaway, gunakan itu
-      // Jika tidak ada, gunakan 0
-      const participants = giveaway.participants_count || 0;
-  
-      // PERBAIKAN: Hitung total anggota channel jika ingin ditampilkan
-      // Tapi ini bukan jumlah peserta giveaway!
-      let totalChannelMembers = 0;
-      if (giveaway.channels && Array.isArray(giveaway.channels)) {
-        giveaway.channels.forEach(ch => {
-          totalChannelMembers += ch.participants_count || 0;
+    // ==================== FUNGSI: FETCH ALL GIVEAWAYS ====================
+    async function fetchAllGiveaways() {
+      try {
+        console.log('📡 Fetching all giveaways...');
+        console.log('API URL:', API_BASE_URL);
+    
+        // Ambil active giveaways
+        const activeUrl = `${API_BASE_URL}/api/giveaways?status=active&limit=50`;
+        console.log('Active URL:', activeUrl);
+    
+        const activeRes = await fetch(activeUrl, {
+          headers: { 'Accept': 'application/json' },
+          mode: 'cors'
         });
-      }
-  
-      // Ambil deskripsi giveaway (ambil 100 karakter pertama)
-      const description = giveaway.giveaway_text || 'Tidak ada deskripsi';
-      const shortDescription = description.length > 100 ?
-        description.substring(0, 100) + '...' :
-        description;
-  
-      // Tentukan apakah giveaway sudah expired berdasarkan end_date
-      const now = new Date();
-      const endDate = giveaway.end_date ? new Date(giveaway.end_date) : null;
-      const isExpired = endDate && now > endDate;
-  
-      // PERBAIKAN: Jika status dari API adalah 'active' tapi sudah expired,
-      // maka harus masuk ke tab ENDED, bukan ACTIVE
-      if (type === 'active') {
-        // Hanya tampilkan yang benar-benar active (belum expired)
-        if (!isExpired) {
-          html += `
-                      <div class="giveaway-item" data-id="${giveawayId}">
-                          <h3>${escapeHtml(prizeText)}</h3>
-                          <p class="giveaway-description">${escapeHtml(shortDescription)}</p>
-                          <div class="giveaway-stats">
-                              <span class="stat-badge">👥 ${participants} peserta</span>
-                          </div>
-                      </div>
-                  `;
+    
+        // Ambil ended giveaways
+        const endedUrl = `${API_BASE_URL}/api/giveaways?status=ended&limit=50`;
+        console.log('Ended URL:', endedUrl);
+    
+        const endedRes = await fetch(endedUrl, {
+          headers: { 'Accept': 'application/json' },
+          mode: 'cors'
+        });
+    
+        console.log('Active response status:', activeRes.status);
+        console.log('Ended response status:', endedRes.status);
+    
+        let activeGiveaways = [];
+        let endedGiveaways = [];
+    
+        if (activeRes.ok) {
+          const activeData = await activeRes.json();
+          console.log('Active data:', activeData);
+    
+          if (activeData.giveaways && Array.isArray(activeData.giveaways)) {
+            activeGiveaways = activeData.giveaways;
+    
+            // Log untuk debugging
+            console.log(`📊 Active giveaways from API: ${activeGiveaways.length}`);
+            activeGiveaways.forEach((g, i) => {
+              const now = new Date();
+              const endDate = g.end_date ? new Date(g.end_date) : null;
+              const isExpired = endDate && now > endDate;
+              console.log(`  ${i+1}. ID: ${g.giveaway_id || g.id}, Status: ${g.status}, End: ${g.end_date}, Expired: ${isExpired}`);
+            });
+          } else {
+            activeGiveaways = [];
+          }
+        } else {
+          console.warn('Failed to fetch active giveaways:', activeRes.status);
         }
-      } else if (type === 'ended') {
-        // Hanya tampilkan yang sudah expired atau status ended
-        if (isExpired || giveaway.status === 'ended') {
-          const winners = giveaway.winners_count || 0;
-          html += `
-                      <div class="giveaway-item ended" data-id="${giveawayId}">
-                          <h3>${escapeHtml(prizeText)}</h3>
-                          <p class="giveaway-description">${escapeHtml(shortDescription)}</p>
-                          <div class="giveaway-stats">
-                              <span class="stat-badge">👥 ${participants} peserta</span>
-                              <span class="stat-badge winner-badge">🏆 ${winners} pemenang</span>
-                          </div>
-                          <div class="ended-badge">SELESAI</div>
-                      </div>
-                  `;
+    
+        if (endedRes.ok) {
+          const endedData = await endedRes.json();
+          console.log('Ended data:', endedData);
+    
+          if (endedData.giveaways && Array.isArray(endedData.giveaways)) {
+            endedGiveaways = endedData.giveaways;
+            console.log(`📊 Ended giveaways from API: ${endedGiveaways.length}`);
+          } else {
+            endedGiveaways = [];
+          }
+        } else {
+          console.warn('Failed to fetch ended giveaways:', endedRes.status);
         }
+    
+        console.log(`✅ Loaded ${activeGiveaways.length} active, ${endedGiveaways.length} ended giveaways`);
+    
+        return {
+          active: activeGiveaways,
+          ended: endedGiveaways
+        };
+      } catch (error) {
+        console.error('❌ Error fetching giveaways:', error);
+        return { active: [], ended: [] };
       }
-    });
-  
-    // Jika setelah filter tidak ada yang ditampilkan, tampilkan pesan kosong
-    if (html === '') {
-      elements.giveawayContent.innerHTML = `<div class="empty-message">Tidak ada ${type === 'active' ? 'giveaway aktif' : 'giveaway selesai'}</div>`;
-      return;
     }
   
-    elements.giveawayContent.innerHTML = html;
+    // ==================== FUNGSI: FETCH GIVEAWAY DETAIL (DIPINDAHKAN KE ATAS) ====================
+    async function fetchGiveawayDetail(id) {
+      try {
+        console.log(`📡 Fetching giveaway detail for ID: ${id}`);
+        const response = await fetch(`${API_BASE_URL}/api/giveaways/${id}`, {
+          headers: { 'Accept': 'application/json' },
+          mode: 'cors'
+        });
+        
+        if (!response.ok) {
+          if (response.status === 404) throw new Error('Giveaway tidak ditemukan');
+          throw new Error(`Gagal memuat data: ${response.status}`);
+        }
+        
+        const result = await response.json();
+        console.log('📥 Giveaway detail response:', result);
+        
+        // Handle berbagai format response
+        if (result && result.giveaway_id) {
+          // Jika langsung objek giveaway
+          return result;
+        } else if (result.success && result.giveaway) {
+          // Jika dengan properti success
+          return result.giveaway;
+        } else {
+          console.error('Format response tidak dikenal:', result);
+          throw new Error('Data giveaway tidak valid');
+        }
+      } catch (error) {
+        console.error('❌ Error fetching giveaway:', error);
+        throw error;
+      }
+    }
   
-    // Tambahkan event listener ke setiap item giveaway
-    document.querySelectorAll('.giveaway-item').forEach(item => {
-      item.addEventListener('click', () => {
-        const giveawayId = item.dataset.id;
-        if (giveawayId) {
-          window.location.href = `?search=${giveawayId}`;
+    // ==================== FUNGSI: DISPLAY GIVEAWAYS ====================
+    function displayGiveaways(type) {
+      vibrate(15);
+      currentGiveawayType = type;
+    
+      const giveaways = allGiveaways[type] || [];
+    
+      console.log(`Displaying ${type} giveaways:`, giveaways);
+      console.log(`Total ${type} giveaways:`, giveaways.length);
+    
+      if (giveaways.length === 0) {
+        elements.giveawayContent.innerHTML = `<div class="empty-message">Tidak ada ${type === 'active' ? 'giveaway aktif' : 'giveaway selesai'}</div>`;
+        return;
+      }
+    
+      let html = '';
+    
+      giveaways.forEach(giveaway => {
+        // PERBAIKAN: Pastikan giveaway_id ada
+        const giveawayId = giveaway.giveaway_id || giveaway.id;
+        const prizeText = Array.isArray(giveaway.prizes) ?
+          (giveaway.prizes[0] || 'Giveaway') :
+          (giveaway.prizes || 'Giveaway');
+    
+        // PERBAIKAN: participants_count adalah jumlah peserta giveaway, bukan jumlah anggota channel
+        // Jika API mengirim participants_count di level giveaway, gunakan itu
+        // Jika tidak ada, gunakan 0
+        const participants = giveaway.participants_count || 0;
+    
+        // PERBAIKAN: Hitung total anggota channel jika ingin ditampilkan
+        // Tapi ini bukan jumlah peserta giveaway!
+        let totalChannelMembers = 0;
+        if (giveaway.channels && Array.isArray(giveaway.channels)) {
+          giveaway.channels.forEach(ch => {
+            totalChannelMembers += ch.participants_count || 0;
+          });
+        }
+    
+        // Ambil deskripsi giveaway (ambil 100 karakter pertama)
+        const description = giveaway.giveaway_text || 'Tidak ada deskripsi';
+        const shortDescription = description.length > 100 ?
+          description.substring(0, 100) + '...' :
+          description;
+    
+        // Tentukan apakah giveaway sudah expired berdasarkan end_date
+        const now = new Date();
+        const endDate = giveaway.end_date ? new Date(giveaway.end_date) : null;
+        const isExpired = endDate && now > endDate;
+    
+        // PERBAIKAN: Jika status dari API adalah 'active' tapi sudah expired,
+        // maka harus masuk ke tab ENDED, bukan ACTIVE
+        if (type === 'active') {
+          // Hanya tampilkan yang benar-benar active (belum expired)
+          if (!isExpired) {
+            html += `
+                        <div class="giveaway-item" data-id="${giveawayId}">
+                            <h3>${escapeHtml(prizeText)}</h3>
+                            <p class="giveaway-description">${escapeHtml(shortDescription)}</p>
+                            <div class="giveaway-stats">
+                                <span class="stat-badge">👥 ${participants} peserta</span>
+                            </div>
+                        </div>
+                    `;
+          }
+        } else if (type === 'ended') {
+          // Hanya tampilkan yang sudah expired atau status ended
+          if (isExpired || giveaway.status === 'ended') {
+            const winners = giveaway.winners_count || 0;
+            html += `
+                        <div class="giveaway-item ended" data-id="${giveawayId}">
+                            <h3>${escapeHtml(prizeText)}</h3>
+                            <p class="giveaway-description">${escapeHtml(shortDescription)}</p>
+                            <div class="giveaway-stats">
+                                <span class="stat-badge">👥 ${participants} peserta</span>
+                                <span class="stat-badge winner-badge">🏆 ${winners} pemenang</span>
+                            </div>
+                            <div class="ended-badge">SELESAI</div>
+                        </div>
+                    `;
+          }
         }
       });
-    });
-  }
-
+    
+      // Jika setelah filter tidak ada yang ditampilkan, tampilkan pesan kosong
+      if (html === '') {
+        elements.giveawayContent.innerHTML = `<div class="empty-message">Tidak ada ${type === 'active' ? 'giveaway aktif' : 'giveaway selesai'}</div>`;
+        return;
+      }
+    
+      elements.giveawayContent.innerHTML = html;
+    
+      // Tambahkan event listener ke setiap item giveaway
+      document.querySelectorAll('.giveaway-item').forEach(item => {
+        item.addEventListener('click', () => {
+          const giveawayId = item.dataset.id;
+          if (giveawayId) {
+            window.location.href = `?search=${giveawayId}`;
+          }
+        });
+      });
+    }
+  
   // ==================== FUNGSI: RENDER GIVEAWAY DETAIL ====================
   function renderGiveawayDetail(giveaway) {
       // Sembunyikan elemen profil dan tombol giveaway
@@ -479,17 +479,21 @@
       let statusText = giveaway.status || 'Active';
       const now = new Date();
       const endDate = giveaway.end_date ? new Date(giveaway.end_date) : null;
+      const isExpired = giveaway.status === 'active' && endDate && now > endDate;
       
-      if (giveaway.status === 'active' && endDate && now > endDate) {
-          statusText = 'Expired';
-          statusClass += ' expired';
-      } else if (giveaway.status === 'ended') {
+      if (isExpired || giveaway.status === 'ended') {
           statusText = 'Ended';
           statusClass += ' ended';
       } else if (giveaway.status === 'deleted') {
           statusText = 'Deleted';
           statusClass += ' expired';
+      } else {
+          statusText = 'Active';
+          statusClass += ' active';
       }
+  
+      // Tentukan apakah ini ended giveaway
+      const isEnded = (giveaway.status === 'ended') || isExpired;
   
       // Siapkan data untuk ditampilkan
       const prizes = Array.isArray(giveaway.prizes) ? giveaway.prizes : [];
@@ -598,11 +602,11 @@
       // Format tanggal akhir
       const endDateFormatted = giveaway.end_date ? formatDate(giveaway.end_date) : 'Tidak ditentukan';
       
-      // Hitung sisa waktu untuk countdown
+      // Hitung sisa waktu untuk countdown (hanya untuk active)
       let timeRemaining = '00:00:00:00';
       let countdownActive = false;
       
-      if (giveaway.end_date && giveaway.status === 'active') {
+      if (!isEnded && giveaway.end_date && giveaway.status === 'active') {
           const endDateTime = new Date(giveaway.end_date).getTime();
           const nowTime = new Date().getTime();
           const diff = endDateTime - nowTime;
@@ -618,16 +622,182 @@
           }
       }
   
+      // Data dummy untuk pemenang (nanti diganti dengan data real dari API)
+      const winners = [
+          {
+              id: 123456789,
+              first_name: 'John',
+              last_name: 'Doe',
+              username: 'johndoe',
+              photo_url: null,
+              prize_index: 0 // Pemenang untuk hadiah pertama
+          },
+          {
+              id: 987654321,
+              first_name: 'Jane',
+              last_name: 'Smith',
+              username: 'janesmith',
+              photo_url: null,
+              prize_index: 1 // Pemenang untuk hadiah kedua
+          }
+      ];
+  
+      // Fungsi untuk generate inisial dari nama
+      function getInitials(name) {
+          if (!name) return 'U';
+          return name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+      }
+  
+      // Fungsi untuk generate warna random berdasarkan user id
+      function getUserColor(userId) {
+          const colors = [
+              '#FF6B6B', '#4ECDC4', '#FFD166', '#A06CD5', '#F7B731',
+              '#45AAF2', '#FC5C65', '#26DE81', '#A55EEA', '#FF9F1C'
+          ];
+          return colors[userId % colors.length];
+      }
+  
+      // Buat HTML untuk pemenang (hanya untuk ended giveaway)
+      let winnersHtml = '';
+      if (isEnded) {
+          // Kelompokkan pemenang berdasarkan hadiah
+          const winnersByPrize = {};
+          winners.forEach(winner => {
+              const prizeIndex = winner.prize_index || 0;
+              if (!winnersByPrize[prizeIndex]) {
+                  winnersByPrize[prizeIndex] = [];
+              }
+              winnersByPrize[prizeIndex].push(winner);
+          });
+  
+          // Buat HTML untuk setiap hadiah dengan pemenangnya
+          prizes.forEach((prize, prizeIndex) => {
+              const prizeWinners = winnersByPrize[prizeIndex] || [];
+              
+              winnersHtml += `
+                  <div class="prize-winners-section">
+                      <div class="prize-winners-header">
+                          <span class="prize-number" style="background: ${getRandomColor(prizeIndex)};">${prizeIndex + 1}</span>
+                          <span class="prize-winners-title">${escapeHtml(prize)}</span>
+                          <span class="winners-count">${prizeWinners.length} pemenang</span>
+                      </div>
+                      
+                      <div class="winners-grid">
+              `;
+              
+              prizeWinners.forEach(winner => {
+                  const fullName = [winner.first_name, winner.last_name].filter(Boolean).join(' ') || 'User';
+                  const initials = getInitials(fullName);
+                  const bgColor = getUserColor(winner.id);
+                  const username = winner.username ? `@${winner.username}` : '(no username)';
+                  
+                  winnersHtml += `
+                      <div class="winner-card">
+                          <div class="winner-avatar" style="background: ${bgColor};">
+                              ${winner.photo_url ? 
+                                  `<img src="${winner.photo_url}" alt="${fullName}" class="winner-avatar-img">` : 
+                                  `<span class="winner-initials">${initials}</span>`
+                              }
+                          </div>
+                          <div class="winner-info">
+                              <div class="winner-name">${escapeHtml(fullName)}</div>
+                              <div class="winner-username">${escapeHtml(username)}</div>
+                              <div class="winner-id">ID: ${winner.id}</div>
+                          </div>
+                      </div>
+                  `;
+              });
+              
+              winnersHtml += `
+                      </div>
+                  </div>
+              `;
+          });
+      }
+  
+      // Data dummy untuk partisipan
+      const participants = [
+          {
+              id: 111111111,
+              first_name: 'Alice',
+              last_name: 'Johnson',
+              username: 'alicej',
+              photo_url: null
+          },
+          {
+              id: 222222222,
+              first_name: 'Bob',
+              last_name: 'Williams',
+              username: 'bobw',
+              photo_url: null
+          },
+          {
+              id: 333333333,
+              first_name: 'Charlie',
+              last_name: 'Brown',
+              username: 'charlieb',
+              photo_url: null
+          },
+          {
+              id: 444444444,
+              first_name: 'Diana',
+              last_name: 'Prince',
+              username: 'dianap',
+              photo_url: null
+          },
+          {
+              id: 555555555,
+              first_name: 'Eve',
+              last_name: 'Adams',
+              username: 'evea',
+              photo_url: null
+          }
+      ];
+  
+      // Buat HTML untuk partisipan (dengan tombol mata)
+      let participantsHtml = '';
+      participants.forEach(participant => {
+          const fullName = [participant.first_name, participant.last_name].filter(Boolean).join(' ') || 'User';
+          const initials = getInitials(fullName);
+          const bgColor = getUserColor(participant.id);
+          const username = participant.username ? `@${participant.username}` : '(no username)';
+          
+          participantsHtml += `
+              <div class="participant-item">
+                  <div class="participant-avatar" style="background: ${bgColor};">
+                      ${participant.photo_url ? 
+                          `<img src="${participant.photo_url}" alt="${fullName}" class="participant-avatar-img">` : 
+                          `<span class="participant-initials">${initials}</span>`
+                      }
+                  </div>
+                  <div class="participant-info">
+                      <div class="participant-name">${escapeHtml(fullName)}</div>
+                      <div class="participant-username">${escapeHtml(username)}</div>
+                  </div>
+              </div>
+          `;
+      });
+  
       // Gabungkan semua HTML dengan struktur dari page.css
       const detailHtml = `
           <div class="giveaway-detail-container">
-              <!-- HEADER dengan tombol back (TANPA MATA) -->
+              <!-- HEADER dengan tombol back -->
               <div class="detail-header">
                   <div class="logo-box" style="background: transparent; border: none; box-shadow: none; padding: 8px 0;">
                       <img src="img/logo.png" class="logo-img" alt="logo" onerror="this.style.display='none'">
                       <span class="logo-text">GIFT FREEBIES</span>
                   </div>
-                  <button class="detail-back-btn" id="backToIndexBtn">←</button>
+                  <div class="detail-header-right">
+                      ${isEnded && participants.length > 0 ? `
+                          <button class="eye-custom-btn" id="toggleParticipantsBtn" title="Lihat Partisipan">
+                              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                  <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5z" fill="white"/>
+                                  <circle cx="12" cy="12" r="3" fill="white"/>
+                              </svg>
+                          </button>
+                      ` : ''}
+                      <button class="detail-back-btn" id="backToIndexBtn">←</button>
+                  </div>
               </div>
               
               <!-- MAIN CARD -->
@@ -670,7 +840,15 @@
                           </div>
                       </div>
                       
-                      <!-- CHANNEL & LINK BUTTONS DALAM SATU BARIS -->
+                      <!-- WINNERS SECTION (HANYA UNTUK ENDED GIVEAWAY) -->
+                      ${isEnded && winners.length > 0 ? `
+                          <div class="detail-winners">
+                              <div class="winners-title">🏆 Pemenang</div>
+                              ${winnersHtml}
+                          </div>
+                      ` : ''}
+                      
+                      <!-- CHANNEL & LINK BUTTONS DALAM SATU BARIS (UNTUK SEMUA) -->
                       ${channels.length > 0 || links.length > 0 ? `
                       <div class="channel-link-row-container">
                           ${channels.length > 0 ? `
@@ -735,28 +913,48 @@
                       </div>
                       ` : ''}
                       
-                      <!-- TIMER SECTION -->
-                      <div class="detail-timer">
-                          <div class="timer-label">BERAKHIR DALAM</div>
-                          <div class="timer-countdown" id="detailCountdown">${timeRemaining}</div>
-                          <div class="timer-end-date">
-                              <span>${endDateFormatted}</span>
+                      <!-- PANEL PARTICIPANTS (HANYA UNTUK ENDED GIVEAWAY) -->
+                      ${isEnded && participants.length > 0 ? `
+                      <div class="participants-panel-container hidden" id="participantsPanelContainer">
+                          <div class="detail-panel">
+                              <div class="panel-header">
+                                  <div class="panel-title participants">👥 Daftar Partisipan</div>
+                                  <button class="panel-close" id="closeParticipantsPanelBtn">✕</button>
+                              </div>
+                              <div class="panel-content participants-grid" id="participantsList">
+                                  ${participantsHtml}
+                              </div>
+                              ${participants.length > 4 ? '<button class="participants-expand-btn" id="expandParticipantsBtn">Lihat Semua</button>' : ''}
                           </div>
                       </div>
+                      ` : ''}
+                      
+                      <!-- TIMER SECTION (HANYA UNTUK ACTIVE GIVEAWAY) -->
+                      ${!isEnded ? `
+                          <div class="detail-timer">
+                              <div class="timer-label">BERAKHIR DALAM</div>
+                              <div class="timer-countdown" id="detailCountdown">${timeRemaining}</div>
+                              <div class="timer-end-date">
+                                  <span>${endDateFormatted}</span>
+                              </div>
+                          </div>
+                      ` : ''}
                   </div>
               </div>
               
-              <!-- ACTION BUTTONS FIXED -->
-              <div class="detail-actions-fixed">
-                  <button class="btn btn-participate" id="detailParticipateBtn">
-                      <span>✓</span>
-                      <span>PARTISIPASI</span>
-                  </button>
-                  <button class="btn btn-share" id="detailShareBtn">
-                      <span>📤</span>
-                      <span>BAGIKAN</span>
-                  </button>
-              </div>
+              <!-- ACTION BUTTONS FIXED (HANYA UNTUK ACTIVE GIVEAWAY) -->
+              ${!isEnded ? `
+                  <div class="detail-actions-fixed">
+                      <button class="btn btn-participate" id="detailParticipateBtn">
+                          <span>✓</span>
+                          <span>PARTISIPASI</span>
+                      </button>
+                      <button class="btn btn-share" id="detailShareBtn">
+                          <span>📤</span>
+                          <span>BAGIKAN</span>
+                      </button>
+                  </div>
+              ` : ''}
           </div>
       `;
   
@@ -764,11 +962,11 @@
       container.style.display = 'block';
   
       // Setup event listeners untuk halaman detail
-      setupDetailEventListeners(giveaway, prizes, countdownActive);
+      setupDetailEventListeners(giveaway, prizes, countdownActive, isEnded);
   }
   
   // ==================== FUNGSI: SETUP EVENT LISTENERS UNTUK DETAIL ====================
-  function setupDetailEventListeners(giveaway, prizes, countdownActive) {
+  function setupDetailEventListeners(giveaway, prizes, countdownActive, isEnded) {
     // Tombol back
     const backBtn = document.getElementById('backToIndexBtn');
     if (backBtn) {
@@ -783,58 +981,35 @@
       }
     }
   
-    // Expand deskripsi
-    const expandDescBtn = document.getElementById('expandDescriptionBtn');
-    const descContent = document.getElementById('descriptionContent');
+    // Tombol mata untuk Partisipan (hanya untuk ended)
+    const toggleParticipantsBtn = document.getElementById('toggleParticipantsBtn');
+    const participantsPanelContainer = document.getElementById('participantsPanelContainer');
+    const closeParticipantsPanelBtn = document.getElementById('closeParticipantsPanelBtn');
   
-    if (expandDescBtn && descContent) {
-      // Hapus event listener lama
-      expandDescBtn.replaceWith(expandDescBtn.cloneNode(true));
-      const newExpandDescBtn = document.getElementById('expandDescriptionBtn');
-      if (newExpandDescBtn) {
-        newExpandDescBtn.addEventListener('click', () => {
-          const isCollapsed = descContent.classList.contains('collapsed');
+    if (toggleParticipantsBtn && participantsPanelContainer) {
+      toggleParticipantsBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
   
-          if (isCollapsed) {
-            descContent.classList.remove('collapsed');
-            descContent.classList.add('expanded');
-            newExpandDescBtn.textContent = 'Tutup';
-          } else {
-            descContent.classList.add('collapsed');
-            descContent.classList.remove('expanded');
-            newExpandDescBtn.textContent = 'Lihat Lengkap';
-          }
+        // Toggle panel participants
+        participantsPanelContainer.classList.toggle('hidden');
   
-          vibrate(10);
-        });
-      }
+        // Toggle active state tombol
+        toggleParticipantsBtn.classList.toggle('active');
+  
+        vibrate(15);
+      });
     }
   
-    // Expand hadiah
-    const expandPrizesBtn = document.getElementById('expandPrizesBtn');
-    const prizesList = document.getElementById('prizesList');
-  
-    if (expandPrizesBtn && prizesList) {
-      // Hapus event listener lama
-      expandPrizesBtn.replaceWith(expandPrizesBtn.cloneNode(true));
-      const newExpandPrizesBtn = document.getElementById('expandPrizesBtn');
-      if (newExpandPrizesBtn) {
-        newExpandPrizesBtn.addEventListener('click', () => {
-          const isCollapsed = prizesList.classList.contains('collapsed');
-  
-          if (isCollapsed) {
-            prizesList.classList.remove('collapsed');
-            prizesList.classList.add('expanded');
-            newExpandPrizesBtn.textContent = 'Tutup';
-          } else {
-            prizesList.classList.add('collapsed');
-            prizesList.classList.remove('expanded');
-            newExpandPrizesBtn.textContent = 'Lihat Semua';
-          }
-  
-          vibrate(10);
-        });
-      }
+    if (closeParticipantsPanelBtn && participantsPanelContainer) {
+      closeParticipantsPanelBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        participantsPanelContainer.classList.add('hidden');
+        if (toggleParticipantsBtn) {
+          toggleParticipantsBtn.classList.remove('active');
+        }
+      });
     }
   
     // Tombol mata untuk Channel
@@ -843,11 +1018,7 @@
     const closeChannelPanelBtn = document.getElementById('closeChannelPanelBtn');
   
     if (toggleChannelBtn && channelPanelContainer) {
-      // Hapus event listener lama
-      toggleChannelBtn.replaceWith(toggleChannelBtn.cloneNode(true));
-      const newToggleChannelBtn = document.getElementById('toggleChannelBtn');
-  
-      newToggleChannelBtn.addEventListener('click', (e) => {
+      toggleChannelBtn.addEventListener('click', (e) => {
         e.preventDefault();
         e.stopPropagation();
   
@@ -860,28 +1031,29 @@
           if (toggleLinkBtn) toggleLinkBtn.classList.remove('active');
         }
   
+        // Tutup panel participants jika terbuka
+        if (participantsPanelContainer && !participantsPanelContainer.classList.contains('hidden')) {
+          participantsPanelContainer.classList.add('hidden');
+          if (toggleParticipantsBtn) toggleParticipantsBtn.classList.remove('active');
+        }
+  
         // Toggle panel channel
         channelPanelContainer.classList.toggle('hidden');
   
         // Toggle active state tombol
-        newToggleChannelBtn.classList.toggle('active');
+        toggleChannelBtn.classList.toggle('active');
   
         vibrate(15);
       });
     }
   
     if (closeChannelPanelBtn && channelPanelContainer) {
-      // Hapus event listener lama
-      closeChannelPanelBtn.replaceWith(closeChannelPanelBtn.cloneNode(true));
-      const newCloseChannelPanelBtn = document.getElementById('closeChannelPanelBtn');
-  
-      newCloseChannelPanelBtn.addEventListener('click', (e) => {
+      closeChannelPanelBtn.addEventListener('click', (e) => {
         e.preventDefault();
         e.stopPropagation();
         channelPanelContainer.classList.add('hidden');
         if (toggleChannelBtn) {
-          const updatedToggleChannelBtn = document.getElementById('toggleChannelBtn');
-          if (updatedToggleChannelBtn) updatedToggleChannelBtn.classList.remove('active');
+          toggleChannelBtn.classList.remove('active');
         }
       });
     }
@@ -892,11 +1064,7 @@
     const closeLinkPanelBtn = document.getElementById('closeLinkPanelBtn');
   
     if (toggleLinkBtn && linkPanelContainer) {
-      // Hapus event listener lama
-      toggleLinkBtn.replaceWith(toggleLinkBtn.cloneNode(true));
-      const newToggleLinkBtn = document.getElementById('toggleLinkBtn');
-  
-      newToggleLinkBtn.addEventListener('click', (e) => {
+      toggleLinkBtn.addEventListener('click', (e) => {
         e.preventDefault();
         e.stopPropagation();
   
@@ -904,34 +1072,98 @@
         if (channelPanelContainer && !channelPanelContainer.classList.contains('hidden')) {
           channelPanelContainer.classList.add('hidden');
           if (toggleChannelBtn) {
-            const updatedToggleChannelBtn = document.getElementById('toggleChannelBtn');
-            if (updatedToggleChannelBtn) updatedToggleChannelBtn.classList.remove('active');
+            toggleChannelBtn.classList.remove('active');
           }
+        }
+  
+        // Tutup panel participants jika terbuka
+        if (participantsPanelContainer && !participantsPanelContainer.classList.contains('hidden')) {
+          participantsPanelContainer.classList.add('hidden');
+          if (toggleParticipantsBtn) toggleParticipantsBtn.classList.remove('active');
         }
   
         // Toggle panel link
         linkPanelContainer.classList.toggle('hidden');
   
         // Toggle active state tombol
-        newToggleLinkBtn.classList.toggle('active');
+        toggleLinkBtn.classList.toggle('active');
   
         vibrate(15);
       });
     }
   
     if (closeLinkPanelBtn && linkPanelContainer) {
-      // Hapus event listener lama
-      closeLinkPanelBtn.replaceWith(closeLinkPanelBtn.cloneNode(true));
-      const newCloseLinkPanelBtn = document.getElementById('closeLinkPanelBtn');
-  
-      newCloseLinkPanelBtn.addEventListener('click', (e) => {
+      closeLinkPanelBtn.addEventListener('click', (e) => {
         e.preventDefault();
         e.stopPropagation();
         linkPanelContainer.classList.add('hidden');
         if (toggleLinkBtn) {
-          const updatedToggleLinkBtn = document.getElementById('toggleLinkBtn');
-          if (updatedToggleLinkBtn) updatedToggleLinkBtn.classList.remove('active');
+          toggleLinkBtn.classList.remove('active');
         }
+      });
+    }
+  
+    // Expand deskripsi
+    const expandDescBtn = document.getElementById('expandDescriptionBtn');
+    const descContent = document.getElementById('descriptionContent');
+  
+    if (expandDescBtn && descContent) {
+      expandDescBtn.addEventListener('click', () => {
+        const isCollapsed = descContent.classList.contains('collapsed');
+  
+        if (isCollapsed) {
+          descContent.classList.remove('collapsed');
+          descContent.classList.add('expanded');
+          expandDescBtn.textContent = 'Tutup';
+        } else {
+          descContent.classList.add('collapsed');
+          descContent.classList.remove('expanded');
+          expandDescBtn.textContent = 'Lihat Lengkap';
+        }
+  
+        vibrate(10);
+      });
+    }
+  
+    // Expand hadiah
+    const expandPrizesBtn = document.getElementById('expandPrizesBtn');
+    const prizesList = document.getElementById('prizesList');
+  
+    if (expandPrizesBtn && prizesList) {
+      expandPrizesBtn.addEventListener('click', () => {
+        const isCollapsed = prizesList.classList.contains('collapsed');
+  
+        if (isCollapsed) {
+          prizesList.classList.remove('collapsed');
+          prizesList.classList.add('expanded');
+          expandPrizesBtn.textContent = 'Tutup';
+        } else {
+          prizesList.classList.add('collapsed');
+          prizesList.classList.remove('expanded');
+          expandPrizesBtn.textContent = 'Lihat Semua';
+        }
+  
+        vibrate(10);
+      });
+    }
+  
+    // Expand participants (jika ada)
+    const expandParticipantsBtn = document.getElementById('expandParticipantsBtn');
+    const participantsList = document.getElementById('participantsList');
+  
+    if (expandParticipantsBtn && participantsList) {
+      let isParticipantsExpanded = false;
+  
+      expandParticipantsBtn.addEventListener('click', () => {
+        if (!isParticipantsExpanded) {
+          participantsList.classList.add('expanded');
+          expandParticipantsBtn.textContent = 'Tutup';
+        } else {
+          participantsList.classList.remove('expanded');
+          expandParticipantsBtn.textContent = 'Lihat Semua';
+        }
+        isParticipantsExpanded = !isParticipantsExpanded;
+        vibrate(10);
       });
     }
   
@@ -967,30 +1199,24 @@
       });
     });
   
-    // Tombol partisipasi
-    const participateBtn = document.getElementById('detailParticipateBtn');
-    if (participateBtn) {
-      // Hapus event listener lama
-      participateBtn.replaceWith(participateBtn.cloneNode(true));
-      const newParticipateBtn = document.getElementById('detailParticipateBtn');
+    // Tombol partisipasi (hanya untuk active)
+    if (!isEnded) {
+      const participateBtn = document.getElementById('detailParticipateBtn');
+      if (participateBtn) {
+        participateBtn.addEventListener('click', () => {
+          vibrate(15);
+          alert('Fitur partisipasi sedang dalam pengembangan.');
+        });
+      }
   
-      newParticipateBtn.addEventListener('click', () => {
-        vibrate(15);
-        alert('Fitur partisipasi sedang dalam pengembangan.');
-      });
-    }
-  
-    // Tombol share
-    const shareBtn = document.getElementById('detailShareBtn');
-    if (shareBtn) {
-      // Hapus event listener lama
-      shareBtn.replaceWith(shareBtn.cloneNode(true));
-      const newShareBtn = document.getElementById('detailShareBtn');
-  
-      newShareBtn.addEventListener('click', () => {
-        vibrate(10);
-        shareGiveaway(window.location.href, prizes[0] || 'Giveaway');
-      });
+      // Tombol share (hanya untuk active)
+      const shareBtn = document.getElementById('detailShareBtn');
+      if (shareBtn) {
+        shareBtn.addEventListener('click', () => {
+          vibrate(10);
+          shareGiveaway(window.location.href, prizes[0] || 'Giveaway');
+        });
+      }
     }
   
     // Mulai countdown jika aktif
