@@ -2203,6 +2203,27 @@ body::before {
     }
 }
 
+.detail-back-btn {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1.5px solid rgba(255, 255, 255, 0.2);
+  border-radius: 30px;
+  color: white;
+  width: 40px;
+  height: 40px;
+  font-size: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-left: auto;
+}
+
+.detail-back-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: scale(1.05);
+}
+
 /* ------------------------------------------------------------------
    RESPONSIVE DESIGN
    ------------------------------------------------------------------ */
