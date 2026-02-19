@@ -486,7 +486,6 @@ def get_top_users():
         log_error(f"Error in get_top_users: {e}")
         return jsonify({'error': str(e)}), 500
 
-# ==================== GIVEAWAY ENDPOINTS ====================
 @giveaways_bp.route('', methods=['POST'])
 def create_giveaway():
     """Create new giveaway"""
@@ -503,48 +502,66 @@ def create_giveaway():
                     'error': f'Field {field} is required'
                 }), 400
         
+        # Generate giveaway ID
         giveaway_id = generate_giveaway_id()
         
-        end_time = None
-        if data.get('duration_type') == 'duration':
-            duration_value = data.get('duration_value', 24)
-            duration_unit = data.get('duration_unit', 'hours')
-            end_time = calculate_end_time(duration_value, duration_unit)
-        elif data.get('duration_type') == 'date' and data.get('end_date'):
-            end_date_str = data.get('end_date').replace('T', ' ')
-            if ':' in end_date_str and end_date_str.count(':') == 1:
-                end_date_str += ':00'
-            end_time = end_date_str
+        # Hitung end_date dari duration jika ada
+        end_date = None
+        if data.get('duration_days') is not None or data.get('duration_hours') is not None or \
+           data.get('duration_minutes') is not None or data.get('duration_seconds') is not None:
+            
+            total_seconds = (
+                data.get('duration_days', 0) * 86400 +
+                data.get('duration_hours', 0) * 3600 +
+                data.get('duration_minutes', 0) * 60 +
+                data.get('duration_seconds', 0)
+            )
+            
+            if total_seconds > 0:
+                from datetime import datetime, timedelta
+                jakarta_tz = pytz.timezone('Asia/Jakarta')
+                end_date = (datetime.now(jakarta_tz) + timedelta(seconds=total_seconds)).strftime('%Y-%m-%d %H:%M:%S')
         
+        # Simpan user jika belum ada
         current_db.add_user(
             user_id=data['creator_user_id'],
-            fullname=data.get('fullname', 'Unknown'),
-            username=data.get('username')
+            fullname=data.get('creator_fullname', 'Unknown'),
+            username=data.get('creator_username')
         )
         
-        success = current_db.create_giveaway(
-            giveaway_id=giveaway_id,
-            creator_user_id=data['creator_user_id'],
-            prizes=data['prizes'],
-            requirements=data.get('requirements', []),
-            giveaway_text=data['giveaway_text'],
-            duration_type=data.get('duration_type', 'duration'),
-            duration_value=data.get('duration_value'),
-            duration_unit=data.get('duration_unit'),
-            end_date=end_time,
-            media_path=data.get('media_path'),
-            captcha_enabled=data.get('captcha_enabled', 1)
-        )
+        # Siapkan data untuk disimpan ke database
+        giveaway_data = {
+            'giveaway_id': giveaway_id,
+            'creator_user_id': data['creator_user_id'],
+            'creator_fullname': data.get('creator_fullname'),
+            'creator_username': data.get('creator_username'),
+            'prizes': data['prizes'],
+            'channels': data.get('channels', []),
+            'links': data.get('links', []),
+            'requirements': data.get('requirements', []),
+            'giveaway_text': data['giveaway_text'],
+            'duration_days': data.get('duration_days', 0),
+            'duration_hours': data.get('duration_hours', 0),
+            'duration_minutes': data.get('duration_minutes', 0),
+            'duration_seconds': data.get('duration_seconds', 0),
+            'captcha_enabled': data.get('captcha_enabled', 1),
+            'end_date': end_date,
+            'status': 'active'
+        }
+        
+        # Panggil method create_giveaway dengan satu parameter dictionary
+        success = current_db.create_giveaway(giveaway_data)
         
         if success:
-            direct_link = f"https://aldiprem.github.io/giveaway/?id={giveaway_id}"
+            # Gunakan format URL yang sesuai dengan main.js (parameter search)
+            direct_link = f"https://aldiprem.github.io/GIFT-FREEBIES/?search={giveaway_id}"
             
             return jsonify({
                 'success': True,
                 'message': 'Giveaway created successfully',
                 'giveaway_id': giveaway_id,
                 'direct_link': direct_link,
-                'end_time': end_time
+                'end_time': end_date
             }), 201
         else:
             return jsonify({
@@ -554,7 +571,10 @@ def create_giveaway():
             
     except Exception as e:
         log_error(f"Error in create_giveaway: {e}")
-        return jsonify({'error': str(e)}), 500
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
 
 @giveaways_bp.route('', methods=['GET'])
 def get_all_giveaways():
