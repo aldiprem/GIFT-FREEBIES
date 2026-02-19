@@ -1003,55 +1003,70 @@
 
     // ==================== FORM SUBMIT ====================
     async function handleSubmit(e) {
-        e.preventDefault();
-        
-        if (prizes.length === 0) {
-            hapticNotification('error');
-            alert('Minimal 1 hadiah harus diisi!');
-            return;
+      e.preventDefault();
+    
+      if (prizes.length === 0) {
+        hapticNotification('error');
+        alert('Minimal 1 hadiah harus diisi!');
+        return;
+      }
+    
+      hapticImpact('heavy');
+      setButtonLoading(true);
+    
+      const requirements = selectedRequirements;
+    
+      const totalSeconds = (durationDays * 24 * 3600) +
+        (durationHours * 3600) +
+        (durationMinutes * 60) +
+        durationSeconds;
+    
+      // === PERBAIKAN: Struktur data yang sesuai dengan database.py ===
+      const formData = {
+        creator_user_id: telegramUser?.id || 123456789,
+        creator_fullname: telegramUser ? [telegramUser.first_name, telegramUser.last_name].filter(Boolean).join(' ') : 'Test User',
+        creator_username: telegramUser?.username || 'testuser',
+        prizes: prizes,
+        giveaway_text: elements.giveawayText.value || 'Ikuti giveaway ini dan menangkan hadiah menarik! 🎁',
+        requirements: requirements,
+        channels: channels, // Tambahkan channels
+        links: savedLinks,
+        duration_days: durationDays,
+        duration_hours: durationHours,
+        duration_minutes: durationMinutes,
+        duration_seconds: durationSeconds,
+        total_seconds: totalSeconds,
+        captcha_enabled: elements.captchaToggle.checked ? 1 : 0
+      };
+    
+      console.log('📤 Submitting giveaway:', formData);
+    
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/giveaways`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          },
+          mode: 'cors',
+          body: JSON.stringify(formData)
+        });
+    
+        const result = await response.json();
+        console.log('📥 Response:', result);
+    
+        if (result.success) {
+          setButtonLoading(false);
+          showSuccess(result.giveaway_id);
+        } else {
+          throw new Error(result.error || 'Gagal membuat giveaway');
         }
-        
-        hapticImpact('heavy');
-        setButtonLoading(true);
-        
-        const requirements = selectedRequirements;
-        
-        const totalSeconds = (durationDays * 24 * 3600) + 
-                            (durationHours * 3600) + 
-                            (durationMinutes * 60) + 
-                            durationSeconds;
-        
-        const formData = {
-            creator_user_id: telegramUser?.id || 123456789,
-            fullname: telegramUser ? [telegramUser.first_name, telegramUser.last_name].filter(Boolean).join(' ') : 'Test User',
-            username: telegramUser?.username || 'testuser',
-            prizes: prizes,
-            giveaway_text: elements.giveawayText.value || 'Ikuti giveaway ini dan menangkan hadiah menarik! 🎁',
-            requirements: requirements,
-            links: savedLinks,
-            duration: {
-                days: durationDays,
-                hours: durationHours,
-                minutes: durationMinutes,
-                seconds: durationSeconds,
-                total_seconds: totalSeconds
-            },
-            captcha_enabled: elements.captchaToggle.checked ? 1 : 0
-        };
-        
-        console.log('📤 Submitting giveaway:', formData);
-        
-        try {
-            await new Promise(resolve => setTimeout(resolve, 1500));
-            const giveawayId = generateGiveawayId();
-            setButtonLoading(false);
-            showSuccess(giveawayId);
-        } catch (error) {
-            console.error('❌ Error:', error);
-            hapticNotification('error');
-            setButtonLoading(false);
-            alert('Gagal membuat giveaway. Silakan coba lagi.');
-        }
+      } catch (error) {
+        console.error('❌ Error:', error);
+        hapticNotification('error');
+        setButtonLoading(false);
+        alert('Gagal membuat giveaway: ' + error.message);
+      }
     }
 
     function generateGiveawayId() {
