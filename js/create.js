@@ -1035,8 +1035,8 @@
         duration_hours: durationHours,
         duration_minutes: durationMinutes,
         duration_seconds: durationSeconds,
-        total_seconds: totalSeconds,
         captcha_enabled: elements.captchaToggle.checked ? 1 : 0
+        // total_seconds tidak perlu dikirim karena akan dihitung di backend
       };
     
       console.log('📤 Submitting giveaway:', formData);
@@ -1100,10 +1100,11 @@
     
       hapticNotification('success');
     
-      const giveawayUrl = `https://t.me/giftfreebies/giveaway?startapp=${giveawayId}`;
+      // Gunakan format URL dengan parameter search (sesuai main.js)
+      const giveawayUrl = `https://aldiprem.github.io/GIFT-FREEBIES/?search=${giveawayId}`;
     
       setTimeout(() => {
-        alert(`✅ Giveaway berhasil dibuat!\n\nGiveaway ID: ${giveawayId}`);
+        alert(`✅ Giveaway berhasil dibuat!\n\nGiveaway ID: ${giveawayId}\n\nLink: ${giveawayUrl}`);
         window.location.href = 'index.html';
       }, 500);
     }
