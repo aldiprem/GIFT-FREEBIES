@@ -396,12 +396,16 @@
     if (elements.loading) elements.loading.style.display = 'none';
     if (elements.error) elements.error.style.display = 'none';
   
-    // ===== SEMBUNYIKAN SEMUA ELEMEN YANG TIDAK DIPERLUKAN =====
+    // ===== HAPUS ELEMEN YANG TIDAK DIPERLUKAN DARI DOM =====
     const topContainer = document.querySelector('.top-container');
-    if (topContainer) topContainer.style.display = 'none';
+    if (topContainer) {
+      topContainer.remove(); // Hapus total dari DOM
+    }
   
     const giveawayButtons = document.querySelector('.giveaway-buttons');
-    if (giveawayButtons) giveawayButtons.style.display = 'none';
+    if (giveawayButtons) {
+      giveawayButtons.remove(); // Hapus total dari DOM
+    }
   
     // ===== PENTING: SEMBUNYIKAN SETTINGS BUTTON =====
     if (elements.settingsBtn) elements.settingsBtn.style.display = 'none';
@@ -499,7 +503,7 @@
     container.innerHTML = detailHtml;
     container.style.display = 'block';
   
-    // ===== TAMBAHKAN TOMBOL BACK (HANYA SEKALI) =====
+    // ===== TAMBAHKAN TOMBOL BACK =====
     const backBtn = document.createElement('button');
     backBtn.className = 'detail-back-btn';
     backBtn.innerHTML = '←';
@@ -536,32 +540,7 @@
 
   // ==================== FUNGSI: KEMBALI KE INDEX ====================
   function goBackToIndex() {
-    // Tampilkan kembali elemen yang disembunyikan
-    if (elements.profileContent) elements.profileContent.style.display = 'block';
-    if (elements.giveawayButtons) elements.giveawayButtons.style.display = 'flex';
-    if (elements.settingsBtn) elements.settingsBtn.style.display = 'flex';
-  
-    // ===== TAMPILKAN KEMBALI TOP CONTAINER DAN GIVEAWAY BUTTONS =====
-    const topContainer = document.querySelector('.top-container');
-    if (topContainer) topContainer.style.display = 'flex'; // atau 'block' tergantung CSS
-  
-    const giveawayButtons = document.querySelector('.giveaway-buttons');
-    if (giveawayButtons) giveawayButtons.style.display = 'flex';
-  
-    // Hapus konten detail
-    const container = elements.giveawayContent;
-    if (container) {
-      container.innerHTML = '';
-      container.style.display = 'block';
-    }
-  
-    // Hentikan countdown
-    if (window.detailCountdownInterval) {
-      clearInterval(window.detailCountdownInterval);
-    }
-  
-    // Kembali ke index
-    window.location.href = 'index.html';
+      window.location.href = 'index.html';
   }
 
   // ==================== FUNGSI: COUNTDOWN UNTUK DETAIL ====================
