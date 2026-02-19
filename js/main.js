@@ -300,7 +300,7 @@
     }
   }
 
-  // ==================== FUNGSI: FETCH GIVEAWAY DETAIL (DITAMBAHKAN) ====================
+  // ==================== FUNGSI: FETCH GIVEAWAY DETAIL (DIPINDAHKAN KE ATAS) ====================
   async function fetchGiveawayDetail(id) {
     try {
       console.log(`📡 Fetching giveaway detail for ID: ${id}`);
@@ -638,12 +638,17 @@
           startDetailCountdown(giveaway.end_date);
       }
 
-      // Tambahkan tombol kembali di header (opsional)
+      // Tambahkan tombol kembali di header
       const backBtn = document.createElement('button');
       backBtn.className = 'detail-back-btn';
       backBtn.innerHTML = '←';
       backBtn.addEventListener('click', goBackToIndex);
-      document.querySelector('.giveaway-detail-header .logo-box').appendChild(backBtn);
+      
+      // Cari elemen logo-box untuk menambahkan tombol kembali
+      const logoBox = document.querySelector('.giveaway-detail-header .logo-box');
+      if (logoBox) {
+          logoBox.appendChild(backBtn);
+      }
 
       // Event listener untuk tombol partisipasi
       const participateBtn = document.getElementById('detailParticipateBtn');
