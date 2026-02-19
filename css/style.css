@@ -1541,18 +1541,26 @@ em, i {
     overflow: hidden; /* Mencegah scroll di root */
 }
 
-/* 9.2. Detail Header - TANPA LOGO */
+/* 9.2. Detail Header - Pastikan tidak ada padding/margin berlebih */
 .giveaway-detail-header {
-    padding: 8px 16px;
-    background: rgba(15, 25, 40, 0.2);
-    backdrop-filter: blur(20px) saturate(200%);
-    -webkit-backdrop-filter: blur(20px) saturate(200%);
-    border-bottom: 1.5px solid rgba(0, 170, 255, 0.25);
-    flex-shrink: 0;
-    min-height: 52px;
-    display: flex;
-    align-items: center;
-    justify-content: flex-end; /* Tombol back di kanan */
+  padding: 8px 16px;
+  background: rgba(15, 25, 40, 0.2);
+  backdrop-filter: blur(20px) saturate(200%);
+  -webkit-backdrop-filter: blur(20px) saturate(200%);
+  border-bottom: 1.5px solid rgba(0, 170, 255, 0.25);
+  flex-shrink: 0;
+  min-height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+/* Pastikan tidak ada elemen tersembunyi yang masih memakan ruang */
+.top-container[style*="display: none"],
+.giveaway-buttons[style*="display: none"],
+.logo-box[style*="display: none"],
+.profile-box[style*="display: none"] {
+  display: none !important;
 }
 
 .detail-back-btn:hover {
