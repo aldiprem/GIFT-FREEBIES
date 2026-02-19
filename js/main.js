@@ -467,6 +467,7 @@
       // Buat HTML untuk channel
       let channelsHtml = '';
       if (channels.length > 0) {
+          channelsHtml = '';
           channels.forEach(ch => {
               const channelName = typeof ch === 'string' ? ch : (ch.title || ch.username || 'Channel');
               const username = typeof ch === 'string' ? ch.replace('@', '') : (ch.username || '').replace('@', '');
@@ -490,6 +491,7 @@
       // Buat HTML untuk link
       let linksHtml = '';
       if (links.length > 0) {
+          linksHtml = '';
           links.forEach(link => {
               const title = link.title || 'Tautan';
               const url = link.url || '#';
@@ -523,7 +525,7 @@
           }
       }
   
-      // Format tanggal akhir - HANYA TAMPILKAN TANGGAL BERAKHIR
+      // Format tanggal akhir
       const endDateFormatted = giveaway.end_date ? formatDate(giveaway.end_date) : 'Tidak ditentukan';
       
       // Hitung sisa waktu untuk countdown
@@ -545,7 +547,7 @@
           }
       }
   
-      // Gabungkan semua HTML
+      // Gabungkan semua HTML dengan struktur FULL SCREEN TANPA SCROLL
       const detailHtml = `
           <div class="giveaway-detail-page">
               <div class="giveaway-detail-header">
@@ -555,65 +557,69 @@
                   </div>
               </div>
               
-              <div class="detail-scroll-container">
+              <div class="detail-content-container">
                   <div class="detail-main-card">
                       <div class="${statusClass}">${statusText}</div>
                       
                       ${mediaHtml}
                       
-                      <div class="detail-section-title">
-                          <span class="detail-section-icon">🎁</span>
-                          <span class="detail-section-text">Hadiah</span>
-                      </div>
-                      <div class="detail-prizes-grid">
-                          ${prizesHtml}
-                      </div>
-                      
-                      <div class="detail-section-title">
-                          <span class="detail-section-icon">📄</span>
-                          <span class="detail-section-text">Deskripsi</span>
-                      </div>
-                      <div class="detail-text-card">
-                          ${giveaway.giveaway_text || '<em>Tidak ada deskripsi</em>'}
-                      </div>
-                      
-                      <div class="detail-section-title">
-                          <span class="detail-section-icon">🔐</span>
-                          <span class="detail-section-text">Syarat</span>
-                      </div>
-                      <div class="detail-requirements-grid">
-                          ${reqHtml}
-                      </div>
-                      
-                      ${channelsHtml ? `
+                      <!-- AREA SCROLL UNTUK KONTEN -->
+                      <div class="detail-scroll-area">
                           <div class="detail-section-title">
-                              <span class="detail-section-icon">📢</span>
-                              <span class="detail-section-text">Channel</span>
+                              <span class="detail-section-icon">🎁</span>
+                              <span class="detail-section-text">Hadiah</span>
                           </div>
-                          ${channelsHtml}
-                      ` : ''}
-                      
-                      ${linksHtml ? `
+                          <div class="detail-prizes-grid">
+                              ${prizesHtml}
+                          </div>
+                          
                           <div class="detail-section-title">
-                              <span class="detail-section-icon">🔗</span>
-                              <span class="detail-section-text">Tautan</span>
+                              <span class="detail-section-icon">📄</span>
+                              <span class="detail-section-text">Deskripsi</span>
                           </div>
-                          ${linksHtml}
-                      ` : ''}
-                      
-                      <!-- HANYA TAMPILKAN WAKTU BERAKHIR DAN COUNTDOWN -->
-                      <div class="detail-timer-card">
-                          <div class="detail-timer-label">Berakhir Dalam</div>
-                          <div class="detail-timer-value" id="detailCountdown">${timeRemaining}</div>
-                          <div class="detail-end-date">${endDateFormatted}</div>
+                          <div class="detail-text-card">
+                              ${giveaway.giveaway_text || '<em>Tidak ada deskripsi</em>'}
+                          </div>
+                          
+                          <div class="detail-section-title">
+                              <span class="detail-section-icon">🔐</span>
+                              <span class="detail-section-text">Syarat</span>
+                          </div>
+                          <div class="detail-requirements-grid">
+                              ${reqHtml}
+                          </div>
+                          
+                          ${channelsHtml ? `
+                              <div class="detail-section-title">
+                                  <span class="detail-section-icon">📢</span>
+                                  <span class="detail-section-text">Channel</span>
+                              </div>
+                              ${channelsHtml}
+                          ` : ''}
+                          
+                          ${linksHtml ? `
+                              <div class="detail-section-title">
+                                  <span class="detail-section-icon">🔗</span>
+                                  <span class="detail-section-text">Tautan</span>
+                              </div>
+                              ${linksHtml}
+                          ` : ''}
+                          
+                          <!-- HANYA TAMPILKAN WAKTU BERAKHIR DAN COUNTDOWN -->
+                          <div class="detail-timer-card">
+                              <div class="detail-timer-label">Berakhir Dalam</div>
+                              <div class="detail-timer-value" id="detailCountdown">${timeRemaining}</div>
+                              <div class="detail-end-date">${endDateFormatted}</div>
+                          </div>
+                          
+                          <div class="detail-captcha-badge">
+                              <span class="detail-captcha-icon">🧩</span>
+                              <span class="detail-captcha-text ${giveaway.captcha_enabled ? 'active' : 'inactive'}">
+                                  CAPTCHA ${giveaway.captcha_enabled ? 'AKTIF' : 'NONAKTIF'}
+                              </span>
+                          </div>
                       </div>
-                      
-                      <div class="detail-captcha-badge">
-                          <span class="detail-captcha-icon">🧩</span>
-                          <span class="detail-captcha-text ${giveaway.captcha_enabled ? 'active' : 'inactive'}">
-                              CAPTCHA ${giveaway.captcha_enabled ? 'AKTIF' : 'NONAKTIF'}
-                          </span>
-                      </div>
+                      <!-- AKHIR AREA SCROLL -->
                   </div>
               </div>
               
@@ -637,7 +643,7 @@
       if (giveaway.end_date && giveaway.status === 'active') {
           startDetailCountdown(giveaway.end_date);
       }
-
+  
       // Tambahkan tombol kembali di header
       const backBtn = document.createElement('button');
       backBtn.className = 'detail-back-btn';
@@ -649,7 +655,7 @@
       if (logoBox) {
           logoBox.appendChild(backBtn);
       }
-
+  
       // Event listener untuk tombol partisipasi
       const participateBtn = document.getElementById('detailParticipateBtn');
       if (participateBtn) {
