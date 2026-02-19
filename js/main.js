@@ -396,109 +396,205 @@
     if (elements.loading) elements.loading.style.display = 'none';
     if (elements.error) elements.error.style.display = 'none';
   
-    // ===== HAPUS ELEMEN YANG TIDAK DIPERLUKAN DARI DOM =====
+    // ===== SEMBUNYIKAN ELEMEN, JANGAN DIHAPUS =====
     const topContainer = document.querySelector('.top-container');
     if (topContainer) {
-      topContainer.remove(); // Hapus total dari DOM
+      topContainer.style.display = 'none'; // SEMBUNYIKAN, bukan remove()
     }
   
     const giveawayButtons = document.querySelector('.giveaway-buttons');
     if (giveawayButtons) {
-      giveawayButtons.remove(); // Hapus total dari DOM
+      giveawayButtons.style.display = 'none'; // SEMBUNYIKAN, bukan remove()
     }
   
-    // ===== PENTING: SEMBUNYIKAN SETTINGS BUTTON =====
+    // ===== SEMBUNYIKAN SETTINGS BUTTON =====
     if (elements.settingsBtn) elements.settingsBtn.style.display = 'none';
   
     const container = elements.giveawayContent;
     if (!container) return;
   
-    // ... (kode untuk prizes, requirements, dll tetap sama) ...
+    // Proses data giveaway...
+    const prizes = giveaway.prizes || [];
+    const requirements = giveaway.requirements || [];
+    const channels = giveaway.channels || [];
+    const links = giveaway.links || [];
+    const media = giveaway.media;
+    const isActive = giveaway.status === 'active';
+    const statusText = isActive ? 'AKTIF' : 'SELESAI';
+    const statusClass = isActive ? 'detail-status-badge' : 'detail-status-badge ended';
   
-    // Gabungkan semua HTML dengan struktur FULL SCREEN TANPA SCROLL
-    const detailHtml = `
-          <div class="giveaway-detail-page">
-              <div class="giveaway-detail-header">
-                  <!-- HEADER KOSONG, TOMBOL BACK AKAN DITAMBAHKAN VIA JS -->
-              </div>
-              
-              <div class="detail-content-container">
-                  <div class="detail-main-card">
-                      <div class="${statusClass}">${statusText}</div>
-                      
-                      ${mediaHtml}
-                      
-                      <!-- AREA SCROLL UNTUK KONTEN -->
-                      <div class="detail-scroll-area">
-                          <div class="detail-section-title">
-                              <span class="detail-section-icon">🎁</span>
-                              <span class="detail-section-text">Hadiah</span>
-                          </div>
-                          <div class="detail-prizes-grid">
-                              ${prizesHtml}
-                          </div>
-                          
-                          <div class="detail-section-title">
-                              <span class="detail-section-icon">📄</span>
-                              <span class="detail-section-text">Deskripsi</span>
-                          </div>
-                          <div class="detail-text-card">
-                              ${giveaway.giveaway_text || '<em>Tidak ada deskripsi</em>'}
-                          </div>
-                          
-                          <div class="detail-section-title">
-                              <span class="detail-section-icon">🔐</span>
-                              <span class="detail-section-text">Syarat</span>
-                          </div>
-                          <div class="detail-requirements-grid">
-                              ${reqHtml}
-                          </div>
-                          
-                          ${channelsHtml ? `
-                              <div class="detail-section-title">
-                                  <span class="detail-section-icon">📢</span>
-                                  <span class="detail-section-text">Channel</span>
-                              </div>
-                              ${channelsHtml}
-                          ` : ''}
-                          
-                          ${linksHtml ? `
-                              <div class="detail-section-title">
-                                  <span class="detail-section-icon">🔗</span>
-                                  <span class="detail-section-text">Tautan</span>
-                              </div>
-                              ${linksHtml}
-                          ` : ''}
-                          
-                          <!-- HANYA TAMPILKAN WAKTU BERAKHIR DAN COUNTDOWN -->
-                          <div class="detail-timer-card">
-                              <div class="detail-timer-label">Berakhir Dalam</div>
-                              <div class="detail-timer-value" id="detailCountdown">${timeRemaining}</div>
-                              <div class="detail-end-date">${endDateFormatted}</div>
-                          </div>
-                          
-                          <div class="detail-captcha-badge">
-                              <span class="detail-captcha-icon">🧩</span>
-                              <span class="detail-captcha-text ${giveaway.captcha_enabled ? 'active' : 'inactive'}">
-                                  CAPTCHA ${giveaway.captcha_enabled ? 'AKTIF' : 'NONAKTIF'}
-                              </span>
-                          </div>
-                      </div>
-                  </div>
-              </div>
-              
-              <div class="detail-action-fixed">
-                  <button class="detail-action-btn participate" id="detailParticipateBtn">
-                      <span class="detail-action-icon">✓</span>
-                      <span>PARTISIPASI</span>
-                  </button>
-                  <button class="detail-action-btn share" id="detailShareBtn">
-                      <span class="detail-action-icon">📤</span>
-                      <span>BAGIKAN</span>
-                  </button>
-              </div>
+    // ... (sisa kode untuk generate HTML tetap sama) ...
+  
+    // Generate prizes HTML
+    let prizesHtml = '';
+    if (prizes.length > 0) {
+      prizes.forEach((prize, index) => {
+        prizesHtml += `
+          <div class="detail-prize-card">
+            <span class="detail-prize-number">${index + 1}</span>
+            <span>${escapeHtml(prize)}</span>
           </div>
-      `;
+        `;
+      });
+    } else {
+      prizesHtml = '<div class="detail-text-card"><em>Tidak ada hadiah</em></div>';
+    }
+  
+    // Generate requirements HTML
+    let reqHtml = '';
+    if (requirements.length > 0) {
+      requirements.forEach(req => {
+        reqHtml += `
+          <div class="detail-requirement-chip">
+            <span>${escapeHtml(req)}</span>
+          </div>
+        `;
+      });
+    } else {
+      reqHtml = '<div class="detail-text-card"><em>Tidak ada syarat khusus</em></div>';
+    }
+  
+    // Generate channels HTML
+    let channelsHtml = '';
+    if (channels.length > 0) {
+      channelsHtml = '<div class="detail-channels-list">';
+      channels.forEach(channel => {
+        channelsHtml += `
+          <div class="detail-channel-item">
+            <div class="detail-channel-icon">📢</div>
+            <div class="detail-channel-info">
+              <div class="detail-channel-name">${escapeHtml(channel.name || 'Channel')}</div>
+              <div class="detail-channel-username">${escapeHtml(channel.username || '')}</div>
+            </div>
+            <button class="detail-channel-btn" onclick="window.open('https://t.me/${channel.username.replace('@', '')}', '_blank')">Join</button>
+          </div>
+        `;
+      });
+      channelsHtml += '</div>';
+    }
+  
+    // Generate links HTML
+    let linksHtml = '';
+    if (links.length > 0) {
+      linksHtml = '<div class="detail-links-list">';
+      links.forEach(link => {
+        linksHtml += `
+          <div class="detail-link-item" onclick="window.open('${link.url}', '_blank')">
+            <div class="detail-link-icon">🔗</div>
+            <div class="detail-link-info">
+              <div class="detail-link-title">${escapeHtml(link.title || 'Link')}</div>
+              <div class="detail-link-url">${escapeHtml(link.url)}</div>
+            </div>
+          </div>
+        `;
+      });
+      linksHtml += '</div>';
+    }
+  
+    // Media HTML
+    let mediaHtml = '';
+    if (media) {
+      if (media.type === 'image') {
+        mediaHtml = `
+          <div class="detail-media-section">
+            <img src="${media.url}" class="detail-media-image" alt="Giveaway media">
+          </div>
+        `;
+      } else if (media.type === 'video') {
+        mediaHtml = `
+          <div class="detail-media-section">
+            <video src="${media.url}" class="detail-media-video" controls></video>
+          </div>
+        `;
+      }
+    }
+  
+    // Time remaining
+    const timeRemaining = giveaway.end_date ? formatTimeRemaining(giveaway.end_date) : 'Tidak terbatas';
+    const endDateFormatted = giveaway.end_date ? formatDate(giveaway.end_date) : 'Tidak ada batas waktu';
+  
+    // Gabungkan semua HTML
+    const detailHtml = `
+      <div class="giveaway-detail-page">
+        <div class="giveaway-detail-header">
+          <!-- Tombol back akan ditambahkan via JS -->
+        </div>
+        
+        <div class="detail-content-container">
+          <div class="detail-main-card">
+            <div class="${statusClass}">${statusText}</div>
+            
+            ${mediaHtml}
+            
+            <div class="detail-scroll-area">
+              <div class="detail-section-title">
+                <span class="detail-section-icon">🎁</span>
+                <span class="detail-section-text">Hadiah</span>
+              </div>
+              <div class="detail-prizes-grid">
+                ${prizesHtml}
+              </div>
+              
+              <div class="detail-section-title">
+                <span class="detail-section-icon">📄</span>
+                <span class="detail-section-text">Deskripsi</span>
+              </div>
+              <div class="detail-text-card">
+                ${giveaway.giveaway_text || '<em>Tidak ada deskripsi</em>'}
+              </div>
+              
+              <div class="detail-section-title">
+                <span class="detail-section-icon">🔐</span>
+                <span class="detail-section-text">Syarat</span>
+              </div>
+              <div class="detail-requirements-grid">
+                ${reqHtml}
+              </div>
+              
+              ${channelsHtml ? `
+                <div class="detail-section-title">
+                  <span class="detail-section-icon">📢</span>
+                  <span class="detail-section-text">Channel</span>
+                </div>
+                ${channelsHtml}
+              ` : ''}
+              
+              ${linksHtml ? `
+                <div class="detail-section-title">
+                  <span class="detail-section-icon">🔗</span>
+                  <span class="detail-section-text">Tautan</span>
+                </div>
+                ${linksHtml}
+              ` : ''}
+              
+              <div class="detail-timer-card">
+                <div class="detail-timer-label">Berakhir Dalam</div>
+                <div class="detail-timer-value" id="detailCountdown">${timeRemaining}</div>
+                <div class="detail-end-date">${endDateFormatted}</div>
+              </div>
+              
+              <div class="detail-captcha-badge">
+                <span class="detail-captcha-icon">🧩</span>
+                <span class="detail-captcha-text ${giveaway.captcha_enabled ? 'active' : 'inactive'}">
+                  CAPTCHA ${giveaway.captcha_enabled ? 'AKTIF' : 'NONAKTIF'}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="detail-action-fixed">
+          <button class="detail-action-btn participate" id="detailParticipateBtn">
+            <span class="detail-action-icon">✓</span>
+            <span>PARTISIPASI</span>
+          </button>
+          <button class="detail-action-btn share" id="detailShareBtn">
+            <span class="detail-action-icon">📤</span>
+            <span>BAGIKAN</span>
+          </button>
+        </div>
+      </div>
+    `;
   
     container.innerHTML = detailHtml;
     container.style.display = 'block';
@@ -547,10 +643,14 @@
   
     // ===== TAMPILKAN KEMBALI TOP CONTAINER DAN GIVEAWAY BUTTONS =====
     const topContainer = document.querySelector('.top-container');
-    if (topContainer) topContainer.style.display = 'flex'; // atau 'block' tergantung CSS
+    if (topContainer) {
+      topContainer.style.display = 'flex'; // Tampilkan kembali
+    }
   
     const giveawayButtons = document.querySelector('.giveaway-buttons');
-    if (giveawayButtons) giveawayButtons.style.display = 'flex';
+    if (giveawayButtons) {
+      giveawayButtons.style.display = 'flex'; // Tampilkan kembali
+    }
   
     // Hapus konten detail
     const container = elements.giveawayContent;
@@ -564,8 +664,13 @@
       clearInterval(window.detailCountdownInterval);
     }
   
-    // Kembali ke index
-    window.location.href = 'index.html';
+    // Hapus parameter URL tanpa reload halaman
+    const url = new URL(window.location);
+    url.searchParams.delete('search');
+    window.history.pushState({}, '', url);
+  
+    // Tampilkan kembali giveaway list
+    displayGiveaways(currentGiveawayType);
   }
 
   // ==================== FUNGSI: COUNTDOWN UNTUK DETAIL ====================
