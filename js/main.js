@@ -603,9 +603,10 @@
                           </div>
                       </div>
                       
-                      <!-- CHANNEL ROW DENGAN MATA -->
-                      ${channels.length > 0 ? `
-                      <div class="channel-link-container">
+                      <!-- CHANNEL & LINK BUTTONS DALAM SATU BARIS -->
+                      ${channels.length > 0 || links.length > 0 ? `
+                      <div class="channel-link-row-container">
+                          ${channels.length > 0 ? `
                           <div class="channel-link-row">
                               <div class="channel-link-label channel">
                                   <span class="icon">📢</span>
@@ -618,6 +619,22 @@
                                   </svg>
                               </button>
                           </div>
+                          ` : ''}
+                          
+                          ${links.length > 0 ? `
+                          <div class="channel-link-row">
+                              <div class="channel-link-label link">
+                                  <span class="icon">🔗</span>
+                                  <span>LINK</span>
+                              </div>
+                              <button class="eye-custom-btn" id="toggleLinkBtn">
+                                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                      <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5z" fill="white"/>
+                                      <circle cx="12" cy="12" r="3" fill="white"/>
+                                  </svg>
+                              </button>
+                          </div>
+                          ` : ''}
                       </div>
                       ` : ''}
                       
@@ -632,24 +649,6 @@
                               <div class="panel-content" id="channelsList">
                                   ${channelsHtml}
                               </div>
-                          </div>
-                      </div>
-                      ` : ''}
-                      
-                      <!-- LINK ROW DENGAN MATA -->
-                      ${links.length > 0 ? `
-                      <div class="channel-link-container">
-                          <div class="channel-link-row">
-                              <div class="channel-link-label link">
-                                  <span class="icon">🔗</span>
-                                  <span>LINK</span>
-                              </div>
-                              <button class="eye-custom-btn" id="toggleLinkBtn">
-                                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                      <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5z" fill="white"/>
-                                      <circle cx="12" cy="12" r="3" fill="white"/>
-                                  </svg>
-                              </button>
                           </div>
                       </div>
                       ` : ''}
@@ -706,7 +705,15 @@
     // Tombol back
     const backBtn = document.getElementById('backToIndexBtn');
     if (backBtn) {
-      backBtn.addEventListener('click', goBackToIndex);
+      // Hapus event listener lama jika ada
+      backBtn.replaceWith(backBtn.cloneNode(true));
+      const newBackBtn = document.getElementById('backToIndexBtn');
+      if (newBackBtn) {
+        newBackBtn.addEventListener('click', function(e) {
+          e.preventDefault();
+          goBackToIndex();
+        });
+      }
     }
   
     // Expand deskripsi
@@ -714,21 +721,26 @@
     const descContent = document.getElementById('descriptionContent');
   
     if (expandDescBtn && descContent) {
-      expandDescBtn.addEventListener('click', () => {
-        const isCollapsed = descContent.classList.contains('collapsed');
+      // Hapus event listener lama
+      expandDescBtn.replaceWith(expandDescBtn.cloneNode(true));
+      const newExpandDescBtn = document.getElementById('expandDescriptionBtn');
+      if (newExpandDescBtn) {
+        newExpandDescBtn.addEventListener('click', () => {
+          const isCollapsed = descContent.classList.contains('collapsed');
   
-        if (isCollapsed) {
-          descContent.classList.remove('collapsed');
-          descContent.classList.add('expanded');
-          expandDescBtn.textContent = 'Tutup';
-        } else {
-          descContent.classList.add('collapsed');
-          descContent.classList.remove('expanded');
-          expandDescBtn.textContent = 'Lihat Lengkap';
-        }
+          if (isCollapsed) {
+            descContent.classList.remove('collapsed');
+            descContent.classList.add('expanded');
+            newExpandDescBtn.textContent = 'Tutup';
+          } else {
+            descContent.classList.add('collapsed');
+            descContent.classList.remove('expanded');
+            newExpandDescBtn.textContent = 'Lihat Lengkap';
+          }
   
-        vibrate(10);
-      });
+          vibrate(10);
+        });
+      }
     }
   
     // Expand hadiah
@@ -736,21 +748,26 @@
     const prizesList = document.getElementById('prizesList');
   
     if (expandPrizesBtn && prizesList) {
-      expandPrizesBtn.addEventListener('click', () => {
-        const isCollapsed = prizesList.classList.contains('collapsed');
+      // Hapus event listener lama
+      expandPrizesBtn.replaceWith(expandPrizesBtn.cloneNode(true));
+      const newExpandPrizesBtn = document.getElementById('expandPrizesBtn');
+      if (newExpandPrizesBtn) {
+        newExpandPrizesBtn.addEventListener('click', () => {
+          const isCollapsed = prizesList.classList.contains('collapsed');
   
-        if (isCollapsed) {
-          prizesList.classList.remove('collapsed');
-          prizesList.classList.add('expanded');
-          expandPrizesBtn.textContent = 'Tutup';
-        } else {
-          prizesList.classList.add('collapsed');
-          prizesList.classList.remove('expanded');
-          expandPrizesBtn.textContent = 'Lihat Semua';
-        }
+          if (isCollapsed) {
+            prizesList.classList.remove('collapsed');
+            prizesList.classList.add('expanded');
+            newExpandPrizesBtn.textContent = 'Tutup';
+          } else {
+            prizesList.classList.add('collapsed');
+            prizesList.classList.remove('expanded');
+            newExpandPrizesBtn.textContent = 'Lihat Semua';
+          }
   
-        vibrate(10);
-      });
+          vibrate(10);
+        });
+      }
     }
   
     // Tombol mata untuk Channel
@@ -759,10 +776,17 @@
     const closeChannelPanelBtn = document.getElementById('closeChannelPanelBtn');
   
     if (toggleChannelBtn && channelPanelContainer) {
-      toggleChannelBtn.addEventListener('click', () => {
+      // Hapus event listener lama
+      toggleChannelBtn.replaceWith(toggleChannelBtn.cloneNode(true));
+      const newToggleChannelBtn = document.getElementById('toggleChannelBtn');
+  
+      newToggleChannelBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+  
         // Tutup panel link jika terbuka
-        const linkPanelContainer = document.getElementById('linkPanelContainer');
         const toggleLinkBtn = document.getElementById('toggleLinkBtn');
+        const linkPanelContainer = document.getElementById('linkPanelContainer');
   
         if (linkPanelContainer && !linkPanelContainer.classList.contains('hidden')) {
           linkPanelContainer.classList.add('hidden');
@@ -773,16 +797,25 @@
         channelPanelContainer.classList.toggle('hidden');
   
         // Toggle active state tombol
-        toggleChannelBtn.classList.toggle('active');
+        newToggleChannelBtn.classList.toggle('active');
   
         vibrate(15);
       });
     }
   
     if (closeChannelPanelBtn && channelPanelContainer) {
-      closeChannelPanelBtn.addEventListener('click', () => {
+      // Hapus event listener lama
+      closeChannelPanelBtn.replaceWith(closeChannelPanelBtn.cloneNode(true));
+      const newCloseChannelPanelBtn = document.getElementById('closeChannelPanelBtn');
+  
+      newCloseChannelPanelBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
         channelPanelContainer.classList.add('hidden');
-        if (toggleChannelBtn) toggleChannelBtn.classList.remove('active');
+        if (toggleChannelBtn) {
+          const updatedToggleChannelBtn = document.getElementById('toggleChannelBtn');
+          if (updatedToggleChannelBtn) updatedToggleChannelBtn.classList.remove('active');
+        }
       });
     }
   
@@ -792,58 +825,89 @@
     const closeLinkPanelBtn = document.getElementById('closeLinkPanelBtn');
   
     if (toggleLinkBtn && linkPanelContainer) {
-      toggleLinkBtn.addEventListener('click', () => {
+      // Hapus event listener lama
+      toggleLinkBtn.replaceWith(toggleLinkBtn.cloneNode(true));
+      const newToggleLinkBtn = document.getElementById('toggleLinkBtn');
+  
+      newToggleLinkBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+  
         // Tutup panel channel jika terbuka
         if (channelPanelContainer && !channelPanelContainer.classList.contains('hidden')) {
           channelPanelContainer.classList.add('hidden');
-          if (toggleChannelBtn) toggleChannelBtn.classList.remove('active');
+          if (toggleChannelBtn) {
+            const updatedToggleChannelBtn = document.getElementById('toggleChannelBtn');
+            if (updatedToggleChannelBtn) updatedToggleChannelBtn.classList.remove('active');
+          }
         }
   
         // Toggle panel link
         linkPanelContainer.classList.toggle('hidden');
   
         // Toggle active state tombol
-        toggleLinkBtn.classList.toggle('active');
+        newToggleLinkBtn.classList.toggle('active');
   
         vibrate(15);
       });
     }
   
     if (closeLinkPanelBtn && linkPanelContainer) {
-      closeLinkPanelBtn.addEventListener('click', () => {
+      // Hapus event listener lama
+      closeLinkPanelBtn.replaceWith(closeLinkPanelBtn.cloneNode(true));
+      const newCloseLinkPanelBtn = document.getElementById('closeLinkPanelBtn');
+  
+      newCloseLinkPanelBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
         linkPanelContainer.classList.add('hidden');
-        if (toggleLinkBtn) toggleLinkBtn.classList.remove('active');
+        if (toggleLinkBtn) {
+          const updatedToggleLinkBtn = document.getElementById('toggleLinkBtn');
+          if (updatedToggleLinkBtn) updatedToggleLinkBtn.classList.remove('active');
+        }
       });
     }
   
     // Klik pada item channel
     document.querySelectorAll('.channel-item').forEach(item => {
-      item.addEventListener('click', function(e) {
+      // Hapus event listener lama dengan clone
+      const newItem = item.cloneNode(true);
+      item.parentNode.replaceChild(newItem, item);
+  
+      newItem.addEventListener('click', function(e) {
+        // Biarkan link berfungsi normal
         const selector = this.querySelector('.item-selector');
         if (selector) {
           selector.classList.toggle('selected');
         }
         vibrate(10);
-        // Link akan tetap terbuka di tab baru karena target="_blank"
       });
     });
   
     // Klik pada item link
     document.querySelectorAll('.link-item').forEach(item => {
-      item.addEventListener('click', function(e) {
+      // Hapus event listener lama dengan clone
+      const newItem = item.cloneNode(true);
+      item.parentNode.replaceChild(newItem, item);
+  
+      newItem.addEventListener('click', function(e) {
+        // Biarkan link berfungsi normal
         const selector = this.querySelector('.item-selector');
         if (selector) {
           selector.classList.toggle('selected');
         }
         vibrate(10);
-        // Link akan tetap terbuka di tab baru karena target="_blank"
       });
     });
   
     // Tombol partisipasi
     const participateBtn = document.getElementById('detailParticipateBtn');
     if (participateBtn) {
-      participateBtn.addEventListener('click', () => {
+      // Hapus event listener lama
+      participateBtn.replaceWith(participateBtn.cloneNode(true));
+      const newParticipateBtn = document.getElementById('detailParticipateBtn');
+  
+      newParticipateBtn.addEventListener('click', () => {
         vibrate(15);
         alert('Fitur partisipasi sedang dalam pengembangan.');
       });
@@ -852,7 +916,11 @@
     // Tombol share
     const shareBtn = document.getElementById('detailShareBtn');
     if (shareBtn) {
-      shareBtn.addEventListener('click', () => {
+      // Hapus event listener lama
+      shareBtn.replaceWith(shareBtn.cloneNode(true));
+      const newShareBtn = document.getElementById('detailShareBtn');
+  
+      newShareBtn.addEventListener('click', () => {
         vibrate(10);
         shareGiveaway(window.location.href, prizes[0] || 'Giveaway');
       });
@@ -866,29 +934,50 @@
   
   // ==================== FUNGSI: KEMBALI KE INDEX (DIPERBAIKI) ====================
   function goBackToIndex() {
-      // Tampilkan kembali elemen yang disembunyikan
-      if (elements.profileContent) elements.profileContent.style.display = 'block';
-      if (elements.giveawayButtons) elements.giveawayButtons.style.display = 'flex';
-      if (elements.settingsBtn) elements.settingsBtn.style.display = 'flex';
-      
-      // Tampilkan kembali top container
-      const topContainer = document.querySelector('.top-container');
-      if (topContainer) topContainer.style.display = 'flex';
+    console.log('🔙 Kembali ke index...');
   
-      // Hapus konten detail
-      const container = elements.giveawayContent;
-      if (container) {
-          container.innerHTML = '';
-          container.style.display = 'block';
-      }
+    // Tampilkan kembali elemen yang disembunyikan
+    if (elements.profileContent) {
+      elements.profileContent.style.display = 'block';
+    }
   
-      // Hentikan countdown
-      if (window.detailCountdownInterval) {
-          clearInterval(window.detailCountdownInterval);
-      }
+    if (elements.giveawayButtons) {
+      elements.giveawayButtons.style.display = 'flex';
+    }
   
-      // Kembali ke index tanpa reload
-      window.history.pushState({}, '', 'index.html');
+    if (elements.settingsBtn) {
+      elements.settingsBtn.style.display = 'flex';
+    }
+  
+    // Tampilkan kembali top container
+    const topContainer = document.querySelector('.top-container');
+    if (topContainer) {
+      topContainer.style.display = 'flex';
+    }
+  
+    // Hapus konten detail
+    const container = elements.giveawayContent;
+    if (container) {
+      container.innerHTML = '';
+      container.style.display = 'block';
+    }
+  
+    // Hentikan countdown
+    if (window.detailCountdownInterval) {
+      clearInterval(window.detailCountdownInterval);
+      window.detailCountdownInterval = null;
+    }
+  
+    // Hapus parameter search dari URL
+    const url = new URL(window.location.href);
+    url.searchParams.delete('search');
+    window.history.pushState({}, '', url.toString());
+  
+    // Refresh data giveaway
+    fetchAllGiveaways().then(giveaways => {
+      allGiveaways = giveaways;
+      displayGiveaways('active');
+    });
   }
 
   // ==================== FUNGSI: COUNTDOWN UNTUK DETAIL ====================
