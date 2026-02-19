@@ -391,247 +391,288 @@
 
   // ==================== FUNGSI: RENDER GIVEAWAY DETAIL ====================
   function renderGiveawayDetail(giveaway) {
-    if (elements.profileContent) elements.profileContent.style.display = 'none';
-    if (elements.giveawayButtons) elements.giveawayButtons.style.display = 'none';
-    if (elements.loading) elements.loading.style.display = 'none';
-    if (elements.error) elements.error.style.display = 'none';
+      // Sembunyikan elemen profil dan tombol giveaway
+      if (elements.profileContent) elements.profileContent.style.display = 'none';
+      if (elements.giveawayButtons) elements.giveawayButtons.style.display = 'none';
+      if (elements.loading) elements.loading.style.display = 'none';
+      if (elements.error) elements.error.style.display = 'none';
+      
+      // ===== PENTING: SEMBUNYIKAN SETTINGS BUTTON =====
+      if (elements.settingsBtn) elements.settingsBtn.style.display = 'none';
   
-    // ===== SEMBUNYIKAN ELEMEN, JANGAN DIHAPUS =====
-    const topContainer = document.querySelector('.top-container');
-    if (topContainer) {
-      topContainer.style.display = 'none'; // SEMBUNYIKAN, bukan remove()
-    }
+      const container = elements.giveawayContent;
+      if (!container) return;
   
-    const giveawayButtons = document.querySelector('.giveaway-buttons');
-    if (giveawayButtons) {
-      giveawayButtons.style.display = 'none'; // SEMBUNYIKAN, bukan remove()
-    }
-  
-    // ===== SEMBUNYIKAN SETTINGS BUTTON =====
-    if (elements.settingsBtn) elements.settingsBtn.style.display = 'none';
-  
-    const container = elements.giveawayContent;
-    if (!container) return;
-  
-    // Proses data giveaway...
-    const prizes = giveaway.prizes || [];
-    const requirements = giveaway.requirements || [];
-    const channels = giveaway.channels || [];
-    const links = giveaway.links || [];
-    const media = giveaway.media;
-    const isActive = giveaway.status === 'active';
-    const statusText = isActive ? 'AKTIF' : 'SELESAI';
-    const statusClass = isActive ? 'detail-status-badge' : 'detail-status-badge ended';
-  
-    // ... (sisa kode untuk generate HTML tetap sama) ...
-  
-    // Generate prizes HTML
-    let prizesHtml = '';
-    if (prizes.length > 0) {
-      prizes.forEach((prize, index) => {
-        prizesHtml += `
-          <div class="detail-prize-card">
-            <span class="detail-prize-number">${index + 1}</span>
-            <span>${escapeHtml(prize)}</span>
-          </div>
-        `;
-      });
-    } else {
-      prizesHtml = '<div class="detail-text-card"><em>Tidak ada hadiah</em></div>';
-    }
-  
-    // Generate requirements HTML
-    let reqHtml = '';
-    if (requirements.length > 0) {
-      requirements.forEach(req => {
-        reqHtml += `
-          <div class="detail-requirement-chip">
-            <span>${escapeHtml(req)}</span>
-          </div>
-        `;
-      });
-    } else {
-      reqHtml = '<div class="detail-text-card"><em>Tidak ada syarat khusus</em></div>';
-    }
-  
-    // Generate channels HTML
-    let channelsHtml = '';
-    if (channels.length > 0) {
-      channelsHtml = '<div class="detail-channels-list">';
-      channels.forEach(channel => {
-        channelsHtml += `
-          <div class="detail-channel-item">
-            <div class="detail-channel-icon">📢</div>
-            <div class="detail-channel-info">
-              <div class="detail-channel-name">${escapeHtml(channel.name || 'Channel')}</div>
-              <div class="detail-channel-username">${escapeHtml(channel.username || '')}</div>
-            </div>
-            <button class="detail-channel-btn" onclick="window.open('https://t.me/${channel.username.replace('@', '')}', '_blank')">Join</button>
-          </div>
-        `;
-      });
-      channelsHtml += '</div>';
-    }
-  
-    // Generate links HTML
-    let linksHtml = '';
-    if (links.length > 0) {
-      linksHtml = '<div class="detail-links-list">';
-      links.forEach(link => {
-        linksHtml += `
-          <div class="detail-link-item" onclick="window.open('${link.url}', '_blank')">
-            <div class="detail-link-icon">🔗</div>
-            <div class="detail-link-info">
-              <div class="detail-link-title">${escapeHtml(link.title || 'Link')}</div>
-              <div class="detail-link-url">${escapeHtml(link.url)}</div>
-            </div>
-          </div>
-        `;
-      });
-      linksHtml += '</div>';
-    }
-  
-    // Media HTML
-    let mediaHtml = '';
-    if (media) {
-      if (media.type === 'image') {
-        mediaHtml = `
-          <div class="detail-media-section">
-            <img src="${media.url}" class="detail-media-image" alt="Giveaway media">
-          </div>
-        `;
-      } else if (media.type === 'video') {
-        mediaHtml = `
-          <div class="detail-media-section">
-            <video src="${media.url}" class="detail-media-video" controls></video>
-          </div>
-        `;
+      // Tentukan status
+      let statusClass = 'detail-status-badge';
+      let statusText = giveaway.status || 'Active';
+      const now = new Date();
+      const endDate = giveaway.end_date ? new Date(giveaway.end_date) : null;
+      if (giveaway.status === 'active' && endDate && now > endDate) {
+          statusText = 'Expired';
+          statusClass += ' expired';
+      } else if (giveaway.status === 'ended') {
+          statusText = 'Ended';
+          statusClass += ' ended';
+      } else if (giveaway.status === 'deleted') {
+          statusText = 'Deleted';
+          statusClass += ' expired';
       }
-    }
   
-    // Time remaining
-    const timeRemaining = giveaway.end_date ? formatTimeRemaining(giveaway.end_date) : 'Tidak terbatas';
-    const endDateFormatted = giveaway.end_date ? formatDate(giveaway.end_date) : 'Tidak ada batas waktu';
+      // Siapkan data untuk ditampilkan
+      const prizes = Array.isArray(giveaway.prizes) ? giveaway.prizes : [];
+      const requirements = Array.isArray(giveaway.requirements) ? giveaway.requirements : [];
+      const channels = Array.isArray(giveaway.channels) ? giveaway.channels : [];
+      const links = Array.isArray(giveaway.links) ? giveaway.links : [];
   
-    // Gabungkan semua HTML
-    const detailHtml = `
-      <div class="giveaway-detail-page">
-        <div class="giveaway-detail-header">
-          <!-- Tombol back akan ditambahkan via JS -->
-        </div>
-        
-        <div class="detail-content-container">
-          <div class="detail-main-card">
-            <div class="${statusClass}">${statusText}</div>
-            
-            ${mediaHtml}
-            
-            <div class="detail-scroll-area">
-              <div class="detail-section-title">
-                <span class="detail-section-icon">🎁</span>
-                <span class="detail-section-text">Hadiah</span>
-              </div>
-              <div class="detail-prizes-grid">
-                ${prizesHtml}
+      // Buat HTML untuk hadiah
+      let prizesHtml = '';
+      if (prizes.length === 0) {
+          prizesHtml = '<div class="detail-prize-card">Tidak ada hadiah</div>';
+      } else {
+          const colors = ['#FF6B6B', '#4ECDC4', '#FFD166', '#A06CD5', '#F7B731', '#45AAF2', '#FC5C65', '#26DE81'];
+          prizes.forEach((prize, index) => {
+              const bgColor = colors[index % colors.length];
+              prizesHtml += `
+                  <div class="detail-prize-card" style="border-color: ${bgColor}80;">
+                      <span class="detail-prize-number" style="background: ${bgColor};">${index + 1}</span>
+                      <span>${escapeHtml(prize)}</span>
+                  </div>
+              `;
+          });
+      }
+  
+      // Buat HTML untuk syarat
+      let reqHtml = '';
+      if (requirements.length === 0) {
+          reqHtml = '<div class="detail-requirement-chip">Tidak ada syarat khusus</div>';
+      } else {
+          requirements.forEach(req => {
+              let icon = '🔘';
+              let label = req;
+              if (req === 'subscribe') { icon = '🔔'; label = 'Subscribe Channel'; }
+              else if (req === 'premium') { icon = '⭐'; label = 'Akun Premium'; }
+              else if (req === 'nonpremium') { icon = '👤'; label = 'Akun Non-Premium'; }
+              else if (req === 'aktif') { icon = '✅'; label = 'Akun Aktif'; }
+              else if (req === 'share') { icon = '📤'; label = 'Share Postingan'; }
+              reqHtml += `
+                  <div class="detail-requirement-chip">
+                      <span>${icon}</span>
+                      <span>${label}</span>
+                  </div>
+              `;
+          });
+      }
+  
+      // Buat HTML untuk channel
+      let channelsHtml = '';
+      if (channels.length > 0) {
+          channelsHtml = '';
+          channels.forEach(ch => {
+              const channelName = typeof ch === 'string' ? ch : (ch.title || ch.username || 'Channel');
+              const username = typeof ch === 'string' ? ch.replace('@', '') : (ch.username || '').replace('@', '');
+              const isVerified = typeof ch !== 'string' && ch.is_verified;
+              channelsHtml += `
+                  <div class="detail-channel-item">
+                      <div class="detail-channel-icon">📢</div>
+                      <div class="detail-channel-info">
+                          <div class="detail-channel-name">
+                              ${escapeHtml(channelName)}
+                              ${isVerified ? '<span style="color: #00e676; margin-left: 5px;">✅</span>' : ''}
+                          </div>
+                          <div class="detail-channel-username">${username}</div>
+                      </div>
+                      <a href="https://t.me/${username}" target="_blank" class="detail-channel-btn">Buka</a>
+                  </div>
+              `;
+          });
+      }
+  
+      // Buat HTML untuk link
+      let linksHtml = '';
+      if (links.length > 0) {
+          linksHtml = '';
+          links.forEach(link => {
+              const title = link.title || 'Tautan';
+              const url = link.url || '#';
+              linksHtml += `
+                  <div class="detail-link-item" onclick="window.open('${escapeHtml(url)}', '_blank')">
+                      <div class="detail-link-icon">🔗</div>
+                      <div class="detail-link-info">
+                          <div class="detail-link-title">${escapeHtml(title)}</div>
+                          <div class="detail-link-url">${escapeHtml(url)}</div>
+                      </div>
+                  </div>
+              `;
+          });
+      }
+  
+      // Tentukan media (foto/video)
+      let mediaHtml = '';
+      if (giveaway.media_path) {
+          if (giveaway.media_type === 'video') {
+              mediaHtml = `
+                  <div class="detail-media-section">
+                      <video src="${giveaway.media_path}" class="detail-media-video" controls></video>
+                  </div>
+              `;
+          } else {
+              mediaHtml = `
+                  <div class="detail-media-section">
+                      <img src="${giveaway.media_path}" class="detail-media-image" alt="Giveaway Media" onerror="this.style.display='none'">
+                  </div>
+              `;
+          }
+      }
+  
+      // Format tanggal akhir
+      const endDateFormatted = giveaway.end_date ? formatDate(giveaway.end_date) : 'Tidak ditentukan';
+      
+      // Hitung sisa waktu untuk countdown
+      let timeRemaining = 'Menghitung...';
+      if (giveaway.end_date && giveaway.status === 'active') {
+          const endDateTime = new Date(giveaway.end_date).getTime();
+          const nowTime = new Date().getTime();
+          const diff = endDateTime - nowTime;
+          
+          if (diff > 0) {
+              const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+              const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+              const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+              const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+              
+              timeRemaining = `${days.toString().padStart(2, '0')}:${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+          } else {
+              timeRemaining = '00:00:00:00';
+          }
+      }
+  
+      // Gabungkan semua HTML dengan struktur FULL SCREEN TANPA SCROLL
+      const detailHtml = `
+          <div class="giveaway-detail-page">
+              <div class="giveaway-detail-header">
+                  <div class="logo-box">
+                      <img src="img/logo.png" class="logo-img" alt="logo" onerror="this.style.display='none'">
+                      <span class="logo-text">GIFT FREEBIES</span>
+                  </div>
               </div>
               
-              <div class="detail-section-title">
-                <span class="detail-section-icon">📄</span>
-                <span class="detail-section-text">Deskripsi</span>
-              </div>
-              <div class="detail-text-card">
-                ${giveaway.giveaway_text || '<em>Tidak ada deskripsi</em>'}
+              <div class="detail-content-container">
+                  <div class="detail-main-card">
+                      <div class="${statusClass}">${statusText}</div>
+                      
+                      ${mediaHtml}
+                      
+                      <!-- AREA SCROLL UNTUK KONTEN -->
+                      <div class="detail-scroll-area">
+                          <div class="detail-section-title">
+                              <span class="detail-section-icon">🎁</span>
+                              <span class="detail-section-text">Hadiah</span>
+                          </div>
+                          <div class="detail-prizes-grid">
+                              ${prizesHtml}
+                          </div>
+                          
+                          <div class="detail-section-title">
+                              <span class="detail-section-icon">📄</span>
+                              <span class="detail-section-text">Deskripsi</span>
+                          </div>
+                          <div class="detail-text-card">
+                              ${giveaway.giveaway_text || '<em>Tidak ada deskripsi</em>'}
+                          </div>
+                          
+                          <div class="detail-section-title">
+                              <span class="detail-section-icon">🔐</span>
+                              <span class="detail-section-text">Syarat</span>
+                          </div>
+                          <div class="detail-requirements-grid">
+                              ${reqHtml}
+                          </div>
+                          
+                          ${channelsHtml ? `
+                              <div class="detail-section-title">
+                                  <span class="detail-section-icon">📢</span>
+                                  <span class="detail-section-text">Channel</span>
+                              </div>
+                              ${channelsHtml}
+                          ` : ''}
+                          
+                          ${linksHtml ? `
+                              <div class="detail-section-title">
+                                  <span class="detail-section-icon">🔗</span>
+                                  <span class="detail-section-text">Tautan</span>
+                              </div>
+                              ${linksHtml}
+                          ` : ''}
+                          
+                          <!-- HANYA TAMPILKAN WAKTU BERAKHIR DAN COUNTDOWN -->
+                          <div class="detail-timer-card">
+                              <div class="detail-timer-label">Berakhir Dalam</div>
+                              <div class="detail-timer-value" id="detailCountdown">${timeRemaining}</div>
+                              <div class="detail-end-date">${endDateFormatted}</div>
+                          </div>
+                          
+                          <div class="detail-captcha-badge">
+                              <span class="detail-captcha-icon">🧩</span>
+                              <span class="detail-captcha-text ${giveaway.captcha_enabled ? 'active' : 'inactive'}">
+                                  CAPTCHA ${giveaway.captcha_enabled ? 'AKTIF' : 'NONAKTIF'}
+                              </span>
+                          </div>
+                      </div>
+                      <!-- AKHIR AREA SCROLL -->
+                  </div>
               </div>
               
-              <div class="detail-section-title">
-                <span class="detail-section-icon">🔐</span>
-                <span class="detail-section-text">Syarat</span>
+              <div class="detail-action-fixed">
+                  <button class="detail-action-btn participate" id="detailParticipateBtn">
+                      <span class="detail-action-icon">✓</span>
+                      <span>PARTISIPASI</span>
+                  </button>
+                  <button class="detail-action-btn share" id="detailShareBtn">
+                      <span class="detail-action-icon">📤</span>
+                      <span>BAGIKAN</span>
+                  </button>
               </div>
-              <div class="detail-requirements-grid">
-                ${reqHtml}
-              </div>
-              
-              ${channelsHtml ? `
-                <div class="detail-section-title">
-                  <span class="detail-section-icon">📢</span>
-                  <span class="detail-section-text">Channel</span>
-                </div>
-                ${channelsHtml}
-              ` : ''}
-              
-              ${linksHtml ? `
-                <div class="detail-section-title">
-                  <span class="detail-section-icon">🔗</span>
-                  <span class="detail-section-text">Tautan</span>
-                </div>
-                ${linksHtml}
-              ` : ''}
-              
-              <div class="detail-timer-card">
-                <div class="detail-timer-label">Berakhir Dalam</div>
-                <div class="detail-timer-value" id="detailCountdown">${timeRemaining}</div>
-                <div class="detail-end-date">${endDateFormatted}</div>
-              </div>
-              
-              <div class="detail-captcha-badge">
-                <span class="detail-captcha-icon">🧩</span>
-                <span class="detail-captcha-text ${giveaway.captcha_enabled ? 'active' : 'inactive'}">
-                  CAPTCHA ${giveaway.captcha_enabled ? 'AKTIF' : 'NONAKTIF'}
-                </span>
-              </div>
-            </div>
           </div>
-        </div>
-        
-        <div class="detail-action-fixed">
-          <button class="detail-action-btn participate" id="detailParticipateBtn">
-            <span class="detail-action-icon">✓</span>
-            <span>PARTISIPASI</span>
-          </button>
-          <button class="detail-action-btn share" id="detailShareBtn">
-            <span class="detail-action-icon">📤</span>
-            <span>BAGIKAN</span>
-          </button>
-        </div>
-      </div>
-    `;
+      `;
   
-    container.innerHTML = detailHtml;
-    container.style.display = 'block';
+      container.innerHTML = detailHtml;
+      container.style.display = 'block';
   
-    // ===== TAMBAHKAN TOMBOL BACK =====
-    const backBtn = document.createElement('button');
-    backBtn.className = 'detail-back-btn';
-    backBtn.innerHTML = '←';
-    backBtn.addEventListener('click', goBackToIndex);
+      // Mulai countdown jika ada end date
+      if (giveaway.end_date && giveaway.status === 'active') {
+          startDetailCountdown(giveaway.end_date);
+      }
   
-    const header = document.querySelector('.giveaway-detail-header');
-    if (header) {
-      header.appendChild(backBtn);
-    }
+      // Tambahkan tombol kembali di header
+      const backBtn = document.createElement('button');
+      backBtn.className = 'detail-back-btn';
+      backBtn.innerHTML = '←';
+      backBtn.addEventListener('click', goBackToIndex);
+      
+      // Cari elemen logo-box untuk menambahkan tombol kembali
+      const logoBox = document.querySelector('.giveaway-detail-header .logo-box');
+      if (logoBox) {
+          logoBox.appendChild(backBtn);
+      }
   
-    // Mulai countdown jika ada end date
-    if (giveaway.end_date && giveaway.status === 'active') {
-      startDetailCountdown(giveaway.end_date);
-    }
+      // Event listener untuk tombol partisipasi
+      const participateBtn = document.getElementById('detailParticipateBtn');
+      if (participateBtn) {
+          participateBtn.addEventListener('click', () => {
+              vibrate(15);
+              alert('Fitur partisipasi sedang dalam pengembangan.');
+          });
+      }
   
-    // Event listener untuk tombol partisipasi
-    const participateBtn = document.getElementById('detailParticipateBtn');
-    if (participateBtn) {
-      participateBtn.addEventListener('click', () => {
-        vibrate(15);
-        alert('Fitur partisipasi sedang dalam pengembangan.');
-      });
-    }
-  
-    // Event listener untuk tombol share
-    const shareBtn = document.getElementById('detailShareBtn');
-    if (shareBtn) {
-      shareBtn.addEventListener('click', () => {
-        vibrate(10);
-        shareGiveaway(window.location.href, prizes[0]);
-      });
-    }
+      // Event listener untuk tombol share
+      const shareBtn = document.getElementById('detailShareBtn');
+      if (shareBtn) {
+          shareBtn.addEventListener('click', () => {
+              vibrate(10);
+              shareGiveaway(window.location.href, prizes[0]);
+          });
+      }
   }
 
   // ==================== FUNGSI: KEMBALI KE INDEX ====================
@@ -640,17 +681,6 @@
     if (elements.profileContent) elements.profileContent.style.display = 'block';
     if (elements.giveawayButtons) elements.giveawayButtons.style.display = 'flex';
     if (elements.settingsBtn) elements.settingsBtn.style.display = 'flex';
-  
-    // ===== TAMPILKAN KEMBALI TOP CONTAINER DAN GIVEAWAY BUTTONS =====
-    const topContainer = document.querySelector('.top-container');
-    if (topContainer) {
-      topContainer.style.display = 'flex'; // Tampilkan kembali
-    }
-  
-    const giveawayButtons = document.querySelector('.giveaway-buttons');
-    if (giveawayButtons) {
-      giveawayButtons.style.display = 'flex'; // Tampilkan kembali
-    }
   
     // Hapus konten detail
     const container = elements.giveawayContent;
@@ -664,13 +694,8 @@
       clearInterval(window.detailCountdownInterval);
     }
   
-    // Hapus parameter URL tanpa reload halaman
-    const url = new URL(window.location);
-    url.searchParams.delete('search');
-    window.history.pushState({}, '', url);
-  
-    // Tampilkan kembali giveaway list
-    displayGiveaways(currentGiveawayType);
+    // Kembali ke index
+    window.location.href = 'index.html';
   }
 
   // ==================== FUNGSI: COUNTDOWN UNTUK DETAIL ====================
