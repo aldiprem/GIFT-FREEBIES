@@ -554,16 +554,13 @@
       // Gabungkan semua HTML dengan struktur dari page.css
       const detailHtml = `
           <div class="giveaway-detail-container">
-              <!-- HEADER dengan tombol back dan tombol mata -->
+              <!-- HEADER dengan tombol back (TANPA MATA) -->
               <div class="detail-header">
                   <div class="logo-box" style="background: transparent; border: none; box-shadow: none; padding: 8px 0;">
                       <img src="img/logo.png" class="logo-img" alt="logo" onerror="this.style.display='none'">
                       <span class="logo-text">GIFT FREEBIES</span>
                   </div>
-                  <div class="detail-header-right">
-                      <button class="eye-toggle-btn" id="eyeToggleBtn">👁️</button>
-                      <button class="detail-back-btn" id="backToIndexBtn">←</button>
-                  </div>
+                  <button class="detail-back-btn" id="backToIndexBtn">←</button>
               </div>
               
               <!-- MAIN CARD -->
@@ -606,41 +603,71 @@
                           </div>
                       </div>
                       
-                      <!-- CHANNEL & LINK BUTTONS (AKAN DITAMPILKAN/SEMBUNYIKAN OLEH TOMBOL MATA) -->
-                      <div id="channelLinkContainer" style="display: none;">
-                          ${channels.length > 0 || links.length > 0 ? `
-                          <div class="detail-buttons">
-                              ${channels.length > 0 ? '<button class="detail-action-btn" id="showChannelsBtn"><span class="btn-icon">📢</span><span>CHANNEL</span></button>' : ''}
-                              ${links.length > 0 ? '<button class="detail-action-btn" id="showLinksBtn"><span class="btn-icon">🔗</span><span>LINK</span></button>' : ''}
+                      <!-- CHANNEL ROW DENGAN MATA -->
+                      ${channels.length > 0 ? `
+                      <div class="channel-link-container">
+                          <div class="channel-link-row">
+                              <div class="channel-link-label channel">
+                                  <span class="icon">📢</span>
+                                  <span>CHANNEL</span>
+                              </div>
+                              <button class="eye-custom-btn" id="toggleChannelBtn">
+                                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                      <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5z" fill="white"/>
+                                      <circle cx="12" cy="12" r="3" fill="white"/>
+                                  </svg>
+                              </button>
                           </div>
-                          ` : ''}
-                          
-                          <!-- PANEL CHANNEL (AWALNYA HIDDEN) -->
-                          ${channels.length > 0 ? `
-                          <div class="detail-panel hidden" id="channelsPanel">
+                      </div>
+                      ` : ''}
+                      
+                      <!-- PANEL CHANNEL (AWALNYA HIDDEN) -->
+                      ${channels.length > 0 ? `
+                      <div class="channel-panel-container hidden" id="channelPanelContainer">
+                          <div class="detail-panel">
                               <div class="panel-header">
                                   <div class="panel-title channel">Daftar Channel</div>
-                                  <button class="panel-close" id="closeChannelsPanel">✕</button>
+                                  <button class="panel-close" id="closeChannelPanelBtn">✕</button>
                               </div>
                               <div class="panel-content" id="channelsList">
                                   ${channelsHtml}
                               </div>
                           </div>
-                          ` : ''}
-                          
-                          <!-- PANEL LINK (AWALNYA HIDDEN) -->
-                          ${links.length > 0 ? `
-                          <div class="detail-panel hidden" id="linksPanel">
+                      </div>
+                      ` : ''}
+                      
+                      <!-- LINK ROW DENGAN MATA -->
+                      ${links.length > 0 ? `
+                      <div class="channel-link-container">
+                          <div class="channel-link-row">
+                              <div class="channel-link-label link">
+                                  <span class="icon">🔗</span>
+                                  <span>LINK</span>
+                              </div>
+                              <button class="eye-custom-btn" id="toggleLinkBtn">
+                                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                      <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5z" fill="white"/>
+                                      <circle cx="12" cy="12" r="3" fill="white"/>
+                                  </svg>
+                              </button>
+                          </div>
+                      </div>
+                      ` : ''}
+                      
+                      <!-- PANEL LINK (AWALNYA HIDDEN) -->
+                      ${links.length > 0 ? `
+                      <div class="link-panel-container hidden" id="linkPanelContainer">
+                          <div class="detail-panel">
                               <div class="panel-header">
                                   <div class="panel-title link">Daftar Link</div>
-                                  <button class="panel-close" id="closeLinksPanel">✕</button>
+                                  <button class="panel-close" id="closeLinkPanelBtn">✕</button>
                               </div>
                               <div class="panel-content" id="linksList">
                                   ${linksHtml}
                               </div>
                           </div>
-                          ` : ''}
                       </div>
+                      ` : ''}
                       
                       <!-- TIMER SECTION -->
                       <div class="detail-timer">
@@ -680,45 +707,6 @@
     const backBtn = document.getElementById('backToIndexBtn');
     if (backBtn) {
       backBtn.addEventListener('click', goBackToIndex);
-    }
-  
-    // Tombol mata untuk menampilkan/menyembunyikan channel & link
-    const eyeToggleBtn = document.getElementById('eyeToggleBtn');
-    const channelLinkContainer = document.getElementById('channelLinkContainer');
-  
-    if (eyeToggleBtn && channelLinkContainer) {
-      // Cek apakah ada channel atau link
-      const hasChannels = document.getElementById('showChannelsBtn') !== null;
-      const hasLinks = document.getElementById('showLinksBtn') !== null;
-  
-      // Jika tidak ada channel dan link, sembunyikan tombol mata
-      if (!hasChannels && !hasLinks) {
-        eyeToggleBtn.style.display = 'none';
-      } else {
-        eyeToggleBtn.addEventListener('click', () => {
-          // Toggle container
-          if (channelLinkContainer.style.display === 'none') {
-            channelLinkContainer.style.display = 'block';
-            eyeToggleBtn.classList.add('active');
-          } else {
-            channelLinkContainer.style.display = 'none';
-            eyeToggleBtn.classList.remove('active');
-  
-            // Sembunyikan juga panel yang mungkin terbuka
-            const channelsPanel = document.getElementById('channelsPanel');
-            const linksPanel = document.getElementById('linksPanel');
-            const showChannelsBtn = document.getElementById('showChannelsBtn');
-            const showLinksBtn = document.getElementById('showLinksBtn');
-  
-            if (channelsPanel) channelsPanel.classList.add('hidden');
-            if (linksPanel) linksPanel.classList.add('hidden');
-            if (showChannelsBtn) showChannelsBtn.classList.remove('active');
-            if (showLinksBtn) showLinksBtn.classList.remove('active');
-          }
-  
-          vibrate(10);
-        });
-      }
     }
   
     // Expand deskripsi
@@ -765,72 +753,72 @@
       });
     }
   
-    // Tombol Channel
-    const showChannelsBtn = document.getElementById('showChannelsBtn');
-    const channelsPanel = document.getElementById('channelsPanel');
-    const closeChannelsBtn = document.getElementById('closeChannelsBtn');
+    // Tombol mata untuk Channel
+    const toggleChannelBtn = document.getElementById('toggleChannelBtn');
+    const channelPanelContainer = document.getElementById('channelPanelContainer');
+    const closeChannelPanelBtn = document.getElementById('closeChannelPanelBtn');
   
-    if (showChannelsBtn && channelsPanel) {
-      showChannelsBtn.addEventListener('click', () => {
-        // Sembunyikan panel link jika terbuka
-        const linksPanel = document.getElementById('linksPanel');
-        if (linksPanel && !linksPanel.classList.contains('hidden')) {
-          linksPanel.classList.add('hidden');
-          const showLinksBtn = document.getElementById('showLinksBtn');
-          if (showLinksBtn) showLinksBtn.classList.remove('active');
+    if (toggleChannelBtn && channelPanelContainer) {
+      toggleChannelBtn.addEventListener('click', () => {
+        // Tutup panel link jika terbuka
+        const linkPanelContainer = document.getElementById('linkPanelContainer');
+        const toggleLinkBtn = document.getElementById('toggleLinkBtn');
+  
+        if (linkPanelContainer && !linkPanelContainer.classList.contains('hidden')) {
+          linkPanelContainer.classList.add('hidden');
+          if (toggleLinkBtn) toggleLinkBtn.classList.remove('active');
         }
   
         // Toggle panel channel
-        channelsPanel.classList.toggle('hidden');
+        channelPanelContainer.classList.toggle('hidden');
   
-        // Update active state tombol
-        showChannelsBtn.classList.toggle('active');
+        // Toggle active state tombol
+        toggleChannelBtn.classList.toggle('active');
   
         vibrate(15);
       });
     }
   
-    if (closeChannelsBtn && channelsPanel) {
-      closeChannelsBtn.addEventListener('click', () => {
-        channelsPanel.classList.add('hidden');
-        if (showChannelsBtn) showChannelsBtn.classList.remove('active');
+    if (closeChannelPanelBtn && channelPanelContainer) {
+      closeChannelPanelBtn.addEventListener('click', () => {
+        channelPanelContainer.classList.add('hidden');
+        if (toggleChannelBtn) toggleChannelBtn.classList.remove('active');
       });
     }
   
-    // Tombol Link
-    const showLinksBtn = document.getElementById('showLinksBtn');
-    const linksPanel = document.getElementById('linksPanel');
-    const closeLinksBtn = document.getElementById('closeLinksBtn');
+    // Tombol mata untuk Link
+    const toggleLinkBtn = document.getElementById('toggleLinkBtn');
+    const linkPanelContainer = document.getElementById('linkPanelContainer');
+    const closeLinkPanelBtn = document.getElementById('closeLinkPanelBtn');
   
-    if (showLinksBtn && linksPanel) {
-      showLinksBtn.addEventListener('click', () => {
-        // Sembunyikan panel channel jika terbuka
-        if (channelsPanel && !channelsPanel.classList.contains('hidden')) {
-          channelsPanel.classList.add('hidden');
-          if (showChannelsBtn) showChannelsBtn.classList.remove('active');
+    if (toggleLinkBtn && linkPanelContainer) {
+      toggleLinkBtn.addEventListener('click', () => {
+        // Tutup panel channel jika terbuka
+        if (channelPanelContainer && !channelPanelContainer.classList.contains('hidden')) {
+          channelPanelContainer.classList.add('hidden');
+          if (toggleChannelBtn) toggleChannelBtn.classList.remove('active');
         }
   
         // Toggle panel link
-        linksPanel.classList.toggle('hidden');
+        linkPanelContainer.classList.toggle('hidden');
   
-        // Update active state tombol
-        showLinksBtn.classList.toggle('active');
+        // Toggle active state tombol
+        toggleLinkBtn.classList.toggle('active');
   
         vibrate(15);
       });
     }
   
-    if (closeLinksBtn && linksPanel) {
-      closeLinksBtn.addEventListener('click', () => {
-        linksPanel.classList.add('hidden');
-        if (showLinksBtn) showLinksBtn.classList.remove('active');
+    if (closeLinkPanelBtn && linkPanelContainer) {
+      closeLinkPanelBtn.addEventListener('click', () => {
+        linkPanelContainer.classList.add('hidden');
+        if (toggleLinkBtn) toggleLinkBtn.classList.remove('active');
       });
     }
   
-    // Klik pada item channel (sekarang menggunakan tag <a> jadi sudah otomatis membuka link)
+    // Klik pada item channel
     document.querySelectorAll('.channel-item').forEach(item => {
       item.addEventListener('click', function(e) {
-        // Toggle selector
         const selector = this.querySelector('.item-selector');
         if (selector) {
           selector.classList.toggle('selected');
@@ -843,7 +831,6 @@
     // Klik pada item link
     document.querySelectorAll('.link-item').forEach(item => {
       item.addEventListener('click', function(e) {
-        // Toggle selector
         const selector = this.querySelector('.item-selector');
         if (selector) {
           selector.classList.toggle('selected');
