@@ -540,7 +540,32 @@
 
   // ==================== FUNGSI: KEMBALI KE INDEX ====================
   function goBackToIndex() {
-      window.location.href = 'index.html';
+    // Tampilkan kembali elemen yang disembunyikan
+    if (elements.profileContent) elements.profileContent.style.display = 'block';
+    if (elements.giveawayButtons) elements.giveawayButtons.style.display = 'flex';
+    if (elements.settingsBtn) elements.settingsBtn.style.display = 'flex';
+  
+    // ===== TAMPILKAN KEMBALI TOP CONTAINER DAN GIVEAWAY BUTTONS =====
+    const topContainer = document.querySelector('.top-container');
+    if (topContainer) topContainer.style.display = 'flex'; // atau 'block' tergantung CSS
+  
+    const giveawayButtons = document.querySelector('.giveaway-buttons');
+    if (giveawayButtons) giveawayButtons.style.display = 'flex';
+  
+    // Hapus konten detail
+    const container = elements.giveawayContent;
+    if (container) {
+      container.innerHTML = '';
+      container.style.display = 'block';
+    }
+  
+    // Hentikan countdown
+    if (window.detailCountdownInterval) {
+      clearInterval(window.detailCountdownInterval);
+    }
+  
+    // Kembali ke index
+    window.location.href = 'index.html';
   }
 
   // ==================== FUNGSI: COUNTDOWN UNTUK DETAIL ====================
