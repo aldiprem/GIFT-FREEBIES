@@ -1288,6 +1288,101 @@ body::before {
 }
 
 /* ------------------------------------------------------------------
+   21. CHANNEL & LINK BUTTONS IN ONE ROW
+   ------------------------------------------------------------------ */
+
+.channel-link-row-container {
+  display: flex;
+  gap: 12px;
+  margin: 20px 0 16px 0;
+  padding: 0 20px;
+}
+
+.channel-link-row-container .channel-link-row {
+  flex: 1;
+  margin-bottom: 0;
+}
+
+.channel-link-row-container .channel-link-row .eye-custom-btn {
+  margin-left: auto;
+}
+
+/* Perbaikan untuk panel container */
+.channel-panel-container,
+.link-panel-container {
+  margin: 0 20px 20px 20px;
+  transition: all 0.3s ease;
+}
+
+.channel-panel-container.hidden,
+.link-panel-container.hidden {
+  display: none;
+}
+
+/* Perbaikan untuk panel item link */
+.panel-item {
+  text-decoration: none !important;
+  color: inherit !important;
+}
+
+.panel-item:hover {
+  text-decoration: none !important;
+}
+
+.panel-item:link,
+.panel-item:visited,
+.panel-item:hover,
+.panel-item:active {
+  text-decoration: none !important;
+  color: inherit !important;
+}
+
+/* Perbaikan untuk header */
+.detail-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  position: relative;
+}
+
+.detail-header .logo-box {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 8px 0 !important;
+}
+
+.detail-back-btn {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1.5px solid rgba(255, 255, 255, 0.1);
+  color: white;
+  font-size: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  flex-shrink: 0;
+}
+
+.detail-back-btn:hover {
+  background: rgba(255, 255, 255, 0.15);
+  transform: scale(1.05);
+  border-color: var(--primary-blue);
+}
+
+/* ------------------------------------------------------------------
    19. RESPONSIVE
    ------------------------------------------------------------------ */
 @media (max-width: 480px) {
