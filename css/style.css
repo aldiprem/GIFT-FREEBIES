@@ -1557,11 +1557,14 @@ em, i {
     z-index: var(--z-sticky);
 }
 
-/* Hapus style yang tidak perlu */
-.giveaway-detail-header .logo-box,
-.giveaway-detail-header .logo-text,
-.giveaway-detail-header .logo-img {
-    display: none !important;
+/* Pastikan elemen yang disembunyikan bisa ditampilkan kembali */
+.top-container[style*="display: flex"],
+.top-container[style*="display: block"] {
+  display: flex !important;
+}
+
+.giveaway-buttons[style*="display: flex"] {
+  display: flex !important;
 }
 
 .detail-back-btn:hover {
