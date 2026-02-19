@@ -1,0 +1,1003 @@
+/* ------------------------------------------------------------------
+   PAGE.CSS - GIVEAWAY DETAIL PAGE
+   ------------------------------------------------------------------ */
+/* Halaman ini khusus untuk menampilkan detail giveaway dengan ID tertentu */
+/* File: css/page.css */
+
+/* ------------------------------------------------------------------
+   1. RESET & BASE STYLES
+   ------------------------------------------------------------------ */
+*,
+*::before,
+*::after {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html {
+    font-size: 16px;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+}
+
+body {
+    font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    background: linear-gradient(135deg, #0f0f1a, #1a1a2f);
+    min-height: 100vh;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 16px;
+    position: relative;
+    overflow-x: hidden;
+    color: rgba(255, 255, 255, 0.95);
+    line-height: 1.5;
+}
+
+/* Efek Background Glow */
+body::before {
+    content: '';
+    position: fixed;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle at 30% 30%, rgba(0, 136, 255, 0.08) 0%, transparent 50%),
+                radial-gradient(circle at 70% 70%, rgba(100, 100, 255, 0.05) 0%, transparent 50%);
+    pointer-events: none;
+    z-index: -1;
+    animation: backgroundShift 30s ease infinite alternate;
+}
+
+/* ------------------------------------------------------------------
+   2. CSS VARIABLES (THEME)
+   ------------------------------------------------------------------ */
+:root {
+    --primary-blue: #0088ff;
+    --primary-blue-light: #4da6ff;
+    --primary-blue-dark: #0066cc;
+    --primary-blue-glow: rgba(0, 136, 255, 0.5);
+    
+    --text-primary: rgba(255, 255, 255, 0.95);
+    --text-secondary: rgba(255, 255, 255, 0.7);
+    --text-tertiary: rgba(255, 255, 255, 0.5);
+    --text-muted: rgba(255, 255, 255, 0.3);
+    
+    --border-glow: rgba(0, 170, 255, 0.3);
+    --border-soft: rgba(255, 255, 255, 0.08);
+    --border-hard: rgba(255, 255, 255, 0.15);
+    
+    --glass-bg: rgba(15, 25, 35, 0.25);
+    --glass-bg-dark: rgba(10, 15, 25, 0.4);
+    --glass-border: rgba(255, 255, 255, 0.08);
+    --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    
+    --transition-normal: 0.3s ease;
+    
+    --radius-md: 12px;
+    --radius-lg: 16px;
+    --radius-xl: 20px;
+    --radius-xxl: 24px;
+    --radius-xxxl: 32px;
+    --radius-pill: 999px;
+    --radius-circle: 50%;
+}
+
+/* ------------------------------------------------------------------
+   3. ANIMATIONS
+   ------------------------------------------------------------------ */
+@keyframes backgroundShift {
+    0% { transform: translate(0, 0) rotate(0deg); }
+    100% { transform: translate(-2%, -2%) rotate(1deg); }
+}
+
+@keyframes slideDown {
+    from {
+        transform: translateY(-20px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* ------------------------------------------------------------------
+   4. CONTAINER
+   ------------------------------------------------------------------ */
+.giveaway-detail-container {
+    width: 100%;
+    max-width: 480px;
+    margin: 0 auto;
+    position: relative;
+    z-index: 1;
+}
+
+/* ------------------------------------------------------------------
+   5. HEADER WITH BACK BUTTON
+   ------------------------------------------------------------------ */
+.detail-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+}
+
+.detail-header .logo-box {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex: 1;
+}
+
+.detail-header .logo-img {
+    width: 36px;
+    height: 36px;
+    object-fit: contain;
+}
+
+.detail-header .logo-text {
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    background: linear-gradient(135deg, #fff, #aaddff);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.detail-back-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: var(--radius-circle);
+    background: rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1.5px solid rgba(255, 255, 255, 0.1);
+    color: white;
+    font-size: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    margin-left: 12px;
+    flex-shrink: 0;
+}
+
+.detail-back-btn:hover {
+    background: rgba(255, 255, 255, 0.15);
+    transform: scale(1.05);
+    border-color: var(--primary-blue);
+}
+
+/* ------------------------------------------------------------------
+   6. MAIN CARD
+   ------------------------------------------------------------------ */
+.detail-card {
+    background: rgba(15, 25, 40, 0.2);
+    backdrop-filter: blur(20px) saturate(200%);
+    -webkit-backdrop-filter: blur(20px) saturate(200%);
+    border: 1.5px solid rgba(0, 170, 255, 0.25);
+    border-radius: var(--radius-xxxl);
+    overflow: hidden;
+    box-shadow: 
+        0 20px 40px -10px rgba(0, 0, 0, 0.4),
+        inset 0 1px 2px rgba(255, 255, 255, 0.15);
+    position: relative;
+}
+
+.detail-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 60%;
+    background: linear-gradient(to bottom, 
+        rgba(255, 255, 255, 0.15) 0%, 
+        rgba(255, 255, 255, 0.05) 40%, 
+        transparent 100%);
+    pointer-events: none;
+    z-index: 1;
+}
+
+.detail-card-content {
+    position: relative;
+    z-index: 2;
+    padding: 0;
+}
+
+/* ------------------------------------------------------------------
+   7. MEDIA SECTION (FOTO BORDER ATAS)
+   ------------------------------------------------------------------ */
+.detail-media {
+    width: 100%;
+    border-bottom: 1.5px solid rgba(0, 170, 255, 0.25);
+    overflow: hidden;
+    background: rgba(0, 0, 0, 0.3);
+}
+
+.detail-media-image {
+    width: 100%;
+    max-height: 200px;
+    object-fit: cover;
+    display: block;
+}
+
+.detail-media-video {
+    width: 100%;
+    max-height: 200px;
+    display: block;
+    background: black;
+}
+
+/* ------------------------------------------------------------------
+   8. CONTENT SECTIONS (PADDING UNTUK SEMUA KECUALI MEDIA)
+   ------------------------------------------------------------------ */
+.detail-section {
+    padding: 0 20px;
+}
+
+.detail-section:first-of-type {
+    margin-top: 16px;
+}
+
+/* ------------------------------------------------------------------
+   9. STATUS BADGE
+   ------------------------------------------------------------------ */
+.detail-status {
+    display: inline-block;
+    padding: 4px 16px;
+    background: rgba(0, 200, 83, 0.15);
+    border: 1.5px solid rgba(0, 200, 83, 0.4);
+    border-radius: var(--radius-pill);
+    color: #00e676;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin: 16px 20px 12px 20px;
+}
+
+.detail-status.ended {
+    background: rgba(255, 107, 107, 0.15);
+    border-color: rgba(255, 107, 107, 0.4);
+    color: #ff8a8a;
+}
+
+.detail-status.expired {
+    background: rgba(158, 158, 158, 0.15);
+    border-color: rgba(158, 158, 158, 0.4);
+    color: #bdbdbd;
+}
+
+/* ------------------------------------------------------------------
+   10. DESKRIPSI SECTION - 2 BARIS DENGAN TOMBOL EXPAND
+   ------------------------------------------------------------------ */
+.detail-description {
+    margin: 16px 0 20px 0;
+    padding: 0 20px;
+}
+
+.description-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+}
+
+.description-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: white;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.description-title::before {
+    content: '📄';
+    font-size: 18px;
+}
+
+.description-expand-btn {
+    background: rgba(255, 255, 255, 0.08);
+    border: 1.5px solid rgba(255, 255, 255, 0.1);
+    border-radius: var(--radius-pill);
+    color: white;
+    font-size: 12px;
+    font-weight: 500;
+    padding: 6px 16px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
+    letter-spacing: 0.3px;
+}
+
+.description-expand-btn:hover {
+    background: var(--primary-blue);
+    border-color: var(--primary-blue);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 136, 255, 0.3);
+}
+
+.description-content {
+    background: rgba(10, 20, 30, 0.3);
+    border: 1.5px solid rgba(255, 255, 255, 0.05);
+    border-radius: var(--radius-xl);
+    padding: 16px;
+    color: var(--text-secondary);
+    font-size: 14px;
+    line-height: 1.6;
+    word-break: break-word;
+    transition: all 0.3s ease;
+}
+
+.description-content.collapsed {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    max-height: 80px;
+}
+
+.description-content.expanded {
+    max-height: 500px;
+    overflow-y: auto;
+}
+
+.description-content::-webkit-scrollbar {
+    width: 4px;
+}
+
+.description-content::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: 4px;
+}
+
+.description-content::-webkit-scrollbar-thumb {
+    background: var(--primary-blue);
+    border-radius: 4px;
+}
+
+/* ------------------------------------------------------------------
+   11. SYARAT SECTION - SCROLL KANAN, TANPA BUBLE
+   ------------------------------------------------------------------ */
+.detail-requirements {
+    margin: 20px 0;
+    padding: 0 20px;
+}
+
+.requirements-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: white;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.requirements-title::before {
+    content: '🔐';
+    font-size: 18px;
+}
+
+.requirements-scroll {
+    overflow-x: auto;
+    overflow-y: hidden;
+    white-space: nowrap;
+    padding-bottom: 8px;
+    scrollbar-width: thin;
+    scrollbar-color: var(--primary-blue) rgba(255, 255, 255, 0.05);
+    -webkit-overflow-scrolling: touch;
+}
+
+.requirements-scroll::-webkit-scrollbar {
+    height: 4px;
+}
+
+.requirements-scroll::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 4px;
+}
+
+.requirements-scroll::-webkit-scrollbar-thumb {
+    background: var(--primary-blue);
+    border-radius: 4px;
+}
+
+.requirements-list {
+    display: inline-flex;
+    gap: 10px;
+    padding: 0 2px;
+}
+
+.requirement-item {
+    background: rgba(0, 136, 255, 0.12);
+    border: 1.5px solid rgba(0, 136, 255, 0.3);
+    border-radius: var(--radius-pill);
+    padding: 8px 18px;
+    color: white;
+    font-size: 13px;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* TANPA BUBLE - HANYA TEXT DENGAN STYLE FONT */
+.requirement-item span:first-child {
+    font-size: 14px;
+}
+
+/* ------------------------------------------------------------------
+   12. HADIAH SECTION - 2 BARIS DENGAN TOMBOL EXPAND
+   ------------------------------------------------------------------ */
+.detail-prizes {
+    margin: 20px 0;
+    padding: 0 20px;
+}
+
+.prizes-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+}
+
+.prizes-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: white;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.prizes-title::before {
+    content: '🎁';
+    font-size: 18px;
+}
+
+.prizes-expand-btn {
+    background: rgba(255, 255, 255, 0.08);
+    border: 1.5px solid rgba(255, 255, 255, 0.1);
+    border-radius: var(--radius-pill);
+    color: white;
+    font-size: 12px;
+    font-weight: 500;
+    padding: 6px 16px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
+    letter-spacing: 0.3px;
+}
+
+.prizes-expand-btn:hover {
+    background: var(--primary-blue);
+    border-color: var(--primary-blue);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 136, 255, 0.3);
+}
+
+.prizes-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    transition: all 0.3s ease;
+}
+
+.prizes-list.collapsed {
+    max-height: 90px;
+    overflow: hidden;
+}
+
+.prizes-list.expanded {
+    max-height: 500px;
+    overflow-y: auto;
+}
+
+.prizes-list.expanded::-webkit-scrollbar {
+    width: 4px;
+}
+
+.prizes-list.expanded::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: 4px;
+}
+
+.prizes-list.expanded::-webkit-scrollbar-thumb {
+    background: var(--primary-blue);
+    border-radius: 4px;
+}
+
+.prize-item {
+    background: rgba(0, 136, 255, 0.1);
+    border: 1.5px solid rgba(0, 136, 255, 0.2);
+    border-radius: var(--radius-xl);
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    transition: all 0.2s ease;
+}
+
+.prize-item:hover {
+    background: rgba(0, 136, 255, 0.15);
+    border-color: var(--primary-blue);
+    transform: translateX(5px);
+}
+
+.prize-number {
+    width: 28px;
+    height: 28px;
+    background: linear-gradient(135deg, var(--primary-blue), #4da6ff);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: 700;
+    color: white;
+    flex-shrink: 0;
+    box-shadow: 0 4px 8px rgba(0, 136, 255, 0.3);
+}
+
+/* HADIAH TANPA BUBLE - HANYA TEXT */
+.prize-text {
+    color: white;
+    font-size: 15px;
+    font-weight: 500;
+    word-break: break-word;
+    flex: 1;
+}
+
+/* ------------------------------------------------------------------
+   13. CHANNEL & LINK BUTTONS
+   ------------------------------------------------------------------ */
+.detail-buttons {
+    display: flex;
+    gap: 12px;
+    margin: 20px 0 16px 0;
+    padding: 0 20px;
+}
+
+.detail-action-btn {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 14px 0;
+    background: rgba(30, 40, 50, 0.3);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1.5px solid rgba(255, 255, 255, 0.1);
+    border-radius: var(--radius-xl);
+    color: white;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.detail-action-btn:hover {
+    transform: translateY(-2px);
+    background: rgba(40, 50, 60, 0.4);
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+.detail-action-btn.active {
+    background: rgba(0, 136, 255, 0.2);
+    border-color: var(--primary-blue);
+    color: white;
+}
+
+.detail-action-btn .btn-icon {
+    font-size: 18px;
+}
+
+/* ------------------------------------------------------------------
+   14. PANEL CHANNEL / LINK
+   ------------------------------------------------------------------ */
+.detail-panel {
+    margin: 0 20px 20px 20px;
+    background: rgba(10, 20, 30, 0.4);
+    backdrop-filter: blur(20px) saturate(200%);
+    -webkit-backdrop-filter: blur(20px) saturate(200%);
+    border: 1.5px solid rgba(0, 170, 255, 0.25);
+    border-radius: var(--radius-xxl);
+    overflow: hidden;
+    animation: slideDown 0.3s ease;
+    box-shadow: 0 15px 30px -5px rgba(0, 0, 0, 0.5);
+}
+
+.panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    background: rgba(0, 0, 0, 0.2);
+}
+
+.panel-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: white;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.panel-title.channel::before {
+    content: '📢';
+    font-size: 18px;
+}
+
+.panel-title.link::before {
+    content: '🔗';
+    font-size: 18px;
+}
+
+.panel-close {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: white;
+    font-size: 16px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+
+.panel-close:hover {
+    background: rgba(255, 107, 107, 0.3);
+    transform: rotate(90deg);
+}
+
+.panel-content {
+    max-height: 300px;
+    overflow-y: auto;
+    padding: 12px 0;
+}
+
+.panel-content::-webkit-scrollbar {
+    width: 4px;
+}
+
+.panel-content::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.panel-content::-webkit-scrollbar-thumb {
+    background: var(--primary-blue);
+    border-radius: 4px;
+}
+
+/* LIST ITEM UNTUK CHANNEL DAN LINK */
+.panel-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+.panel-item:hover {
+    background: rgba(0, 136, 255, 0.1);
+}
+
+.panel-item:last-child {
+    border-bottom: none;
+}
+
+.item-info {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    flex: 1;
+    overflow: hidden;
+}
+
+.item-icon {
+    width: 40px;
+    height: 40px;
+    background: rgba(0, 136, 255, 0.15);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    border: 1px solid rgba(0, 136, 255, 0.3);
+    flex-shrink: 0;
+}
+
+.item-details {
+    flex: 1;
+    overflow: hidden;
+}
+
+.item-title {
+    color: white;
+    font-size: 15px;
+    font-weight: 600;
+    margin-bottom: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.item-subtitle {
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 12px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.item-subtitle.channel::before {
+    content: '@';
+    color: var(--primary-blue);
+    margin-right: 2px;
+}
+
+/* TANDA LINGKARAN KOSONG UNTUK SELECTED (CEKLIS NANTI) */
+.item-selector {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    background: transparent;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 14px;
+    transition: all 0.2s ease;
+    margin-left: 12px;
+    flex-shrink: 0;
+}
+
+.item-selector.selected {
+    border-color: #10b981;
+    background: #10b981;
+}
+
+.item-selector.selected::after {
+    content: '✓';
+    color: white;
+    font-weight: bold;
+}
+
+/* LINK ITEM KHUSUS */
+.link-item .item-icon {
+    background: rgba(255, 215, 0, 0.15);
+    border-color: rgba(255, 215, 0, 0.3);
+    color: #ffd700;
+}
+
+/* ------------------------------------------------------------------
+   15. TIMER SECTION
+   ------------------------------------------------------------------ */
+.detail-timer {
+    margin: 20px 20px 24px 20px;
+    background: rgba(0, 136, 255, 0.1);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1.5px solid rgba(0, 170, 255, 0.3);
+    border-radius: var(--radius-xxl);
+    padding: 16px;
+    text-align: center;
+    box-shadow: 
+        0 10px 20px -8px rgba(0, 0, 0, 0.4),
+        inset 0 1px 2px rgba(255, 255, 255, 0.2);
+}
+
+.timer-label {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.6);
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    margin-bottom: 8px;
+}
+
+.timer-countdown {
+    font-size: 32px;
+    font-weight: 800;
+    background: linear-gradient(135deg, #fff, #aaddff);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    font-family: 'Inter', 'SF Mono', 'Fira Code', monospace;
+    letter-spacing: 2px;
+    animation: timerPulse 2s ease infinite;
+    line-height: 1.2;
+    margin-bottom: 8px;
+}
+
+@keyframes timerPulse {
+    0%, 100% { text-shadow: 0 0 15px rgba(0, 136, 255, 0.3); }
+    50% { text-shadow: 0 0 25px rgba(0, 136, 255, 0.6); }
+}
+
+.timer-end-date {
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.5);
+    padding-top: 8px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.timer-end-date span {
+    color: white;
+    font-weight: 500;
+    margin-left: 4px;
+}
+
+/* ------------------------------------------------------------------
+   16. ACTION BUTTONS FIXED
+   ------------------------------------------------------------------ */
+.detail-actions-fixed {
+    display: flex;
+    gap: 12px;
+    margin-top: 20px;
+    padding: 0 20px 16px 20px;
+}
+
+.detail-actions-fixed .btn {
+    flex: 1;
+    padding: 16px 0;
+    border: none;
+    border-radius: var(--radius-pill);
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    position: relative;
+    overflow: hidden;
+    letter-spacing: 0.5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.btn-participate {
+    background: linear-gradient(135deg, #0088ff, #6c5ce7);
+    color: white;
+    box-shadow: 0 8px 20px rgba(0, 136, 255, 0.4);
+}
+
+.btn-participate:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 28px rgba(0, 136, 255, 0.6);
+}
+
+.btn-share {
+    background: rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1.5px solid rgba(255, 255, 255, 0.15);
+    color: white;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.btn-share:hover {
+    background: rgba(255, 255, 255, 0.15);
+    transform: translateY(-3px);
+    border-color: rgba(255, 255, 255, 0.3);
+}
+
+/* ------------------------------------------------------------------
+   17. EMPTY STATE & LOADING
+   ------------------------------------------------------------------ */
+.empty-message {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--text-muted);
+    font-size: 15px;
+}
+
+.loading-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 20px;
+}
+
+.loading-state .spinner {
+    width: 48px;
+    height: 48px;
+    border: 3px solid rgba(255, 255, 255, 0.05);
+    border-top: 3px solid var(--primary-blue);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-bottom: 16px;
+}
+
+.loading-state p {
+    color: var(--text-secondary);
+    font-size: 15px;
+}
+
+/* ------------------------------------------------------------------
+   18. UTILITY CLASSES
+   ------------------------------------------------------------------ */
+.hidden {
+    display: none !important;
+}
+
+.text-gradient {
+    background: linear-gradient(135deg, #fff, #aaddff);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+/* ------------------------------------------------------------------
+   19. RESPONSIVE
+   ------------------------------------------------------------------ */
+@media (max-width: 480px) {
+    body {
+        padding: 12px;
+    }
+    
+    .timer-countdown {
+        font-size: 28px;
+    }
+    
+    .detail-actions-fixed {
+        padding: 0 16px 16px 16px;
+    }
+    
+    .detail-actions-fixed .btn {
+        padding: 14px 0;
+        font-size: 14px;
+    }
+}
+
+@media (max-width: 380px) {
+    .timer-countdown {
+        font-size: 24px;
+    }
+    
+    .detail-action-btn {
+        font-size: 13px;
+        padding: 12px 0;
+    }
+    
+    .item-title {
+        font-size: 14px;
+    }
+    
+    .item-subtitle {
+        font-size: 11px;
+    }
+}
