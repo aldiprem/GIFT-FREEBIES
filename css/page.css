@@ -985,7 +985,93 @@ body::before {
 }
 
 /* ------------------------------------------------------------------
-   19. RESPONSIVE
+   19. ADDITIONAL FIXES
+   ------------------------------------------------------------------ */
+
+/* Hilangkan garis bawah biru pada link di panel */
+.detail-panel a.panel-item,
+.detail-panel a.panel-item:link,
+.detail-panel a.panel-item:visited,
+.detail-panel a.panel-item:hover,
+.detail-panel a.panel-item:active {
+  text-decoration: none !important;
+  color: inherit;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+  transition: all 0.2s ease;
+  cursor: pointer;
+  width: 100%;
+}
+
+.detail-panel a.panel-item:hover {
+  background: rgba(0, 136, 255, 0.1);
+  text-decoration: none !important;
+}
+
+.detail-panel a.panel-item:last-child {
+  border-bottom: none;
+}
+
+/* Style untuk tombol dengan ikon mata */
+.eye-toggle-btn {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1.5px solid rgba(255, 255, 255, 0.1);
+  color: white;
+  font-size: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  margin-left: 12px;
+  flex-shrink: 0;
+}
+
+.eye-toggle-btn:hover {
+  background: rgba(255, 255, 255, 0.15);
+  transform: scale(1.05);
+  border-color: var(--primary-blue);
+}
+
+.eye-toggle-btn.active {
+  background: rgba(0, 136, 255, 0.2);
+  border-color: var(--primary-blue);
+  color: white;
+}
+
+/* Perbaikan untuk header detail */
+.detail-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  position: relative;
+}
+
+.detail-header .logo-box {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+}
+
+.detail-header-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* ------------------------------------------------------------------
+   20. RESPONSIVE
    ------------------------------------------------------------------ */
 @media (max-width: 480px) {
     body {
