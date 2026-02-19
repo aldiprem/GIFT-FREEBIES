@@ -9,6 +9,8 @@ import threading
 from config import Config
 from database import Database
 from utils import log_info, log_error, get_jakarta_time
+import time
+from datetime import datetime, timedelta
 import pytz
 import random
 import string
@@ -138,8 +140,6 @@ def generate_giveaway_id():
     return ''.join(random.choice(characters) for _ in range(25))
 
 def calculate_end_time(duration_value, duration_unit):
-    """Menghitung waktu akhir berdasarkan durasi"""
-    from datetime import datetime, timedelta
     jakarta_tz = pytz.timezone('Asia/Jakarta')
     now = datetime.now(jakarta_tz)
     
@@ -157,6 +157,228 @@ def calculate_end_time(duration_value, duration_unit):
         end_time = now + timedelta(hours=24)
     
     return end_time.strftime('%Y-%m-%d %H:%M:%S')
+
+def update_expired_giveaways():
+    """Background task untuk mengupdate giveaway yang sudah expired"""
+    while True:
+        try:
+            # Cek setiap 60 detik
+            time.sleep(60)
+            
+            # Dapatkan koneksi database
+            current_db = get_db()
+            if not current_db:
+                continue
+                
+            jakarta_tz = pytz.timezone('Asia/Jakarta')
+            now = datetime.now(jakarta_tz).strftime('%Y-%m-%d %H:%M:%S')
+            
+            log_info(f"⏰ Checking for expired giveaways at {now}")
+            
+            cursor = current_db.get_cursor()
+            
+            # Cari giveaway dengan status 'active' yang sudah melewati end_date
+            cursor.execute("""
+                SELECT giveaway_id FROM giveaways 
+                WHERE status = 'active' 
+                AND end_date IS NOT NULL 
+                AND end_date < ?
+            """, (now,))
+            
+            expired_giveaways = cursor.fetchall()
+            
+            if expired_giveaways:
+                log_info(f"📦 Found {len(expired_giveaways)} expired giveaways")
+                
+                # Update status menjadi 'ended'
+                for giveaway in expired_giveaways:
+                    giveaway_id = giveaway['giveaway_id']
+                    cursor.execute("""
+                        UPDATE giveaways 
+                        SET status = 'ended', updated_at = ? 
+                        WHERE giveaway_id = ?
+                    """, (now, giveaway_id))
+                    
+                    log_info(f"✅ Updated giveaway {giveaway_id} to ended")
+                
+                current_db.conn.commit()
+            
+            cursor.close()
+            
+        except Exception as e:
+            log_error(f"❌ Error in update_expired_giveaways: {e}")
+
+def start_background_tasks():
+    """Memulai semua background tasks"""
+    thread = threading.Thread(target=update_expired_giveaways, daemon=True)
+    thread.start()
+    log_info("✅ Background task started: update_expired_giveaways")
+
+@giveaways_bp.route('/update-expired', methods=['POST'])
+def manually_update_expired():
+    """Endpoint untuk manual update giveaway yang expired"""
+    try:
+        current_db = get_db()
+        
+        jakarta_tz = pytz.timezone('Asia/Jakarta')
+        now = datetime.now(jakarta_tz).strftime('%Y-%m-%d %H:%M:%S')
+        
+        cursor = current_db.get_cursor()
+        
+        # Cari giveaway dengan status 'active' yang sudah melewati end_date
+        cursor.execute("""
+            SELECT giveaway_id, end_date FROM giveaways 
+            WHERE status = 'active' 
+            AND end_date IS NOT NULL 
+            AND end_date < ?
+        """, (now,))
+        
+        expired_giveaways = cursor.fetchall()
+        
+        updated_count = 0
+        for giveaway in expired_giveaways:
+            giveaway_id = giveaway['giveaway_id']
+            cursor.execute("""
+                UPDATE giveaways 
+                SET status = 'ended', updated_at = ? 
+                WHERE giveaway_id = ?
+            """, (now, giveaway_id))
+            updated_count += 1
+        
+        if updated_count > 0:
+            current_db.conn.commit()
+        
+        cursor.close()
+        
+        return jsonify({
+            'success': True,
+            'message': f'Updated {updated_count} expired giveaways',
+            'updated_count': updated_count,
+            'timestamp': now
+        })
+        
+    except Exception as e:
+        log_error(f"Error updating expired giveaways: {e}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+@giveaways_bp.route('/check-expired', methods=['GET'])
+def check_expired_giveaways():
+    """Endpoint untuk mengecek giveaway yang sudah expired (tanpa update)"""
+    try:
+        current_db = get_db()
+        
+        jakarta_tz = pytz.timezone('Asia/Jakarta')
+        now = datetime.now(jakarta_tz).strftime('%Y-%m-%d %H:%M:%S')
+        
+        cursor = current_db.get_cursor()
+        
+        # Cari giveaway dengan status 'active' yang sudah melewati end_date
+        cursor.execute("""
+            SELECT giveaway_id, end_date, prizes, creator_username 
+            FROM giveaways 
+            WHERE status = 'active' 
+            AND end_date IS NOT NULL 
+            AND end_date < ?
+            ORDER BY end_date DESC
+        """, (now,))
+        
+        expired_giveaways = cursor.fetchall()
+        cursor.close()
+        
+        result = []
+        for g in expired_giveaways:
+            result.append({
+                'giveaway_id': g['giveaway_id'],
+                'end_date': g['end_date'],
+                'prizes': g['prizes'],
+                'creator_username': g['creator_username']
+            })
+        
+        return jsonify({
+            'success': True,
+            'count': len(result),
+            'expired_giveaways': result,
+            'current_time': now
+        })
+        
+    except Exception as e:
+        log_error(f"Error checking expired giveaways: {e}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+        
+@giveaways_bp.route('/<giveaway_id>/check-status', methods=['POST'])
+def check_and_update_giveaway_status(giveaway_id):
+    """Cek dan update status single giveaway jika expired"""
+    try:
+        current_db = get_db()
+        
+        # Ambil data giveaway
+        giveaway = current_db.get_giveaway(giveaway_id)
+        
+        if not giveaway:
+            return jsonify({
+                'success': False,
+                'error': 'Giveaway not found'
+            }), 404
+        
+        # Jika sudah ended, tidak perlu update
+        if giveaway['status'] == 'ended':
+            return jsonify({
+                'success': True,
+                'message': 'Giveaway already ended',
+                'status': 'ended'
+            })
+        
+        # Jika tidak ada end_date
+        if not giveaway['end_date']:
+            return jsonify({
+                'success': True,
+                'message': 'Giveaway has no end date',
+                'status': giveaway['status']
+            })
+        
+        # Cek apakah sudah expired
+        jakarta_tz = pytz.timezone('Asia/Jakarta')
+        now = datetime.now(jakarta_tz)
+        end_date = datetime.strptime(giveaway['end_date'], '%Y-%m-%d %H:%M:%S')
+        end_date = jakarta_tz.localize(end_date) if end_date.tzinfo is None else end_date
+        
+        if now > end_date:
+            # Update status
+            cursor = current_db.get_cursor()
+            cursor.execute("""
+                UPDATE giveaways 
+                SET status = 'ended', updated_at = ? 
+                WHERE giveaway_id = ?
+            """, (now.strftime('%Y-%m-%d %H:%M:%S'), giveaway_id))
+            current_db.conn.commit()
+            cursor.close()
+            
+            return jsonify({
+                'success': True,
+                'message': 'Giveaway expired and updated to ended',
+                'status': 'ended',
+                'end_date': giveaway['end_date']
+            })
+        else:
+            return jsonify({
+                'success': True,
+                'message': 'Giveaway still active',
+                'status': 'active',
+                'end_date': giveaway['end_date']
+            })
+        
+    except Exception as e:
+        log_error(f"Error checking giveaway status: {e}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
 
 # ==================== ROOT ENDPOINT ====================
 @app.route('/', methods=['GET'])
@@ -1086,8 +1308,12 @@ if __name__ == "__main__":
     ║  🗄️  Database: SQLite3                    ║
     ║  👥 Feature: Users & Giveaways            ║
     ║  🔄 Auto-reconnect: Active                ║
+    ║  ⏰ Auto-expire: Active (every 60s)       ║
     ╚══════════════════════════════════════════╝
     """)
+    
+    # Start background tasks
+    start_background_tasks()
     
     port = Config.PORT
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -1104,9 +1330,13 @@ if __name__ == "__main__":
     print(f"🔍 Health Check: http://{Config.HOST}:{port}/api/health")
     print(f"👥 Users endpoint: http://{Config.HOST}:{port}/api/users")
     print(f"🎁 Giveaways endpoint: http://{Config.HOST}:{port}/api/giveaways")
+    print(f"   • POST /api/giveaways/update-expired - Update all expired giveaways")
+    print(f"   • GET /api/giveaways/check-expired - Check expired giveaways")
+    print(f"   • POST /api/giveaways/<id>/check-status - Check single giveaway")
     print(f"💬 Chat endpoint: http://{Config.HOST}:{port}/api/chatid")
     print(f"   • GET /api/chatid/check-role/<username>/<user_id> - Check if user is admin/owner")
     print(f"🔄 Auto-reconnect: Active (cek setiap 2 detik)")
+    print(f"⏰ Auto-expire: Active (cek setiap 60 detik)")
     print(f"\n📌 Press CTRL+C to stop\n")
     
     app.run(host=Config.HOST, port=port, debug=Config.DEBUG, threaded=True)
