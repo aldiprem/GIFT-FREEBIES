@@ -1207,12 +1207,12 @@
       });
     }
 
-    // Tombol share (hanya untuk active)
+    // Di dalam setupDetailEventListeners, bagian tombol share:
     const shareBtn = document.getElementById('detailShareBtn');
     if (shareBtn) {
       shareBtn.addEventListener('click', () => {
         vibrate(10);
-        shareGiveaway(window.location.href, prizes[0] || 'Giveaway');
+        shareGiveaway(giveaway.giveaway_id || giveaway.id, prizes[0] || 'Giveaway');
       });
     }
   }
@@ -1300,12 +1300,56 @@
       window.detailCountdownInterval = interval;
   }
 
-  function shareGiveaway(url, prize) {
-    const text = `Ikuti giveaway ini: ${prize || 'Giveaway'} - ${url}`;
-    if (navigator.share) {
-      navigator.share({ title: 'GiftFreebies Giveaway', text: text, url: url }).catch(() => {});
+  // ==================== FUNGSI: SHARE GIVEAWAY ====================
+  function shareGiveaway(giveawayId, prize) {
+    vibrate(10);
+
+    const botUsername = 'freebiestbot';
+    const miniAppUrl = `https://t.me/${botUsername}/giveaway?startapp=${giveawayId}`;
+  
+    const text = `🎁 Ikuti giveaway ini dan menangkan hadiah menarik!\n\n${prize || 'Giveaway'}`;
+  
+    const telegramShareUrl = `https://t.me/share/url?url=${encodeURIComponent(miniAppUrl)}&text=${encodeURIComponent(text)}`;
+  
+    console.log('Sharing giveaway with Mini App link:', miniAppUrl);
+  
+    if (window.Telegram?.WebApp) {
+      const tg = window.Telegram.WebApp;
+  
+      try {
+        if (tg.switchInlineQuery) {
+          tg.switchInlineQuery(`${giveawayId}`, ['users', 'groups', 'channels']);
+          showToast('Pilih chat untuk membagikan giveaway...', 'success', 1500);
+        }
+        else if (tg.openTelegramLink) {
+          tg.openTelegramLink(telegramShareUrl);
+          showToast('Membuka Telegram untuk berbagi...', 'success', 1500);
+        }
+        else if (tg.openLink) {
+          tg.openLink(telegramShareUrl);
+          showToast('Membuka Telegram untuk berbagi...', 'success', 1500);
+        }
+        else {
+          window.open(telegramShareUrl, '_blank');
+          showToast('Berhasil membuka link share', 'success', 1500);
+        }
+      } catch (error) {
+        console.error('Error sharing giveaway:', error);
+        window.open(telegramShareUrl, '_blank');
+      }
     } else {
-      navigator.clipboard.writeText(url).then(() => alert('Link giveaway disalin!')).catch(() => {});
+      if (navigator.share) {
+        navigator.share({
+          title: 'GiftFreebies Giveaway',
+          text: text,
+          url: miniAppUrl
+        }).catch((error) => {
+          console.log('Share cancelled or failed:', error);
+          window.open(telegramShareUrl, '_blank');
+        });
+      } else {
+        window.open(telegramShareUrl, '_blank');
+      }
     }
   }
 
