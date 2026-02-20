@@ -378,12 +378,19 @@
           (giveaway.prizes[0] || 'Giveaway') :
           (giveaway.prizes || 'Giveaway');
     
-        // === TAMBAHKAN: Hitung total hadiah ===
-        const totalPrizes = Array.isArray(giveaway.prizes) ? giveaway.prizes.length : 1;
-        const prizeCountText = totalPrizes > 1 ? `${totalPrizes} hadiah` : '1 hadiah';
-    
-        // PERBAIKAN: participants_count adalah jumlah peserta giveaway
+        // PERBAIKAN: participants_count adalah jumlah peserta giveaway, bukan jumlah anggota channel
+        // Jika API mengirim participants_count di level giveaway, gunakan itu
+        // Jika tidak ada, gunakan 0
         const participants = giveaway.participants_count || 0;
+    
+        // PERBAIKAN: Hitung total anggota channel jika ingin ditampilkan
+        // Tapi ini bukan jumlah peserta giveaway!
+        let totalChannelMembers = 0;
+        if (giveaway.channels && Array.isArray(giveaway.channels)) {
+          giveaway.channels.forEach(ch => {
+            totalChannelMembers += ch.participants_count || 0;
+          });
+        }
     
         // Ambil deskripsi giveaway (ambil 100 karakter pertama)
         const description = giveaway.giveaway_text || 'Tidak ada deskripsi';
@@ -396,64 +403,36 @@
         const endDate = giveaway.end_date ? new Date(giveaway.end_date) : null;
         const isExpired = endDate && now > endDate;
     
-        // === TAMBAHKAN: Format waktu tersisa untuk active giveaway ===
-        let timeRemainingText = '';
-        if (type === 'active' && !isExpired && giveaway.end_date) {
-          const diff = endDate - now;
-    
-          if (diff > 0) {
-            const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-            const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-            const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-    
-            if (days > 0) {
-              timeRemainingText = `${days} hari`;
-            } else if (hours > 0) {
-              timeRemainingText = `${hours} jam`;
-            } else if (minutes > 0) {
-              timeRemainingText = `${minutes} menit`;
-            } else {
-              timeRemainingText = 'Beberapa detik';
-            }
-          }
-        }
-    
+        // PERBAIKAN: Jika status dari API adalah 'active' tapi sudah expired,
+        // maka harus masuk ke tab ENDED, bukan ACTIVE
         if (type === 'active') {
           // Hanya tampilkan yang benar-benar active (belum expired)
           if (!isExpired) {
             html += `
-              <div class="giveaway-item" data-id="${giveawayId}">
-                <!-- TAMBAHKAN: Badge ACTIVE di pojok kanan atas -->
-                <div class="active-badge">AKTIF</div>
-                <h3>${escapeHtml(prizeText)}</h3>
-                <p class="giveaway-description">${escapeHtml(shortDescription)}</p>
-                <div class="giveaway-stats">
-                  <!-- UBAH: Tambahkan badge total hadiah -->
-                  <span class="stat-badge">🎁 ${prizeCountText}</span>
-                  <span class="stat-badge">👥 ${participants} peserta</span>
-                  <!-- TAMBAHKAN: Badge waktu tersisa jika ada -->
-                  ${timeRemainingText ? `<span class="stat-badge timer-badge">⏱️ ${timeRemainingText}</span>` : ''}
-                </div>
-              </div>
-            `;
+                        <div class="giveaway-item" data-id="${giveawayId}">
+                            <h3>${escapeHtml(prizeText)}</h3>
+                            <p class="giveaway-description">${escapeHtml(shortDescription)}</p>
+                            <div class="giveaway-stats">
+                                <span class="stat-badge">👥 ${participants} peserta</span>
+                            </div>
+                        </div>
+                    `;
           }
         } else if (type === 'ended') {
           // Hanya tampilkan yang sudah expired atau status ended
           if (isExpired || giveaway.status === 'ended') {
             const winners = giveaway.winners_count || 0;
             html += `
-              <div class="giveaway-item ended" data-id="${giveawayId}">
-                <h3>${escapeHtml(prizeText)}</h3>
-                <p class="giveaway-description">${escapeHtml(shortDescription)}</p>
-                <div class="giveaway-stats">
-                  <!-- UBAH: Tambahkan badge total hadiah -->
-                  <span class="stat-badge">🎁 ${prizeCountText}</span>
-                  <span class="stat-badge">👥 ${participants} peserta</span>
-                  <span class="stat-badge winner-badge">🏆 ${winners} pemenang</span>
-                </div>
-                <div class="ended-badge">SELESAI</div>
-              </div>
-            `;
+                        <div class="giveaway-item ended" data-id="${giveawayId}">
+                            <h3>${escapeHtml(prizeText)}</h3>
+                            <p class="giveaway-description">${escapeHtml(shortDescription)}</p>
+                            <div class="giveaway-stats">
+                                <span class="stat-badge">👥 ${participants} peserta</span>
+                                <span class="stat-badge winner-badge">🏆 ${winners} pemenang</span>
+                            </div>
+                            <div class="ended-badge">SELESAI</div>
+                        </div>
+                    `;
           }
         }
       });
