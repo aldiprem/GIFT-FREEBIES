@@ -431,44 +431,60 @@
           const prizesList = Array.isArray(giveaway.prizes) ? giveaway.prizes : [];
           const topPrizes = prizesList.slice(0, 3);
       
-          // Buat HTML untuk daftar hadiah (vertikal)
+          // Tentukan warna untuk nomor hadiah berdasarkan urutan
+          const getPrizeColor = (index) => {
+            if (index === 0) return 'gold'; // #1 Emas
+            if (index === 1) return 'silver'; // #2 Perak
+            if (index === 2) return 'bronze'; // #3 Perunggu
+            return 'default';
+          };
+      
+          // Buat HTML untuk daftar hadiah (vertikal) dengan warna berbeda
           let prizesHtml = '';
           if (topPrizes.length > 0) {
             topPrizes.forEach((prize, idx) => {
+              const prizeColor = getPrizeColor(idx);
               prizesHtml += `
                 <div class="ended-prize-item">
-                  <span class="ended-prize-number">#${idx + 1}</span>
+                  <span class="ended-prize-number ended-prize-${prizeColor}">#${idx + 1}</span>
                   <span class="ended-prize-text">${escapeHtml(prize)}</span>
                 </div>
               `;
             });
           } else {
-            prizesHtml = `<div class="ended-prize-item">${escapeHtml(prizeText)}</div>`;
+            prizesHtml = `<div class="ended-prize-item">
+              <span class="ended-prize-number ended-prize-default">#1</span>
+              <span class="ended-prize-text">${escapeHtml(prizeText)}</span>
+            </div>`;
           }
+      
+          // Buat ID yang dipotong (8 karakter pertama + ...)
+          const shortId = giveawayId.length > 10 ?
+            giveawayId.substring(0, 8) + '...' :
+            giveawayId;
       
           html += `
             <div class="giveaway-item ended" data-id="${giveawayId}">
-              <!-- Header dengan ID dan badge SELESAI -->
+              <!-- Header dengan ID (bisa dicopy) dan badge SELESAI -->
               <div class="ended-header">
-                <span class="ended-id">#${giveawayId.substring(0, 8)}</span>
+                <span class="ended-id" onclick="copyToClipboard('${giveawayId}')" title="Klik untuk copy ID">#${shortId}</span>
                 <span class="ended-badge-ended">SELESAI</span>
               </div>
               
-              <h3>${escapeHtml(prizeText)}</h3>
+              <!-- HILANGKAN <h3> (nama hadiah utama) -->
               
-              <!-- Daftar Hadiah (vertikal) -->
+              <!-- Daftar Hadiah (vertikal) dengan warna medal -->
               <div class="ended-prizes-list">
                 ${prizesHtml}
               </div>
               
-              <!-- Stats (total hadiah dan partisipasi) di tengah -->
-              <div class="ended-stats-center">
-                <div class="ended-stat-item-center">
+              <!-- Stats (total hadiah dan partisipasi) di baris atas, sejajar dengan header -->
+              <div class="ended-stats-row">
+                <div class="ended-stat-item-small">
                   <span class="ended-stat-icon">🎁</span>
                   <span class="ended-stat-value">${totalPrizes}</span>
                 </div>
-                <div class="ended-stat-divider-vertical"></div>
-                <div class="ended-stat-item-center">
+                <div class="ended-stat-item-small">
                   <span class="ended-stat-icon">👥</span>
                   <span class="ended-stat-value">${participants}</span>
                 </div>
@@ -497,7 +513,41 @@
       });
     });
   }
+
+  // ==================== FUNGSI COPY ID ====================
+  window.copyToClipboard = function(text) {
+    // Gunakan API Clipboard modern
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(() => {
+        showToast('✅ ID Giveaway berhasil dicopy!', 'success', 1500);
+      }).catch(() => {
+        // Fallback untuk yang gagal
+        fallbackCopy(text);
+      });
+    } else {
+      // Fallback untuk browser lama
+      fallbackCopy(text);
+    }
+  };
   
+  function fallbackCopy(text) {
+    const textarea = document.createElement('textarea');
+    textarea.value = text;
+    textarea.style.position = 'fixed';
+    textarea.style.opacity = '0';
+    document.body.appendChild(textarea);
+    textarea.select();
+  
+    try {
+      document.execCommand('copy');
+      showToast('✅ ID Giveaway berhasil dicopy!', 'success', 1500);
+    } catch (err) {
+      showToast('❌ Gagal menyalin ID', 'error', 1500);
+    }
+  
+    document.body.removeChild(textarea);
+  }
+
   // ==================== FUNGSI: RENDER GIVEAWAY DETAIL ====================
   async function renderGiveawayDetail(giveaway) {
       // Sembunyikan elemen profil dan tombol giveaway
