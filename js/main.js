@@ -37,176 +37,172 @@
   // ==================== STATE ====================
   let currentUser = null;
   let currentGiveawayType = 'active';
-  let allGiveaways = { active: [], ended: [] };
-  let currentUser = null;
-  let currentGiveawayType = 'active';
-  let allGiveaways = { active: [], ended: [] };
-
-  // ==================== GUEST USER DATA ====================
-  const guestUser = {
-    id: 999999999,
-    first_name: 'Guest',
-    last_name: 'User',
-    username: 'guest',
-    language_code: 'id',
-    is_premium: false,
-    total_participations: 0,
-    total_wins: 0
-  };
-
-  // ==================== FUNGSI UTILITY ====================
-  function showError(msg, isDetailError = false) {
-    vibrate(30);
-    if (elements.loading) elements.loading.style.display = 'none';
-    if (elements.error) {
-      elements.error.style.display = 'flex';
-      const errorDiv = elements.error.querySelector('div');
-      if (errorDiv) errorDiv.textContent = `❌ ${msg}`;
+    let allGiveaways = { active: [], ended: [] };
+  
+    // ==================== GUEST USER DATA ====================
+    const guestUser = {
+      id: 999999999,
+      first_name: 'Guest',
+      last_name: 'User',
+      username: 'guest',
+      language_code: 'id',
+      is_premium: false,
+      total_participations: 0,
+      total_wins: 0
+    };
+  
+    // ==================== FUNGSI UTILITY ====================
+    function showError(msg, isDetailError = false) {
+      vibrate(30);
+      if (elements.loading) elements.loading.style.display = 'none';
+      if (elements.error) {
+        elements.error.style.display = 'flex';
+        const errorDiv = elements.error.querySelector('div');
+        if (errorDiv) errorDiv.textContent = `❌ ${msg}`;
+      }
+      if (isDetailError && elements.profileContent) {
+        elements.profileContent.style.display = 'none';
+      }
     }
-    if (isDetailError && elements.profileContent) {
-      elements.profileContent.style.display = 'none';
+  
+    function showProfile() {
+      if (elements.loading) elements.loading.style.display = 'none';
+      if (elements.error) elements.error.style.display = 'none';
+      if (elements.profileContent) elements.profileContent.style.display = 'block';
+      if (elements.giveawayButtons) elements.giveawayButtons.style.display = 'flex';
     }
-  }
-
-  function showProfile() {
-    if (elements.loading) elements.loading.style.display = 'none';
-    if (elements.error) elements.error.style.display = 'none';
-    if (elements.profileContent) elements.profileContent.style.display = 'block';
-    if (elements.giveawayButtons) elements.giveawayButtons.style.display = 'flex';
-  }
-
-  function generateAvatarUrl(name) {
-    if (!name) return 'https://ui-avatars.com/api/?name=U&size=120&background=1e88e5&color=fff';
-    return `https://ui-avatars.com/api/?name=${encodeURIComponent(name.charAt(0).toUpperCase())}&size=120&background=1e88e5&color=fff`;
-  }
-
-  function addPremiumIndicator(isPremium) {
-    if (!elements.profilePhotoWrapper) return;
-    const oldIndicator = elements.profilePhotoWrapper.querySelector('.premium-indicator, .free-indicator');
-    if (oldIndicator) oldIndicator.remove();
-    const indicator = document.createElement('div');
-    indicator.className = isPremium ? 'premium-indicator' : 'free-indicator';
-    elements.profilePhotoWrapper.appendChild(indicator);
-  }
-
-  function formatDate(dateString) {
-    if (!dateString) return '-';
-    try {
-      const date = new Date(dateString);
-      return date.toLocaleString('id-ID', {
-        year: 'numeric', month: 'short', day: 'numeric',
-        hour: '2-digit', minute: '2-digit'
-      });
-    } catch (e) {
-      return dateString;
+  
+    function generateAvatarUrl(name) {
+      if (!name) return 'https://ui-avatars.com/api/?name=U&size=120&background=1e88e5&color=fff';
+      return `https://ui-avatars.com/api/?name=${encodeURIComponent(name.charAt(0).toUpperCase())}&size=120&background=1e88e5&color=fff`;
     }
-  }
-
-  function formatTimeRemaining(endDate) {
-    if (!endDate) return 'Tidak terbatas';
-    
-    const now = new Date();
-    const end = new Date(endDate);
-    const diff = end - now;
-    
-    if (diff <= 0) return 'Berakhir';
-    
-    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-    const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-    
-    if (days > 0) return `${days} hari`;
-    if (hours > 0) return `${hours} jam`;
-    if (minutes > 0) return `${minutes} menit`;
-    return 'Beberapa detik';
-  }
-
-  function escapeHtml(text) {
-    if (!text) return '';
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
-  }
-
-  /**
-   * Show toast notification
-   */
-  function showToast(message, type = 'info', duration = 2000) {
-    // Cek apakah sudah ada container toast
-    let toastContainer = document.querySelector('.toast-container');
-    
-    if (!toastContainer) {
-      toastContainer = document.createElement('div');
-      toastContainer.className = 'toast-container';
-      toastContainer.style.cssText = `
-        position: fixed;
-        bottom: 20px;
-        left: 20px;
-        right: 20px;
-        z-index: 9999;
-        display: flex;
-        flex-direction: column;
-        gap: 10px;
-        pointer-events: none;
-      `;
-      document.body.appendChild(toastContainer);
+  
+    function addPremiumIndicator(isPremium) {
+      if (!elements.profilePhotoWrapper) return;
+      const oldIndicator = elements.profilePhotoWrapper.querySelector('.premium-indicator, .free-indicator');
+      if (oldIndicator) oldIndicator.remove();
+      const indicator = document.createElement('div');
+      indicator.className = isPremium ? 'premium-indicator' : 'free-indicator';
+      elements.profilePhotoWrapper.appendChild(indicator);
     }
-    
-    const toast = document.createElement('div');
-    toast.className = `toast toast-${type}`;
-    toast.style.cssText = `
-      background: ${type === 'success' ? '#10b981' : type === 'error' ? '#ef4444' : type === 'warning' ? '#f59e0b' : '#3b82f6'};
-      color: white;
-      padding: 12px 16px;
-      border-radius: 12px;
-      font-size: 14px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-      animation: slideUp 0.3s ease;
-      pointer-events: auto;
-      text-align: center;
-    `;
-    toast.textContent = message;
-    
-    toastContainer.appendChild(toast);
-    
-    setTimeout(() => {
-      toast.style.animation = 'fadeOut 0.3s ease';
-      setTimeout(() => {
-        toast.remove();
-        if (toastContainer.children.length === 0) {
-          toastContainer.remove();
-        }
-      }, 300);
-    }, duration);
-  }
-
-  // Tambahkan CSS animations jika belum ada
-  if (!document.querySelector('#toast-styles')) {
-    const style = document.createElement('style');
-    style.id = 'toast-styles';
-    style.textContent = `
-      @keyframes slideUp {
-        from {
-          transform: translateY(100%);
-          opacity: 0;
-        }
-        to {
-          transform: translateY(0);
-          opacity: 1;
-        }
+  
+    function formatDate(dateString) {
+      if (!dateString) return '-';
+      try {
+        const date = new Date(dateString);
+        return date.toLocaleString('id-ID', {
+          year: 'numeric', month: 'short', day: 'numeric',
+          hour: '2-digit', minute: '2-digit'
+        });
+      } catch (e) {
+        return dateString;
+      }
+    }
+  
+    function formatTimeRemaining(endDate) {
+      if (!endDate) return 'Tidak terbatas';
+      
+      const now = new Date();
+      const end = new Date(endDate);
+      const diff = end - now;
+      
+      if (diff <= 0) return 'Berakhir';
+      
+      const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+      const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+      const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+      
+      if (days > 0) return `${days} hari`;
+      if (hours > 0) return `${hours} jam`;
+      if (minutes > 0) return `${minutes} menit`;
+      return 'Beberapa detik';
+    }
+  
+    function escapeHtml(text) {
+      if (!text) return '';
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+  
+    /**
+     * Show toast notification
+     */
+    function showToast(message, type = 'info', duration = 2000) {
+      // Cek apakah sudah ada container toast
+      let toastContainer = document.querySelector('.toast-container');
+      
+      if (!toastContainer) {
+        toastContainer = document.createElement('div');
+        toastContainer.className = 'toast-container';
+        toastContainer.style.cssText = `
+          position: fixed;
+          bottom: 20px;
+          left: 20px;
+          right: 20px;
+          z-index: 9999;
+          display: flex;
+          flex-direction: column;
+          gap: 10px;
+          pointer-events: none;
+        `;
+        document.body.appendChild(toastContainer);
       }
       
-      @keyframes fadeOut {
-        to {
-          opacity: 0;
-          transform: translateY(100%);
+      const toast = document.createElement('div');
+      toast.className = `toast toast-${type}`;
+      toast.style.cssText = `
+        background: ${type === 'success' ? '#10b981' : type === 'error' ? '#ef4444' : type === 'warning' ? '#f59e0b' : '#3b82f6'};
+        color: white;
+        padding: 12px 16px;
+        border-radius: 12px;
+        font-size: 14px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        animation: slideUp 0.3s ease;
+        pointer-events: auto;
+        text-align: center;
+      `;
+      toast.textContent = message;
+      
+      toastContainer.appendChild(toast);
+      
+      setTimeout(() => {
+        toast.style.animation = 'fadeOut 0.3s ease';
+        setTimeout(() => {
+          toast.remove();
+          if (toastContainer.children.length === 0) {
+            toastContainer.remove();
+          }
+        }, 300);
+      }, duration);
+    }
+  
+    // Tambahkan CSS animations jika belum ada
+    if (!document.querySelector('#toast-styles')) {
+      const style = document.createElement('style');
+      style.id = 'toast-styles';
+      style.textContent = `
+        @keyframes slideUp {
+          from {
+            transform: translateY(100%);
+            opacity: 0;
+          }
+          to {
+            transform: translateY(0);
+            opacity: 1;
+          }
         }
-      }
-    `;
-    document.head.appendChild(style);
-  }
-
-  // ==================== API CALLS ====================
+        
+        @keyframes fadeOut {
+          to {
+            opacity: 0;
+            transform: translateY(100%);
+          }
+        }
+      `;
+      document.head.appendChild(style);
+    }
+  
   async function fetchUserFromApi(userId) {
     try {
       console.log(`📡 Fetching user data for ID: ${userId}`);
@@ -214,16 +210,22 @@
         headers: { 'Accept': 'application/json' },
         mode: 'cors'
       });
-      
+  
       if (!res.ok) {
         console.log(`API response not OK: ${res.status}`);
         return null;
       }
-      
+  
       const data = await res.json();
       console.log('📥 User data response:', data);
-      
-      return data.success ? data.user : (data.user || null);
+  
+      if (data.success && data.user) {
+        return data.user;
+      } else if (data.user) {
+        return data.user;
+      } else {
+        return null;
+      }
     } catch (error) {
       console.log('API fetch error:', error);
       return null;
@@ -1358,472 +1360,476 @@
     }
   }
 
-    // ==================== UPDATE UI PROFIL ====================
-    async function updateUI(user) {
-      // Simpan user ke currentUser
-      currentUser = user;
-    
-      const fullName = user.fullname || [user.first_name, user.last_name].filter(Boolean).join(' ') || 'No Name';
-      const username = user.username ? (user.username.startsWith('@') ? user.username : `@${user.username}`) : '(no username)';
-      const isPremium = user.is_premium || false;
-      const userId = user.user_id || user.id || '-';
-    
-      if (elements.profileNameDisplay) elements.profileNameDisplay.textContent = fullName;
-      if (elements.profileUsernameDisplay) elements.profileUsernameDisplay.textContent = username;
-      if (elements.profileIdDisplay) elements.profileIdDisplay.textContent = `ID: ${userId}`;
-    
-      const totalCreate = await fetchUserGiveawayCount(userId);
-    
-      if (elements.totalCreate) elements.totalCreate.textContent = totalCreate;
-      if (elements.languageCode) elements.languageCode.textContent = (user.language_code || 'id').toUpperCase();
-      if (elements.participations) elements.participations.textContent = user.total_participations || 0;
-      if (elements.wins) elements.wins.textContent = user.total_wins || 0;
-    
-      if (elements.profilePhoto) {
-        elements.profilePhoto.src = user.photo_url || generateAvatarUrl(fullName);
-      }
-    
-      addPremiumIndicator(isPremium);
-      showProfile();
+  async function updateUI(user) {
+    // Simpan user ke currentUser
+    currentUser = user;
+  
+    const fullName = user.fullname || [user.first_name, user.last_name].filter(Boolean).join(' ') || 'No Name';
+    const username = user.username ? (user.username.startsWith('@') ? user.username : `@${user.username}`) : '(no username)';
+    const isPremium = user.is_premium || false;
+    const userId = user.user_id || user.id || '-';
+  
+    if (elements.profileNameDisplay) elements.profileNameDisplay.textContent = fullName;
+    if (elements.profileUsernameDisplay) elements.profileUsernameDisplay.textContent = username;
+    if (elements.profileIdDisplay) elements.profileIdDisplay.textContent = `ID: ${userId}`;
+  
+    const totalCreate = await fetchUserGiveawayCount(userId);
+  
+    if (elements.totalCreate) elements.totalCreate.textContent = totalCreate;
+    if (elements.languageCode) elements.languageCode.textContent = (user.language_code || 'id').toUpperCase();
+  
+    // Pastikan total_participations terbaca
+    const participations = user.total_participations || 0;
+    if (elements.participations) elements.participations.textContent = participations;
+  
+    const wins = user.total_wins || 0;
+    if (elements.wins) elements.wins.textContent = wins;
+  
+    if (elements.profilePhoto) {
+      elements.profilePhoto.src = user.photo_url || generateAvatarUrl(fullName);
     }
   
-    /**
-     * Menerapkan tema Telegram ke CSS variables
-     */
-    function applyTelegramTheme(tg) {
-      if (!tg || !tg.themeParams) return;
+    addPremiumIndicator(isPremium);
+    showProfile();
+  }
+
+  /**
+   * Menerapkan tema Telegram ke CSS variables
+   */
+  function applyTelegramTheme(tg) {
+    if (!tg || !tg.themeParams) return;
+    
+    try {
+      const theme = tg.themeParams;
+      console.log('🎨 Applying Telegram theme');
       
-      try {
-        const theme = tg.themeParams;
-        console.log('🎨 Applying Telegram theme');
-        
-        if (theme.bg_color) {
-          document.documentElement.style.setProperty('--tg-theme-bg-color', theme.bg_color);
-        }
-        if (theme.text_color) {
-          document.documentElement.style.setProperty('--tg-theme-text-color', theme.text_color);
-        }
-        if (theme.hint_color) {
-          document.documentElement.style.setProperty('--tg-theme-hint-color', theme.hint_color);
-        }
-        if (theme.link_color) {
-          document.documentElement.style.setProperty('--tg-theme-link-color', theme.link_color);
-        }
-        if (theme.button_color) {
-          document.documentElement.style.setProperty('--tg-theme-button-color', theme.button_color);
-        }
-        if (theme.button_text_color) {
-          document.documentElement.style.setProperty('--tg-theme-button-text-color', theme.button_text_color);
-        }
-      } catch (themeError) {
-        console.warn('⚠️ Error applying Telegram theme:', themeError);
+      if (theme.bg_color) {
+        document.documentElement.style.setProperty('--tg-theme-bg-color', theme.bg_color);
       }
+      if (theme.text_color) {
+        document.documentElement.style.setProperty('--tg-theme-text-color', theme.text_color);
+      }
+      if (theme.hint_color) {
+        document.documentElement.style.setProperty('--tg-theme-hint-color', theme.hint_color);
+      }
+      if (theme.link_color) {
+        document.documentElement.style.setProperty('--tg-theme-link-color', theme.link_color);
+      }
+      if (theme.button_color) {
+        document.documentElement.style.setProperty('--tg-theme-button-color', theme.button_color);
+      }
+      if (theme.button_text_color) {
+        document.documentElement.style.setProperty('--tg-theme-button-text-color', theme.button_text_color);
+      }
+    } catch (themeError) {
+      console.warn('⚠️ Error applying Telegram theme:', themeError);
     }
-  
-    /**
-     * Setup event listeners tambahan
-     */
-    function setupAdditionalEventListeners() {
-      // Handle tombol back browser
-      window.addEventListener('popstate', (event) => {
-        console.log('📍 Popstate event:', event);
-        // Refresh data saat user navigasi
+  }
+
+  /**
+   * Setup event listeners tambahan
+   */
+  function setupAdditionalEventListeners() {
+    // Handle tombol back browser
+    window.addEventListener('popstate', (event) => {
+      console.log('📍 Popstate event:', event);
+      // Refresh data saat user navigasi
+      if (!window.location.search.includes('search=')) {
+        // Jika tidak ada parameter search, refresh halaman utama
+        window.location.reload();
+      }
+    });
+    
+    // Handle visibility change (misal user switch tab)
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') {
+        console.log('👀 Tab menjadi aktif - refresh data jika perlu');
+        // Refresh data jika diperlukan
         if (!window.location.search.includes('search=')) {
-          // Jika tidak ada parameter search, refresh halaman utama
-          window.location.reload();
-        }
-      });
-      
-      // Handle visibility change (misal user switch tab)
-      document.addEventListener('visibilitychange', () => {
-        if (document.visibilityState === 'visible') {
-          console.log('👀 Tab menjadi aktif - refresh data jika perlu');
-          // Refresh data jika diperlukan
-          if (!window.location.search.includes('search=')) {
-            // Refresh giveaway list
-            fetchAllGiveaways().then(giveaways => {
-              allGiveaways = giveaways;
-              displayGiveaways(currentGiveawayType);
-            });
-          }
-        }
-      });
-      
-      // Handle online/offline
-      window.addEventListener('online', () => {
-        console.log('🌐 Koneksi internet tersambung kembali');
-        showToast('Koneksi internet tersambung kembali', 'success', 2000);
-        
-        // Refresh data
-        if (!window.location.search.includes('search=')) {
+          // Refresh giveaway list
           fetchAllGiveaways().then(giveaways => {
             allGiveaways = giveaways;
             displayGiveaways(currentGiveawayType);
           });
         }
-      });
+      }
+    });
+    
+    // Handle online/offline
+    window.addEventListener('online', () => {
+      console.log('🌐 Koneksi internet tersambung kembali');
+      showToast('Koneksi internet tersambung kembali', 'success', 2000);
       
-      window.addEventListener('offline', () => {
-        console.log('📡 Koneksi internet terputus');
-        showToast('Koneksi internet terputus', 'warning', 3000);
-      });
+      // Refresh data
+      if (!window.location.search.includes('search=')) {
+        fetchAllGiveaways().then(giveaways => {
+          allGiveaways = giveaways;
+          displayGiveaways(currentGiveawayType);
+        });
+      }
+    });
+    
+    window.addEventListener('offline', () => {
+      console.log('📡 Koneksi internet terputus');
+      showToast('Koneksi internet terputus', 'warning', 3000);
+    });
+  }
+
+// ==================== FUNGSI CHECK SUBSCRIPTION DENGAN LOADING MODAL ====================
+async function checkUserSubscriptionWithModal(giveawayId, channelUsername, userId) {
+    return new Promise(async (resolve, reject) => {
+        try {
+            const cleanUsername = channelUsername.replace('@', '');
+            
+            // Tampilkan loading modal
+            const modal = showSubscriptionLoadingModal(cleanUsername);
+            
+            // Panggil API untuk check subscription
+            const response = await fetch(`${API_BASE_URL}/api/check-subscription`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                mode: 'cors',
+                body: JSON.stringify({
+                    user_id: userId,
+                    channel_username: cleanUsername
+                })
+            });
+            
+            if (response.status === 202) {
+                // Butuh sync, mulai polling
+                const data = await response.json();
+                updateLoadingModalStatus(modal, 'Mengambil data channel...');
+                
+                // Polling status
+                const pollResult = await pollSubscriptionStatus(cleanUsername, userId, modal);
+                resolve(pollResult);
+                
+            } else if (response.ok) {
+                const data = await response.json();
+                
+                if (data.is_subscribed) {
+                    // Berhasil subscribe
+                    updateLoadingModalSuccess(modal, cleanUsername, data.channel_info);
+                    setTimeout(() => {
+                        completeLoadingModal(modal, true);
+                        resolve(true);
+                    }, 1500);
+                } else {
+                    // Tidak subscribe
+                    updateLoadingModalError(modal, `Anda belum subscribe ke @${cleanUsername}`);
+                    setTimeout(() => {
+                        completeLoadingModal(modal, false);
+                        resolve(false);
+                    }, 1500);
+                }
+            } else {
+                const error = await response.json();
+                updateLoadingModalError(modal, error.error || 'Gagal mengecek subscription');
+                setTimeout(() => {
+                    completeLoadingModal(modal, false);
+                    resolve(false);
+                }, 1500);
+            }
+            
+        } catch (error) {
+            console.error('Error checking subscription:', error);
+            reject(error);
+        }
+    });
+}
+
+// ==================== FUNGSI POLLING STATUS SUBSCRIPTION ====================
+async function pollSubscriptionStatus(channelUsername, userId, modal) {
+    const maxAttempts = 20;
+    let attempts = 0;
+    
+    return new Promise((resolve) => {
+        const pollInterval = setInterval(async () => {
+            attempts++;
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/check-subscription-status/${channelUsername}/${userId}`);
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    
+                    if (data.completed) {
+                        clearInterval(pollInterval);
+                        
+                        if (data.result.is_subscribed) {
+                            updateLoadingModalSuccess(modal, channelUsername, data.result.channel_info);
+                            setTimeout(() => {
+                                completeLoadingModal(modal, true);
+                                resolve(true);
+                            }, 1500);
+                        } else {
+                            updateLoadingModalError(modal, `Anda belum subscribe ke @${channelUsername}`);
+                            setTimeout(() => {
+                                completeLoadingModal(modal, false);
+                                resolve(false);
+                            }, 1500);
+                        }
+                        
+                    } else if (data.requires_sync) {
+                        updateLoadingModalStatus(modal, 'Mengambil data channel...');
+                    } else {
+                        updateLoadingModalStatus(modal, 'Memeriksa keanggotaan...');
+                    }
+                }
+                
+                if (attempts >= maxAttempts) {
+                    clearInterval(pollInterval);
+                    updateLoadingModalError(modal, 'Timeout! Silakan coba lagi.');
+                    setTimeout(() => {
+                        completeLoadingModal(modal, false);
+                        resolve(false);
+                    }, 1500);
+                }
+                
+            } catch (error) {
+                console.error('Polling error:', error);
+                if (attempts >= maxAttempts) {
+                    clearInterval(pollInterval);
+                    updateLoadingModalError(modal, 'Gagal terhubung ke server');
+                    setTimeout(() => {
+                        completeLoadingModal(modal, false);
+                        resolve(false);
+                    }, 1500);
+                }
+            }
+        }, 1500);
+    });
+}
+
+// ==================== FUNGSI LOADING MODAL UNTUK SUBSCRIPTION ====================
+let subscriptionModal = null;
+let subscriptionTypingInterval = null;
+let subscriptionTypingIndex = 0;
+let subscriptionTypingLines = [];
+
+function showSubscriptionLoadingModal(channelUsername) {
+    const existingModal = document.querySelector('.subscription-loading-modal');
+    if (existingModal) {
+        existingModal.remove();
     }
-  
-  // ==================== FUNGSI CHECK SUBSCRIPTION DENGAN LOADING MODAL ====================
-  async function checkUserSubscriptionWithModal(giveawayId, channelUsername, userId) {
-      return new Promise(async (resolve, reject) => {
-          try {
-              const cleanUsername = channelUsername.replace('@', '');
-              
-              // Tampilkan loading modal
-              const modal = showSubscriptionLoadingModal(cleanUsername);
-              
-              // Panggil API untuk check subscription
-              const response = await fetch(`${API_BASE_URL}/api/check-subscription`, {
-                  method: 'POST',
-                  headers: {
-                      'Content-Type': 'application/json',
-                      'Accept': 'application/json'
-                  },
-                  mode: 'cors',
-                  body: JSON.stringify({
-                      user_id: userId,
-                      channel_username: cleanUsername
-                  })
-              });
-              
-              if (response.status === 202) {
-                  // Butuh sync, mulai polling
-                  const data = await response.json();
-                  updateLoadingModalStatus(modal, 'Mengambil data channel...');
-                  
-                  // Polling status
-                  const pollResult = await pollSubscriptionStatus(cleanUsername, userId, modal);
-                  resolve(pollResult);
-                  
-              } else if (response.ok) {
-                  const data = await response.json();
-                  
-                  if (data.is_subscribed) {
-                      // Berhasil subscribe
-                      updateLoadingModalSuccess(modal, cleanUsername, data.channel_info);
-                      setTimeout(() => {
-                          completeLoadingModal(modal, true);
-                          resolve(true);
-                      }, 1500);
-                  } else {
-                      // Tidak subscribe
-                      updateLoadingModalError(modal, `Anda belum subscribe ke @${cleanUsername}`);
-                      setTimeout(() => {
-                          completeLoadingModal(modal, false);
-                          resolve(false);
-                      }, 1500);
-                  }
-              } else {
-                  const error = await response.json();
-                  updateLoadingModalError(modal, error.error || 'Gagal mengecek subscription');
-                  setTimeout(() => {
-                      completeLoadingModal(modal, false);
-                      resolve(false);
-                  }, 1500);
-              }
-              
-          } catch (error) {
-              console.error('Error checking subscription:', error);
-              reject(error);
-          }
-      });
-  }
-  
-  // ==================== FUNGSI POLLING STATUS SUBSCRIPTION ====================
-  async function pollSubscriptionStatus(channelUsername, userId, modal) {
-      const maxAttempts = 20;
-      let attempts = 0;
-      
-      return new Promise((resolve) => {
-          const pollInterval = setInterval(async () => {
-              attempts++;
-              
-              try {
-                  const response = await fetch(`${API_BASE_URL}/api/check-subscription-status/${channelUsername}/${userId}`);
-                  
-                  if (response.ok) {
-                      const data = await response.json();
-                      
-                      if (data.completed) {
-                          clearInterval(pollInterval);
-                          
-                          if (data.result.is_subscribed) {
-                              updateLoadingModalSuccess(modal, channelUsername, data.result.channel_info);
-                              setTimeout(() => {
-                                  completeLoadingModal(modal, true);
-                                  resolve(true);
-                              }, 1500);
-                          } else {
-                              updateLoadingModalError(modal, `Anda belum subscribe ke @${channelUsername}`);
-                              setTimeout(() => {
-                                  completeLoadingModal(modal, false);
-                                  resolve(false);
-                              }, 1500);
-                          }
-                          
-                      } else if (data.requires_sync) {
-                          updateLoadingModalStatus(modal, 'Mengambil data channel...');
-                      } else {
-                          updateLoadingModalStatus(modal, 'Memeriksa keanggotaan...');
-                      }
-                  }
-                  
-                  if (attempts >= maxAttempts) {
-                      clearInterval(pollInterval);
-                      updateLoadingModalError(modal, 'Timeout! Silakan coba lagi.');
-                      setTimeout(() => {
-                          completeLoadingModal(modal, false);
-                          resolve(false);
-                      }, 1500);
-                  }
-                  
-              } catch (error) {
-                  console.error('Polling error:', error);
-                  if (attempts >= maxAttempts) {
-                      clearInterval(pollInterval);
-                      updateLoadingModalError(modal, 'Gagal terhubung ke server');
-                      setTimeout(() => {
-                          completeLoadingModal(modal, false);
-                          resolve(false);
-                      }, 1500);
-                  }
-              }
-          }, 1500);
-      });
-  }
-  
-  // ==================== FUNGSI LOADING MODAL UNTUK SUBSCRIPTION ====================
-  let subscriptionModal = null;
-  let subscriptionTypingInterval = null;
-  let subscriptionTypingIndex = 0;
-  let subscriptionTypingLines = [];
-  
-  function showSubscriptionLoadingModal(channelUsername) {
-      const existingModal = document.querySelector('.subscription-loading-modal');
-      if (existingModal) {
-          existingModal.remove();
-      }
-      
-      if (subscriptionTypingInterval) {
-          clearInterval(subscriptionTypingInterval);
-          subscriptionTypingInterval = null;
-      }
-      
-      subscriptionTypingIndex = 0;
-      
-      subscriptionTypingLines = [
-          { text: `🔍 Memeriksa keanggotaan di @${channelUsername}...`, delay: 300 },
-          { text: `👤 Mengecek status subscribe...`, delay: 400 },
-          { text: `⏳ Mohon tunggu sebentar...`, delay: 500 }
-      ];
-      
-      subscriptionModal = document.createElement('div');
-      subscriptionModal.className = 'subscription-loading-modal';
-      subscriptionModal.innerHTML = `
-          <div class="sync-loading-content">
-              <div class="sync-loading-header">
-                  <div class="sync-loading-title">🔍 Memeriksa Subscription</div>
-                  <div class="sync-loading-spinner"></div>
-              </div>
-              <div class="sync-loading-body">
-                  <div class="sync-typing-container">
-                      <div class="sync-typing-content" id="subscriptionTypingContent"></div>
-                  </div>
-                  <div class="sync-progress-bar">
-                      <div class="sync-progress-fill" id="subscriptionProgressFill"></div>
-                  </div>
-                  <div class="sync-status" id="subscriptionStatus">Memulai...</div>
-              </div>
-          </div>
-      `;
-      
-      document.body.appendChild(subscriptionModal);
-      
-      setTimeout(() => {
-          subscriptionModal.classList.add('active');
-      }, 10);
-      
-      startSubscriptionTypingEffect();
-      
-      return subscriptionModal;
-  }
-  
-  function startSubscriptionTypingEffect() {
-      const typingContent = document.getElementById('subscriptionTypingContent');
-      if (!typingContent) return;
-      
-      typingContent.innerHTML = '';
-      subscriptionTypingIndex = 0;
-      
-      function typeNextLine() {
-          if (subscriptionTypingIndex >= subscriptionTypingLines.length) {
-              updateSubscriptionStatus('Memeriksa...');
-              updateSubscriptionProgress(50);
-              return;
-          }
-          
-          const line = subscriptionTypingLines[subscriptionTypingIndex];
-          const lineElement = document.createElement('div');
-          lineElement.className = 'sync-typing-line';
-          lineElement.style.opacity = '0';
-          lineElement.textContent = line.text;
-          typingContent.appendChild(lineElement);
-          
-          setTimeout(() => {
-              lineElement.style.opacity = '1';
-          }, 50);
-          
-          const progress = ((subscriptionTypingIndex + 1) / subscriptionTypingLines.length) * 40;
-          updateSubscriptionProgress(progress);
-          
-          if (subscriptionTypingIndex === 0) {
-              updateSubscriptionStatus('Menghubungi server...');
-          } else if (subscriptionTypingIndex === 1) {
-              updateSubscriptionStatus('Memeriksa keanggotaan...');
-          }
-          
-          subscriptionTypingIndex++;
-          
-          setTimeout(typeNextLine, line.delay || 400);
-      }
-      
-      typeNextLine();
-  }
-  
-  function updateSubscriptionStatus(status) {
-      const statusEl = document.getElementById('subscriptionStatus');
-      if (statusEl) {
-          statusEl.textContent = status;
-      }
-  }
-  
-  function updateSubscriptionProgress(percent) {
-      const progressFill = document.getElementById('subscriptionProgressFill');
-      if (progressFill) {
-          progressFill.style.width = `${percent}%`;
-      }
-  }
-  
-  function updateLoadingModalStatus(modal, status) {
-      updateSubscriptionStatus(status);
-      updateSubscriptionProgress(60);
-  }
-  
-  function updateLoadingModalSuccess(modal, channelUsername, channelInfo) {
-      const typingContent = document.getElementById('subscriptionTypingContent');
-      if (!typingContent) return;
-      
-      const successLine = document.createElement('div');
-      successLine.className = 'sync-typing-line success';
-      successLine.innerHTML = `✅ Anda sudah subscribe ke @${channelUsername}!`;
-      typingContent.appendChild(successLine);
-      
-      if (channelInfo) {
-          const infoLine = document.createElement('div');
-          infoLine.className = 'sync-typing-line success';
-          infoLine.innerHTML = `📢 ${channelInfo.title || channelUsername}`;
-          typingContent.appendChild(infoLine);
-      }
-      
-      updateSubscriptionStatus('✅ Berhasil!');
-      updateSubscriptionProgress(100);
-  }
-  
-  function updateLoadingModalError(modal, errorMessage) {
-      const typingContent = document.getElementById('subscriptionTypingContent');
-      if (!typingContent) return;
-      
-      const errorLine = document.createElement('div');
-      errorLine.className = 'sync-typing-line';
-      errorLine.style.borderLeftColor = '#ff6b6b';
-      errorLine.innerHTML = `❌ ${errorMessage}`;
-      typingContent.appendChild(errorLine);
-      
-      updateSubscriptionStatus('❌ Gagal');
-      updateSubscriptionProgress(100);
-  }
-  
-  function completeLoadingModal(modal, success) {
-      if (!modal) return;
-      
-      setTimeout(() => {
-          modal.classList.remove('active');
-          setTimeout(() => {
-              if (modal && modal.parentNode) {
-                  modal.remove();
-              }
-              if (subscriptionModal === modal) {
-                  subscriptionModal = null;
-              }
-          }, 300);
-      }, success ? 1500 : 2000);
-  }
-  
-  // ==================== UPDATE FUNGSI CHECKALLREQUIREMENTS ====================
-  async function checkAllRequirements(giveaway, user) {
-      const requirements = giveaway.requirements || [];
-      const failedRequirements = [];
-      
-      if (requirements.length === 0) {
-          return { passed: true, failed: [] };
-      }
-      
-      for (const req of requirements) {
-          switch (req) {
-              case 'subscribe':
-                  const channels = giveaway.channels || [];
-                  for (const channel of channels) {
-                      const channelUsername = typeof channel === 'string' ? channel : channel.username;
-                      if (channelUsername) {
-                          // Gunakan modal loading untuk check subscription
-                          const isSubscribed = await checkUserSubscriptionWithModal(
-                              giveaway.giveaway_id,
-                              channelUsername,
-                              user.id
-                          );
-                          
-                          if (!isSubscribed) {
-                              failedRequirements.push(`subscribe:${channelUsername}`);
-                          }
-                      }
-                  }
-                  break;
-                  
-              case 'premium':
-              case 'nonpremium':
-                  const premiumPassed = checkPremiumRequirement(user.is_premium || false, req);
-                  if (!premiumPassed) {
-                      failedRequirements.push(req);
-                  }
-                  break;
-                  
-              case 'aktif':
-                  const isActive = await checkActiveUserRequirement(user.id);
-                  if (!isActive) {
-                      failedRequirements.push('aktif');
-                  }
-                  break;
-                  
-              case 'share':
-                  const hasShared = sessionStorage.getItem(`shared_${giveaway.giveaway_id}`) === 'true';
-                  if (!hasShared) {
-                      failedRequirements.push('share');
-                  }
-                  break;
-          }
-      }
-      
-      return {
-          passed: failedRequirements.length === 0,
-          failed: failedRequirements
-      };
-  }
+    
+    if (subscriptionTypingInterval) {
+        clearInterval(subscriptionTypingInterval);
+        subscriptionTypingInterval = null;
+    }
+    
+    subscriptionTypingIndex = 0;
+    
+    subscriptionTypingLines = [
+        { text: `🔍 Memeriksa keanggotaan di @${channelUsername}...`, delay: 300 },
+        { text: `👤 Mengecek status subscribe...`, delay: 400 },
+        { text: `⏳ Mohon tunggu sebentar...`, delay: 500 }
+    ];
+    
+    subscriptionModal = document.createElement('div');
+    subscriptionModal.className = 'subscription-loading-modal';
+    subscriptionModal.innerHTML = `
+        <div class="sync-loading-content">
+            <div class="sync-loading-header">
+                <div class="sync-loading-title">🔍 Memeriksa Subscription</div>
+                <div class="sync-loading-spinner"></div>
+            </div>
+            <div class="sync-loading-body">
+                <div class="sync-typing-container">
+                    <div class="sync-typing-content" id="subscriptionTypingContent"></div>
+                </div>
+                <div class="sync-progress-bar">
+                    <div class="sync-progress-fill" id="subscriptionProgressFill"></div>
+                </div>
+                <div class="sync-status" id="subscriptionStatus">Memulai...</div>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(subscriptionModal);
+    
+    setTimeout(() => {
+        subscriptionModal.classList.add('active');
+    }, 10);
+    
+    startSubscriptionTypingEffect();
+    
+    return subscriptionModal;
+}
+
+function startSubscriptionTypingEffect() {
+    const typingContent = document.getElementById('subscriptionTypingContent');
+    if (!typingContent) return;
+    
+    typingContent.innerHTML = '';
+    subscriptionTypingIndex = 0;
+    
+    function typeNextLine() {
+        if (subscriptionTypingIndex >= subscriptionTypingLines.length) {
+            updateSubscriptionStatus('Memeriksa...');
+            updateSubscriptionProgress(50);
+            return;
+        }
+        
+        const line = subscriptionTypingLines[subscriptionTypingIndex];
+        const lineElement = document.createElement('div');
+        lineElement.className = 'sync-typing-line';
+        lineElement.style.opacity = '0';
+        lineElement.textContent = line.text;
+        typingContent.appendChild(lineElement);
+        
+        setTimeout(() => {
+            lineElement.style.opacity = '1';
+        }, 50);
+        
+        const progress = ((subscriptionTypingIndex + 1) / subscriptionTypingLines.length) * 40;
+        updateSubscriptionProgress(progress);
+        
+        if (subscriptionTypingIndex === 0) {
+            updateSubscriptionStatus('Menghubungi server...');
+        } else if (subscriptionTypingIndex === 1) {
+            updateSubscriptionStatus('Memeriksa keanggotaan...');
+        }
+        
+        subscriptionTypingIndex++;
+        
+        setTimeout(typeNextLine, line.delay || 400);
+    }
+    
+    typeNextLine();
+}
+
+function updateSubscriptionStatus(status) {
+    const statusEl = document.getElementById('subscriptionStatus');
+    if (statusEl) {
+        statusEl.textContent = status;
+    }
+}
+
+function updateSubscriptionProgress(percent) {
+    const progressFill = document.getElementById('subscriptionProgressFill');
+    if (progressFill) {
+        progressFill.style.width = `${percent}%`;
+    }
+}
+
+function updateLoadingModalStatus(modal, status) {
+    updateSubscriptionStatus(status);
+    updateSubscriptionProgress(60);
+}
+
+function updateLoadingModalSuccess(modal, channelUsername, channelInfo) {
+    const typingContent = document.getElementById('subscriptionTypingContent');
+    if (!typingContent) return;
+    
+    const successLine = document.createElement('div');
+    successLine.className = 'sync-typing-line success';
+    successLine.innerHTML = `✅ Anda sudah subscribe ke @${channelUsername}!`;
+    typingContent.appendChild(successLine);
+    
+    if (channelInfo) {
+        const infoLine = document.createElement('div');
+        infoLine.className = 'sync-typing-line success';
+        infoLine.innerHTML = `📢 ${channelInfo.title || channelUsername}`;
+        typingContent.appendChild(infoLine);
+    }
+    
+    updateSubscriptionStatus('✅ Berhasil!');
+    updateSubscriptionProgress(100);
+}
+
+function updateLoadingModalError(modal, errorMessage) {
+    const typingContent = document.getElementById('subscriptionTypingContent');
+    if (!typingContent) return;
+    
+    const errorLine = document.createElement('div');
+    errorLine.className = 'sync-typing-line';
+    errorLine.style.borderLeftColor = '#ff6b6b';
+    errorLine.innerHTML = `❌ ${errorMessage}`;
+    typingContent.appendChild(errorLine);
+    
+    updateSubscriptionStatus('❌ Gagal');
+    updateSubscriptionProgress(100);
+}
+
+function completeLoadingModal(modal, success) {
+    if (!modal) return;
+    
+    setTimeout(() => {
+        modal.classList.remove('active');
+        setTimeout(() => {
+            if (modal && modal.parentNode) {
+                modal.remove();
+            }
+            if (subscriptionModal === modal) {
+                subscriptionModal = null;
+            }
+        }, 300);
+    }, success ? 1500 : 2000);
+}
+
+// ==================== UPDATE FUNGSI CHECKALLREQUIREMENTS ====================
+async function checkAllRequirements(giveaway, user) {
+    const requirements = giveaway.requirements || [];
+    const failedRequirements = [];
+    
+    if (requirements.length === 0) {
+        return { passed: true, failed: [] };
+    }
+    
+    for (const req of requirements) {
+        switch (req) {
+            case 'subscribe':
+                const channels = giveaway.channels || [];
+                for (const channel of channels) {
+                    const channelUsername = typeof channel === 'string' ? channel : channel.username;
+                    if (channelUsername) {
+                        // Gunakan modal loading untuk check subscription
+                        const isSubscribed = await checkUserSubscriptionWithModal(
+                            giveaway.giveaway_id,
+                            channelUsername,
+                            user.id
+                        );
+                        
+                        if (!isSubscribed) {
+                            failedRequirements.push(`subscribe:${channelUsername}`);
+                        }
+                    }
+                }
+                break;
+                
+            case 'premium':
+            case 'nonpremium':
+                const premiumPassed = checkPremiumRequirement(user.is_premium || false, req);
+                if (!premiumPassed) {
+                    failedRequirements.push(req);
+                }
+                break;
+                
+            case 'aktif':
+                const isActive = await checkActiveUserRequirement(user.id);
+                if (!isActive) {
+                    failedRequirements.push('aktif');
+                }
+                break;
+                
+            case 'share':
+                const hasShared = sessionStorage.getItem(`shared_${giveaway.giveaway_id}`) === 'true';
+                if (!hasShared) {
+                    failedRequirements.push('share');
+                }
+                break;
+        }
+    }
+    
+    return {
+        passed: failedRequirements.length === 0,
+        failed: failedRequirements
+    };
+}
   
   // ==================== FUNGSI TAMPILKAN MODAL SYARAT ====================
   function showRequirementsModal(giveaway, failedRequirements) {
