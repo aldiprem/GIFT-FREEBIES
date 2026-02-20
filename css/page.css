@@ -1962,6 +1962,98 @@ body::before {
     transition: transform 0.3s ease;
 }
 
+/* ===== STYLE UNTUK WINNERS DI DETAIL HALAMAN ===== */
+
+/* Warna medal untuk teks hadiah */
+.winner-prize-name {
+  font-size: 12px;
+  font-weight: 600;
+  margin-top: 4px;
+  padding: 2px 8px;
+  border-radius: 12px;
+  display: inline-block;
+  background: rgba(0, 0, 0, 0.2);
+  backdrop-filter: blur(2px);
+}
+
+.winner-prize-name.prize-gold {
+  color: #ffd700;
+  text-shadow: 0 0 10px rgba(255, 215, 0, 0.3);
+}
+
+.winner-prize-name.prize-silver {
+  color: #c0c0c0;
+  text-shadow: 0 0 10px rgba(192, 192, 192, 0.3);
+}
+
+.winner-prize-name.prize-bronze {
+  color: #cd7f32;
+  text-shadow: 0 0 10px rgba(205, 127, 50, 0.3);
+}
+
+.winner-prize-name.prize-default {
+  color: #4da6ff;
+  text-shadow: 0 0 10px rgba(0, 136, 255, 0.3);
+}
+
+/* Untuk modal winners */
+.winner-modal-prize-name {
+  font-size: 12px;
+  font-weight: 600;
+  margin-top: 4px;
+  padding: 2px 8px;
+  border-radius: 12px;
+  display: inline-block;
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.winner-modal-prize-name.prize-gold {
+  color: #ffd700;
+}
+
+.winner-modal-prize-name.prize-silver {
+  color: #c0c0c0;
+}
+
+.winner-modal-prize-name.prize-bronze {
+  color: #cd7f32;
+}
+
+.winner-modal-prize-name.prize-default {
+  color: #4da6ff;
+}
+
+/* Badge ENDED di header */
+.detail-ended-badge {
+  background: linear-gradient(135deg, #ff3b3b, #c62828);
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+  border: 1px solid rgba(255, 107, 107, 0.5);
+  border-radius: 20px;
+  padding: 6px 16px;
+  font-size: 12px;
+  font-weight: 700;
+  color: white;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 0 15px rgba(255, 59, 59, 0.6);
+  animation: endedBadgeBlink 1.5s ease infinite;
+  margin-right: 8px;
+}
+
+/* Hapus status badge yang lama untuk ended */
+.detail-status.ended {
+  display: none; /* Sembunyikan status badge di bawah header */
+}
+
+/* Perbaiki header right */
+.detail-header-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 /* ------------------------------------------------------------------
    30. WINNERS MODAL STYLES
    ------------------------------------------------------------------ */
