@@ -4251,6 +4251,119 @@ input:checked ~ .toggle-label {
   }
 }
 
+/* Warna untuk nomor hadiah (medal) */
+.ended-prize-number.ended-prize-gold {
+  background: linear-gradient(135deg, #ffd700, #ffa500);
+  box-shadow: 0 2px 8px rgba(255, 215, 0, 0.5);
+}
+
+.ended-prize-number.ended-prize-silver {
+  background: linear-gradient(135deg, #c0c0c0, #a0a0a0);
+  box-shadow: 0 2px 8px rgba(192, 192, 192, 0.5);
+}
+
+.ended-prize-number.ended-prize-bronze {
+  background: linear-gradient(135deg, #cd7f32, #b06e2b);
+  box-shadow: 0 2px 8px rgba(205, 127, 50, 0.5);
+}
+
+.ended-prize-number.ended-prize-default {
+  background: linear-gradient(135deg, #4da6ff, #0088ff);
+  box-shadow: 0 2px 8px rgba(0, 136, 255, 0.5);
+}
+
+/* Style untuk ID yang bisa di-copy */
+.ended-id {
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.ended-id:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: scale(1.02);
+}
+
+.ended-id:active {
+  transform: scale(0.98);
+}
+
+/* Tooltip untuk copy */
+.ended-id:hover::after {
+  content: 'Klik untuk copy';
+  position: absolute;
+  bottom: 100%;
+  left: 0;
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 4px 8px;
+  border-radius: 8px;
+  font-size: 10px;
+  white-space: nowrap;
+  margin-bottom: 5px;
+  z-index: 10;
+  pointer-events: none;
+  font-family: 'Poppins', sans-serif;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Stats row di bagian atas */
+.ended-stats-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+  margin-top: 8px;
+  padding: 8px 16px;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 40px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  width: fit-content;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.ended-stat-item-small {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(0, 0, 0, 0.3);
+  padding: 4px 16px;
+  border-radius: 30px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.ended-stat-item-small .ended-stat-icon {
+  font-size: 14px;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+}
+
+.ended-stat-item-small .ended-stat-value {
+  font-size: 14px;
+  font-weight: 600;
+  color: white;
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+  .ended-stats-row {
+    gap: 16px;
+    padding: 6px 12px;
+  }
+
+  .ended-stat-item-small {
+    padding: 3px 12px;
+  }
+
+  .ended-stat-item-small .ended-stat-icon {
+    font-size: 12px;
+  }
+
+  .ended-stat-item-small .ended-stat-value {
+    font-size: 12px;
+  }
+}
+
 /* ------------------------------------------------------------------
    14. RESPONSIVE DESIGN
    ------------------------------------------------------------------ */
