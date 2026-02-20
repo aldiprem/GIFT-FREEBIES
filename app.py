@@ -839,11 +839,33 @@ def create_giveaway():
             'status': 'active'
         }
         
-        # Panggil method create_giveaway dengan satu parameter dictionary
+        # Panggil method create_giveaway
         success = current_db.create_giveaway(giveaway_data)
         
         if success:
-            # Gunakan format URL yang sesuai dengan main.js (parameter search)
+            # ===== KIRIM REQUEST KE BOT UNTUK MENGIRIM PESAN =====
+            if data.get('channels') and len(data['channels']) > 0:
+                import json
+                import os
+                
+                bot_request = {
+                    'giveaway_id': giveaway_id,
+                    'giveaway_data': {
+                        'channels': data.get('channels', []),
+                        'prizes': data.get('prizes', []),
+                        'giveaway_text': data.get('giveaway_text', ''),
+                        'end_date': end_date
+                    }
+                }
+                
+                request_file = f"/tmp/create_giveaway_{giveaway_id}.request"
+                with open(request_file, 'w') as f:
+                    f.write(json.dumps(bot_request))
+                
+                log_info(f"📤 Giveaway creation request sent to bot for {giveaway_id}")
+            
+            # ===== END =====
+            
             direct_link = f"https://aldiprem.github.io/GIFT-FREEBIES/?search={giveaway_id}"
             
             return jsonify({
@@ -1695,7 +1717,6 @@ def participate_giveaway(giveaway_id):
             'error': str(e)
         }), 500
 
-# ==================== WINNERS ENDPOINTS ====================
 @giveaways_bp.route('/<giveaway_id>/draw-winners', methods=['POST'])
 def draw_winners(giveaway_id):
     """Memilih pemenang secara acak untuk giveaway yang sudah berakhir"""
@@ -1802,6 +1823,24 @@ def draw_winners(giveaway_id):
         
         log_info(f"✅ Winners drawn for giveaway {giveaway_id}: {len(selected_winners)} winners")
         
+        # ===== KIRIM NOTIFIKASI KE BOT =====
+        import json
+        import os
+        
+        notify_request = {
+            'giveaway_id': giveaway_id,
+            'messages': current_db.get_giveaway_messages(giveaway_id),
+            'winners': selected_winners,
+            'participants_count': giveaway.get('participants_count', 0)
+        }
+        
+        notify_file = f"/tmp/notify_winners_{giveaway_id}.request"
+        with open(notify_file, 'w') as f:
+            f.write(json.dumps(notify_request))
+        
+        log_info(f"📤 Winners notification request sent to bot for {giveaway_id}")
+        # ===== END =====
+        
         return jsonify({
             'success': True,
             'message': f'Berhasil memilih {len(selected_winners)} pemenang',
@@ -1810,6 +1849,116 @@ def draw_winners(giveaway_id):
         
     except Exception as e:
         log_error(f"Error drawing winners: {e}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+@giveaways_bp.route('/<giveaway_id>/cancel', methods=['POST'])
+def cancel_giveaway(giveaway_id):
+    """Membatalkan giveaway (hapus dari database dan hapus pesan dari channel)"""
+    try:
+        current_db = get_db()
+        
+        # Ambil data giveaway
+        giveaway = current_db.get_giveaway(giveaway_id)
+        if not giveaway:
+            return jsonify({
+                'success': False,
+                'error': 'Giveaway not found'
+            }), 404
+        
+        # Hanya bisa dibatalkan jika status active
+        if giveaway['status'] != 'active':
+            return jsonify({
+                'success': False,
+                'error': 'Hanya giveaway aktif yang dapat dibatalkan'
+            }), 400
+        
+        # Ambil semua pesan giveaway
+        messages = current_db.get_giveaway_messages(giveaway_id)
+        
+        # Update status menjadi cancelled
+        now = get_jakarta_time()
+        cursor = current_db.get_cursor()
+        cursor.execute("""
+            UPDATE giveaways 
+            SET status = 'cancelled', updated_at = ? 
+            WHERE giveaway_id = ?
+        """, (now, giveaway_id))
+        current_db.conn.commit()
+        cursor.close()
+        
+        # ===== KIRIM REQUEST KE BOT UNTUK HAPUS PESAN =====
+        if messages:
+            import json
+            import os
+            
+            delete_request = {
+                'giveaway_id': giveaway_id,
+                'messages': messages
+            }
+            
+            delete_file = f"/tmp/delete_giveaway_{giveaway_id}.request"
+            with open(delete_file, 'w') as f:
+                f.write(json.dumps(delete_request))
+            
+            log_info(f"📤 Delete giveaway request sent to bot for {giveaway_id}")
+        
+        # Hapus dari tabel giveaway_messages
+        current_db.delete_giveaway_messages(giveaway_id)
+        # ===== END =====
+        
+        return jsonify({
+            'success': True,
+            'message': 'Giveaway berhasil dibatalkan',
+            'giveaway_id': giveaway_id,
+            'status': 'cancelled'
+        })
+        
+    except Exception as e:
+        log_error(f"Error cancelling giveaway: {e}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+@giveaways_bp.route('/<giveaway_id>/messages', methods=['POST'])
+def save_giveaway_message(giveaway_id):
+    """Menyimpan message ID giveaway yang dikirim ke channel"""
+    try:
+        current_db = get_db()
+        data = request.json
+        
+        required_fields = ['chat_id', 'message_id']
+        for field in required_fields:
+            if field not in data:
+                return jsonify({
+                    'success': False,
+                    'error': f'Field {field} is required'
+                }), 400
+        
+        success = current_db.save_giveaway_message(
+            giveaway_id=giveaway_id,
+            chat_id=data['chat_id'],
+            chat_username=data.get('chat_username'),
+            chat_title=data.get('chat_title'),
+            message_id=data['message_id']
+        )
+        
+        if success:
+            return jsonify({
+                'success': True,
+                'message': 'Message saved successfully'
+            }), 201
+        else:
+            return jsonify({
+                'success': False,
+                'error': 'Failed to save message'
+            }), 500
+            
+    except Exception as e:
+        log_error(f"Error saving giveaway message: {e}")
         return jsonify({
             'success': False,
             'error': str(e)
@@ -1884,6 +2033,142 @@ def get_giveaway_winners(giveaway_id):
         
     except Exception as e:
         log_error(f"Error getting winners: {e}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+# ==================== GIVEAWAY MESSAGES ENDPOINTS ====================
+@giveaways_bp.route('/<giveaway_id>/messages', methods=['GET'])
+def get_giveaway_messages(giveaway_id):
+    """Mendapatkan semua pesan giveaway yang dikirim ke channel/group"""
+    try:
+        current_db = get_db()
+        messages = current_db.get_giveaway_messages(giveaway_id)
+        
+        return jsonify({
+            'success': True,
+            'giveaway_id': giveaway_id,
+            'count': len(messages),
+            'messages': messages
+        })
+        
+    except Exception as e:
+        log_error(f"Error getting giveaway messages: {e}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+@giveaways_bp.route('/<giveaway_id>/messages/<int:chat_id>', methods=['GET'])
+def get_giveaway_message_by_chat(giveaway_id, chat_id):
+    """Mendapatkan message ID untuk giveaway di chat tertentu"""
+    try:
+        current_db = get_db()
+        message = current_db.get_giveaway_message_by_chat(giveaway_id, chat_id)
+        
+        if not message:
+            return jsonify({
+                'success': False,
+                'error': 'Message not found'
+            }), 404
+        
+        return jsonify({
+            'success': True,
+            'message': message
+        })
+        
+    except Exception as e:
+        log_error(f"Error getting giveaway message: {e}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+# ==================== UPDATE ENDPOINT UNTUK NOTIFY WINNERS ====================
+@giveaways_bp.route('/<giveaway_id>/notify-winners', methods=['POST'])
+def notify_winners(giveaway_id):
+    """Mengirim notifikasi pemenang ke semua channel/group via reply ke msg.id"""
+    try:
+        current_db = get_db()
+        
+        # Ambil data giveaway
+        giveaway = current_db.get_giveaway(giveaway_id)
+        if not giveaway:
+            return jsonify({
+                'success': False,
+                'error': 'Giveaway not found'
+            }), 404
+        
+        # Cek apakah giveaway sudah ended
+        if giveaway['status'] != 'ended':
+            return jsonify({
+                'success': False,
+                'error': 'Giveaway belum berakhir'
+            }), 400
+        
+        # Ambil daftar pemenang
+        cursor = current_db.get_cursor()
+        cursor.execute("""
+            SELECT w.user_id, w.win_position, 
+                   u.fullname, u.username
+            FROM winners w
+            JOIN users u ON w.user_id = u.user_id
+            WHERE w.giveaway_id = ?
+            ORDER BY w.win_position ASC
+        """, (giveaway_id,))
+        
+        winners_data = cursor.fetchall()
+        
+        # Parse prizes
+        prizes = giveaway.get('prizes', [])
+        if isinstance(prizes, str):
+            try:
+                prizes = json.loads(prizes)
+            except:
+                prizes = [prizes]
+        
+        winners = []
+        for w in winners_data:
+            prize_index = w['win_position'] - 1 if w['win_position'] else 0
+            winners.append({
+                'user_id': w['user_id'],
+                'fullname': w['fullname'],
+                'username': w['username'],
+                'win_position': w['win_position'],
+                'prize': prizes[prize_index] if prize_index < len(prizes) else 'Hadiah'
+            })
+        
+        # Ambil semua pesan giveaway yang sudah dikirim
+        messages = current_db.get_giveaway_messages(giveaway_id)
+        
+        # Buat file request untuk bot mengirim notifikasi
+        import json
+        import os
+        
+        request_data = {
+            'giveaway_id': giveaway_id,
+            'messages': messages,
+            'winners': winners,
+            'participants_count': giveaway.get('participants_count', 0),
+            'timestamp': get_jakarta_time()
+        }
+        
+        request_file = f"/tmp/notify_winners_{giveaway_id}.request"
+        with open(request_file, 'w') as f:
+            f.write(json.dumps(request_data))
+        
+        log_info(f"📨 Notify winners request created for giveaway {giveaway_id}")
+        
+        return jsonify({
+            'success': True,
+            'message': 'Notifikasi pemenang akan dikirim',
+            'winners_count': len(winners),
+            'messages_count': len(messages)
+        }), 202
+        
+    except Exception as e:
+        log_error(f"Error notifying winners: {e}")
         return jsonify({
             'success': False,
             'error': str(e)
