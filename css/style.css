@@ -4057,6 +4057,201 @@ input:checked ~ .toggle-label {
 }
 
 /* ------------------------------------------------------------------
+   17. ENDED GIVEAWAY NEW STYLES - ID, 3 HADIAH VERTIKAL, STATS TENGAH
+   ------------------------------------------------------------------ */
+
+/* Header dengan ID dan badge SELESAI */
+.ended-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  padding: 0 4px;
+}
+
+.ended-id {
+  font-family: 'SF Mono', 'Fira Code', monospace;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 20px;
+  padding: 4px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.9);
+  letter-spacing: 0.5px;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.ended-badge-ended {
+  background: linear-gradient(135deg, #ff3b3b, #c62828);
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+  border: 1px solid rgba(255, 107, 107, 0.5);
+  border-radius: 20px;
+  padding: 4px 14px;
+  font-size: 11px;
+  font-weight: 700;
+  color: white;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+  box-shadow: 
+    0 0 15px rgba(255, 59, 59, 0.6),
+    inset 0 1px 2px rgba(255, 255, 255, 0.3);
+  animation: endedBadgeBlink 1.5s ease infinite;
+}
+
+@keyframes endedBadgeBlink {
+  0%, 100% {
+    box-shadow: 0 0 15px rgba(255, 59, 59, 0.6);
+    background: linear-gradient(135deg, #ff3b3b, #c62828);
+  }
+  50% {
+    box-shadow: 0 0 25px rgba(255, 59, 59, 1), 0 0 35px rgba(255, 87, 87, 0.8);
+    background: linear-gradient(135deg, #ff5252, #d32f2f);
+  }
+}
+
+/* Daftar hadiah vertikal */
+.ended-prizes-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 16px 0 20px 0;
+  padding: 12px;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.03);
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.3);
+}
+
+.ended-prize-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 6px 8px;
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 14px;
+  transition: all 0.2s ease;
+}
+
+.ended-prize-item:hover {
+  background: rgba(255, 255, 255, 0.05);
+  transform: translateX(5px);
+}
+
+.ended-prize-number {
+  width: 28px;
+  height: 28px;
+  background: linear-gradient(135deg, #ffd700, #ffa500);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  color: white;
+  flex-shrink: 0;
+  box-shadow: 0 2px 6px rgba(255, 215, 0, 0.3);
+}
+
+.ended-prize-text {
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.4;
+  word-break: break-word;
+  flex: 1;
+}
+
+/* Stats di tengah */
+.ended-stats-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+  margin: 12px 0 4px 0;
+  padding: 10px 16px;
+  background: rgba(0, 0, 0, 0.15);
+  border-radius: 40px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  width: fit-content;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.ended-stat-item-center {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(0, 0, 0, 0.2);
+  padding: 6px 16px;
+  border-radius: 30px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.ended-stat-item-center .ended-stat-icon {
+  font-size: 16px;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+}
+
+.ended-stat-item-center .ended-stat-value {
+  font-size: 16px;
+  font-weight: 700;
+  color: white;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.ended-stat-divider-vertical {
+  width: 1px;
+  height: 30px;
+  background: linear-gradient(to bottom,
+      transparent,
+      rgba(255, 255, 255, 0.3),
+      transparent);
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+  .ended-stats-center {
+    gap: 16px;
+    padding: 8px 12px;
+  }
+  
+  .ended-stat-item-center {
+    padding: 4px 12px;
+  }
+  
+  .ended-stat-item-center .ended-stat-icon {
+    font-size: 14px;
+  }
+  
+  .ended-stat-item-center .ended-stat-value {
+    font-size: 14px;
+  }
+}
+
+@media (max-width: 380px) {
+  .ended-prize-item {
+    gap: 8px;
+  }
+  
+  .ended-prize-number {
+    width: 24px;
+    height: 24px;
+    font-size: 11px;
+  }
+  
+  .ended-prize-text {
+    font-size: 13px;
+  }
+}
+
+/* ------------------------------------------------------------------
    14. RESPONSIVE DESIGN
    ------------------------------------------------------------------ */
 @media (max-width: 480px) {
