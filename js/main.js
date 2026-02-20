@@ -586,181 +586,14 @@
   
       // Tentukan apakah ini ended giveaway
       const isEnded = (giveaway.status === 'ended') || isExpired;
-
+  
       // CEK APAKAH USER ADALAH PEMBUAT GIVEAWAY
       let isCreator = false;
       if (currentUser && giveaway.creator_user_id == currentUser.id) {
-        isCreator = true;
-        console.log('👑 User adalah pembuat giveaway ini');
+          isCreator = true;
+          console.log('👑 User adalah pembuat giveaway ini');
       }
-      
-      // Di bagian HEADER, update HTML untuk menambahkan tombol HAPUS jika creator
-      const detailHtml = `
-          <div class="giveaway-detail-container">
-              <!-- HEADER dengan tombol back dan badge ENDED (untuk ended giveaway) -->
-              <div class="detail-header">
-                  <div class="logo-box" style="background: transparent; border: none; box-shadow: none; padding: 8px 0;">
-                      <img src="img/logo.png" class="logo-img" alt="logo" onerror="this.style.display='none'">
-                      <span class="logo-text">GIFT FREEBIES</span>
-                  </div>
-                  <div class="detail-header-right">
-                      ${isCreator && !isEnded ? `
-                          <button class="delete-giveaway-btn" id="deleteGiveawayBtn" title="Hapus Giveaway">
-                              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                  <path d="M3 6H5H21" stroke="#ff6b6b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                                  <path d="M8 6V4C8 3.46957 8.21071 2.96086 8.58579 2.58579C8.96086 2.21071 9.46957 2 10 2H14C14.5304 2 15.0391 2.21071 15.4142 2.58579C15.7893 2.96086 16 3.46957 16 4V6M19 6V20C19 20.5304 18.7893 21.0391 18.4142 21.4142C18.0391 21.7893 17.5304 22 17 22H7C6.46957 22 5.96086 21.7893 5.58579 21.4142C5.21071 21.0391 5 20.5304 5 20V6H19Z" stroke="#ff6b6b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                              </svg>
-                          </button>
-                      ` : ''}
-                      ${isEnded ? `<span class="detail-ended-badge">ENDED</span>` : ''}
-                      ${isEnded && participants.length > 0 ? `
-                          <button class="eye-custom-btn" id="toggleParticipantsBtn" title="Lihat Partisipan">
-                              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                  <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5z" fill="white"/>
-                                  <circle cx="12" cy="12" r="3" fill="white"/>
-                              </svg>
-                          </button>
-                      ` : ''}
-                      <button class="detail-back-btn" id="backToIndexBtn">←</button>
-                  </div>
-              </div>
-              
-              <!-- ... sisa konten ... -->
-          </div>
-      `;
-      
-      // Setelah container.innerHTML = detailHtml, tambahkan event listener untuk tombol hapus
-      if (isCreator && !isEnded) {
-        const deleteBtn = document.getElementById('deleteGiveawayBtn');
-        if (deleteBtn) {
-          deleteBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-      
-            // Tampilkan dialog konfirmasi
-            showDeleteConfirmation(giveaway);
-          });
-        }
-      }
-      
-      // Tambahkan fungsi showDeleteConfirmation
-      function showDeleteConfirmation(giveaway) {
-        // Buat elemen modal konfirmasi
-        const modal = document.createElement('div');
-        modal.className = 'delete-confirmation-modal';
-        modal.innerHTML = `
-              <div class="delete-confirmation-content">
-                  <div class="delete-confirmation-header">
-                      <span>🗑️ Hapus Giveaway</span>
-                      <button class="delete-modal-close" id="deleteModalClose">✕</button>
-                  </div>
-                  <div class="delete-confirmation-body">
-                      <p>Apakah Anda yakin ingin menghapus giveaway ini?</p>
-                      <p class="delete-warning">Tindakan ini akan:</p>
-                      <ul>
-                          <li>Menghapus giveaway dari database</li>
-                          <li>Menghapus semua pesan giveaway dari channel/group</li>
-                          <li>Mengubah status menjadi CANCELLED</li>
-                      </ul>
-                      <p class="delete-confirmation-id">ID: ${giveaway.giveaway_id}</p>
-                  </div>
-                  <div class="delete-confirmation-footer">
-                      <button class="delete-cancel-btn" id="deleteCancelBtn">BATALKAN</button>
-                      <button class="delete-confirm-btn" id="deleteConfirmBtn">HAPUS</button>
-                  </div>
-              </div>
-          `;
-      
-        document.body.appendChild(modal);
-      
-        // Tampilkan modal
-        setTimeout(() => {
-          modal.classList.add('active');
-        }, 10);
-      
-        // Event listeners
-        document.getElementById('deleteModalClose').addEventListener('click', () => {
-          modal.classList.remove('active');
-          setTimeout(() => modal.remove(), 300);
-        });
-      
-        document.getElementById('deleteCancelBtn').addEventListener('click', () => {
-          modal.classList.remove('active');
-          setTimeout(() => modal.remove(), 300);
-        });
-      
-        document.getElementById('deleteConfirmBtn').addEventListener('click', async () => {
-          // Tampilkan loading di tombol
-          const confirmBtn = document.getElementById('deleteConfirmBtn');
-          const originalText = confirmBtn.textContent;
-          confirmBtn.textContent = '⏳ Menghapus...';
-          confirmBtn.disabled = true;
-      
-          try {
-            // Panggil API untuk cancel giveaway
-            const response = await fetch(`${API_BASE_URL}/api/giveaways/${giveaway.giveaway_id}/cancel`, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'Accept': 'application/json'
-              },
-              mode: 'cors'
-            });
-      
-            if (response.ok) {
-              const result = await response.json();
-      
-              if (result.success) {
-                // Update UI modal
-                modal.querySelector('.delete-confirmation-body').innerHTML = `
-                              <div class="delete-success">
-                                  <span class="delete-success-icon">✅</span>
-                                  <p>Giveaway berhasil dihapus!</p>
-                                  <p class="delete-success-message">Pesan akan dihapus dari semua channel.</p>
-                              </div>
-                          `;
-      
-                // Sembunyikan footer
-                modal.querySelector('.delete-confirmation-footer').style.display = 'none';
-      
-                // Tutup modal setelah 2 detik dan kembali ke halaman utama
-                setTimeout(() => {
-                  modal.classList.remove('active');
-                  setTimeout(() => {
-                    modal.remove();
-                    // Kembali ke halaman utama
-                    window.location.href = window.location.pathname;
-                  }, 300);
-                }, 2000);
-      
-                showToast('✅ Giveaway berhasil dihapus', 'success', 2000);
-              } else {
-                throw new Error(result.error || 'Gagal menghapus giveaway');
-              }
-            } else {
-              const error = await response.json();
-              throw new Error(error.error || 'Gagal menghapus giveaway');
-            }
-      
-          } catch (error) {
-            console.error('Error deleting giveaway:', error);
-            showToast('❌ Gagal menghapus giveaway: ' + error.message, 'error', 3000);
-      
-            // Kembalikan tombol
-            confirmBtn.textContent = originalText;
-            confirmBtn.disabled = false;
-          }
-        });
-      
-        // Klik di luar modal untuk menutup
-        modal.addEventListener('click', (e) => {
-          if (e.target === modal) {
-            modal.classList.remove('active');
-            setTimeout(() => modal.remove(), 300);
-          }
-        });
-      }
-
+  
       // CEK APAKAH USER SUDAH BERPARTISIPASI
       let hasParticipated = false;
       if (currentUser && !isEnded) {
@@ -957,44 +790,35 @@
           return colors[Math.abs(userId) % colors.length];
       }
   
-      // Fungsi untuk generate warna random
-      function getRandomColor(index) {
-          const colors = [
-              '#FF6B6B', '#4ECDC4', '#FFD166', '#A06CD5', '#F7B731',
-              '#45AAF2', '#FC5C65', '#26DE81', '#A55EEA', '#FF9F1C'
-          ];
-          return colors[index % colors.length];
-      }
-  
-      // ===== BUAT HTML UNTUK PEMENANG (TAMPILAN BARU - DENGAN WARNA MEDAL PADA TEKS HADIAH) =====
+      // ===== BUAT HTML UNTUK PEMENANG =====
       let winnersHtml = '';
       if (isEnded && winners.length > 0) {
-        // Tampilkan hanya 2 pemenang pertama
-        const displayWinners = winners.slice(0, 2);
-        const hasMoreWinners = winners.length > 2;
-      
-        // Fungsi untuk mendapatkan warna medal berdasarkan prize index
-        const getPrizeColorClass = (prizeIndex) => {
-          if (prizeIndex === 0) return 'prize-gold'; // #1 Emas
-          if (prizeIndex === 1) return 'prize-silver'; // #2 Perak
-          if (prizeIndex === 2) return 'prize-bronze'; // #3 Perunggu
-          return 'prize-default';
-        };
-      
-        winnersHtml = `
+          // Tampilkan hanya 2 pemenang pertama
+          const displayWinners = winners.slice(0, 2);
+          const hasMoreWinners = winners.length > 2;
+  
+          // Fungsi untuk mendapatkan warna medal berdasarkan prize index
+          const getPrizeColorClass = (prizeIndex) => {
+              if (prizeIndex === 0) return 'prize-gold'; // #1 Emas
+              if (prizeIndex === 1) return 'prize-silver'; // #2 Perak
+              if (prizeIndex === 2) return 'prize-bronze'; // #3 Perunggu
+              return 'prize-default';
+          };
+  
+          winnersHtml = `
               <div class="winners-border-container">
                   <div class="winners-list-compact">
           `;
-      
-        displayWinners.forEach((winner, index) => {
-          const fullName = [winner.first_name, winner.last_name].filter(Boolean).join(' ') || winner.fullname || 'User';
-          const username = winner.username ? `@${winner.username}` : '(no username)';
-          const prizeIndex = winner.prize_index !== undefined ? winner.prize_index : index;
-          const prizeName = winner.prize || (prizes[prizeIndex] || `Hadiah ${prizeIndex + 1}`);
-          const bgColor = getUserColor(winner.id || winner.user_id);
-          const prizeColorClass = getPrizeColorClass(prizeIndex);
-      
-          winnersHtml += `
+  
+          displayWinners.forEach((winner, index) => {
+              const fullName = [winner.first_name, winner.last_name].filter(Boolean).join(' ') || winner.fullname || 'User';
+              const username = winner.username ? `@${winner.username}` : '(no username)';
+              const prizeIndex = winner.prize_index !== undefined ? winner.prize_index : index;
+              const prizeName = winner.prize || (prizes[prizeIndex] || `Hadiah ${prizeIndex + 1}`);
+              const bgColor = getUserColor(winner.id || winner.user_id);
+              const prizeColorClass = getPrizeColorClass(prizeIndex);
+  
+              winnersHtml += `
                   <div class="winner-compact-item">
                       <div class="winner-compact-left">
                           <div class="winner-compact-avatar" style="background: ${bgColor};">
@@ -1006,41 +830,39 @@
                           <div class="winner-compact-info">
                               <div class="winner-compact-name">${escapeHtml(fullName)}</div>
                               <div class="winner-compact-username">${escapeHtml(username)}</div>
-                              <!-- Nama hadiah dipindahkan ke bawah username dengan warna medal -->
                               <div class="winner-prize-name ${prizeColorClass}">${escapeHtml(prizeName)}</div>
                           </div>
                       </div>
-                      <!-- Hapus winner-compact-prize (hadiah di samping) -->
                   </div>
               `;
-        });
-      
-        winnersHtml += `</div>`;
-      
-        // Tambahkan tombol "Tampilkan Semua" jika lebih dari 2 pemenang
-        if (hasMoreWinners) {
-          winnersHtml += `
+          });
+  
+          winnersHtml += `</div>`;
+  
+          // Tambahkan tombol "Tampilkan Semua" jika lebih dari 2 pemenang
+          if (hasMoreWinners) {
+              winnersHtml += `
                   <button class="winners-expand-btn" id="expandWinnersBtn">
                       <span>Tampilkan Semua (${winners.length})</span>
                       <span class="expand-icon">▼</span>
                   </button>
               `;
-        }
-      
-        winnersHtml += `</div>`;
-      
-        // Tambahkan modal untuk menampilkan semua pemenang (hidden by default)
-        if (hasMoreWinners) {
-          let allWinnersHtml = '';
-          winners.forEach((winner, index) => {
-            const fullName = [winner.first_name, winner.last_name].filter(Boolean).join(' ') || winner.fullname || 'User';
-            const username = winner.username ? `@${winner.username}` : '(no username)';
-            const prizeIndex = winner.prize_index !== undefined ? winner.prize_index : index;
-            const prizeName = winner.prize || (prizes[prizeIndex] || `Hadiah ${prizeIndex + 1}`);
-            const bgColor = getUserColor(winner.id || winner.user_id);
-            const prizeColorClass = getPrizeColorClass(prizeIndex);
-      
-            allWinnersHtml += `
+          }
+  
+          winnersHtml += `</div>`;
+  
+          // Tambahkan modal untuk menampilkan semua pemenang (hidden by default)
+          if (hasMoreWinners) {
+              let allWinnersHtml = '';
+              winners.forEach((winner, index) => {
+                  const fullName = [winner.first_name, winner.last_name].filter(Boolean).join(' ') || winner.fullname || 'User';
+                  const username = winner.username ? `@${winner.username}` : '(no username)';
+                  const prizeIndex = winner.prize_index !== undefined ? winner.prize_index : index;
+                  const prizeName = winner.prize || (prizes[prizeIndex] || `Hadiah ${prizeIndex + 1}`);
+                  const bgColor = getUserColor(winner.id || winner.user_id);
+                  const prizeColorClass = getPrizeColorClass(prizeIndex);
+  
+                  allWinnersHtml += `
                       <div class="winner-modal-item">
                           <div class="winner-modal-left">
                               <div class="winner-modal-avatar" style="background: ${bgColor};">
@@ -1057,9 +879,9 @@
                           </div>
                       </div>
                   `;
-          });
-      
-          winnersHtml += `
+              });
+  
+              winnersHtml += `
                   <div class="winners-modal" id="winnersModal">
                       <div class="winners-modal-content">
                           <div class="winners-modal-header">
@@ -1072,10 +894,10 @@
                       </div>
                   </div>
               `;
-        }
+          }
       }
   
-      // ===== BUAT HTML UNTUK MODAL PARTICIPANTS (BUKAN PANEL BAWAH) =====
+      // ===== BUAT HTML UNTUK MODAL PARTICIPANTS =====
       let participantsModalHtml = '';
       if (isEnded && participants.length > 0) {
           let participantsListHtml = '';
@@ -1146,7 +968,7 @@
           }
       }
   
-      // Gabungkan semua HTML
+      // ===== GABUNGKAN SEMUA HTML =====
       const detailHtml = `
           <div class="giveaway-detail-container">
               <!-- HEADER dengan tombol back dan badge ENDED (untuk ended giveaway) -->
@@ -1156,6 +978,14 @@
                       <span class="logo-text">GIFT FREEBIES</span>
                   </div>
                   <div class="detail-header-right">
+                      ${isCreator && !isEnded ? `
+                          <button class="delete-giveaway-btn" id="deleteGiveawayBtn" title="Hapus Giveaway">
+                              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                  <path d="M3 6H5H21" stroke="#ff6b6b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                  <path d="M8 6V4C8 3.46957 8.21071 2.96086 8.58579 2.58579C8.96086 2.21071 9.46957 2 10 2H14C14.5304 2 15.0391 2.21071 15.4142 2.58579C15.7893 2.96086 16 3.46957 16 4V6M19 6V20C19 20.5304 18.7893 21.0391 18.4142 21.4142C18.0391 21.7893 17.5304 22 17 22H7C6.46957 22 5.96086 21.7893 5.58579 21.4142C5.21071 21.0391 5 20.5304 5 20V6H19Z" stroke="#ff6b6b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                              </svg>
+                          </button>
+                      ` : ''}
                       ${isEnded ? `<span class="detail-ended-badge">ENDED</span>` : ''}
                       ${isEnded && participants.length > 0 ? `
                           <button class="eye-custom-btn" id="toggleParticipantsBtn" title="Lihat Partisipan">
@@ -1213,10 +1043,10 @@
                           </div>
                       </div>
                       
-                      <!-- WINNERS SECTION (HANYA UNTUK ENDED GIVEAWAY) - TANPA JUDUL -->
+                      <!-- WINNERS SECTION (HANYA UNTUK ENDED GIVEAWAY) -->
                       ${isEnded && winners.length > 0 ? winnersHtml : ''}
                       
-                      <!-- CHANNEL & LINK BUTTONS (DITUMPUK - CHANNEL DI ATAS, LINK DI BAWAH) -->
+                      <!-- CHANNEL & LINK BUTTONS (DITUMPUK) -->
                       ${channels.length > 0 || links.length > 0 ? `
                       <div class="channel-stack-container">
                           ${channels.length > 0 ? `
@@ -1307,6 +1137,26 @@
   
       // Setup event listeners untuk halaman detail
       setupDetailEventListeners(giveaway, prizes, countdownActive, isEnded);
+      
+      // ===== TAMBAHKAN EVENT LISTENER UNTUK TOMBOL HAPUS =====
+      if (isCreator && !isEnded) {
+          const deleteBtn = document.getElementById('deleteGiveawayBtn');
+          if (deleteBtn) {
+              // Hapus event listener lama jika ada
+              deleteBtn.replaceWith(deleteBtn.cloneNode(true));
+              const newDeleteBtn = document.getElementById('deleteGiveawayBtn');
+              
+              if (newDeleteBtn) {
+                  newDeleteBtn.addEventListener('click', (e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      
+                      // Tampilkan dialog konfirmasi
+                      showDeleteConfirmation(giveaway);
+                  });
+              }
+          }
+      }
   }
   
   // ==================== FUNGSI: SETUP EVENT LISTENERS UNTUK DETAIL ====================
@@ -1701,7 +1551,125 @@
           startDetailCountdown(giveaway.end_date);
       }
   }
+
+    // ==================== FUNGSI SHOW DELETE CONFIRMATION ====================
+    function showDeleteConfirmation(giveaway) {
+      // Buat elemen modal konfirmasi
+      const modal = document.createElement('div');
+      modal.className = 'delete-confirmation-modal';
+      modal.innerHTML = `
+            <div class="delete-confirmation-content">
+                <div class="delete-confirmation-header">
+                    <span>🗑️ Hapus Giveaway</span>
+                    <button class="delete-modal-close" id="deleteModalClose">✕</button>
+                </div>
+                <div class="delete-confirmation-body">
+                    <p>Apakah Anda yakin ingin menghapus giveaway ini?</p>
+                    <p class="delete-warning">Tindakan ini akan:</p>
+                    <ul>
+                        <li>Menghapus giveaway dari database</li>
+                        <li>Menghapus semua pesan giveaway dari channel/group</li>
+                        <li>Mengubah status menjadi CANCELLED</li>
+                    </ul>
+                    <p class="delete-confirmation-id">ID: ${giveaway.giveaway_id}</p>
+                </div>
+                <div class="delete-confirmation-footer">
+                    <button class="delete-cancel-btn" id="deleteCancelBtn">BATALKAN</button>
+                    <button class="delete-confirm-btn" id="deleteConfirmBtn">HAPUS</button>
+                </div>
+            </div>
+        `;
     
+      document.body.appendChild(modal);
+    
+      // Tampilkan modal
+      setTimeout(() => {
+        modal.classList.add('active');
+      }, 10);
+    
+      // Event listeners
+      document.getElementById('deleteModalClose').addEventListener('click', () => {
+        modal.classList.remove('active');
+        setTimeout(() => modal.remove(), 300);
+      });
+    
+      document.getElementById('deleteCancelBtn').addEventListener('click', () => {
+        modal.classList.remove('active');
+        setTimeout(() => modal.remove(), 300);
+      });
+    
+      document.getElementById('deleteConfirmBtn').addEventListener('click', async () => {
+        // Tampilkan loading di tombol
+        const confirmBtn = document.getElementById('deleteConfirmBtn');
+        const originalText = confirmBtn.textContent;
+        confirmBtn.textContent = '⏳ Menghapus...';
+        confirmBtn.disabled = true;
+    
+        try {
+          // Panggil API untuk cancel giveaway
+          const response = await fetch(`${API_BASE_URL}/api/giveaways/${giveaway.giveaway_id}/cancel`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Accept': 'application/json'
+            },
+            mode: 'cors'
+          });
+    
+          if (response.ok) {
+            const result = await response.json();
+    
+            if (result.success) {
+              // Update UI modal
+              modal.querySelector('.delete-confirmation-body').innerHTML = `
+                            <div class="delete-success">
+                                <span class="delete-success-icon">✅</span>
+                                <p>Giveaway berhasil dihapus!</p>
+                                <p class="delete-success-message">Pesan akan dihapus dari semua channel.</p>
+                            </div>
+                        `;
+    
+              // Sembunyikan footer
+              modal.querySelector('.delete-confirmation-footer').style.display = 'none';
+    
+              // Tutup modal setelah 2 detik dan kembali ke halaman utama
+              setTimeout(() => {
+                modal.classList.remove('active');
+                setTimeout(() => {
+                  modal.remove();
+                  // Kembali ke halaman utama
+                  window.location.href = window.location.pathname;
+                }, 300);
+              }, 2000);
+    
+              showToast('✅ Giveaway berhasil dihapus', 'success', 2000);
+            } else {
+              throw new Error(result.error || 'Gagal menghapus giveaway');
+            }
+          } else {
+            const error = await response.json();
+            throw new Error(error.error || 'Gagal menghapus giveaway');
+          }
+    
+        } catch (error) {
+          console.error('Error deleting giveaway:', error);
+          showToast('❌ Gagal menghapus giveaway: ' + error.message, 'error', 3000);
+    
+          // Kembalikan tombol
+          confirmBtn.textContent = originalText;
+          confirmBtn.disabled = false;
+        }
+      });
+    
+      // Klik di luar modal untuk menutup
+      modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+          modal.classList.remove('active');
+          setTimeout(() => modal.remove(), 300);
+        }
+      });
+    }
+
     // ==================== FUNGSI: KEMBALI KE INDEX (DIPERBAIKI) ====================
     function goBackToIndex() {
       console.log('🔙 Kembali ke index...');
