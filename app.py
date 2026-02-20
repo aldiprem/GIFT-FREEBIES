@@ -83,7 +83,7 @@ class DatabaseManager:
         
         # Cek apakah file database ada
         if not os.path.exists(self.db_path):
-            log_warning("⚠️ Database file not found, reconnecting...")
+            log_info("⚠️ Database file not found, reconnecting...")
             self._connect()
             return self.db
         
@@ -1815,10 +1815,13 @@ def draw_winners(giveaway_id):
             'error': str(e)
         }), 500
 
-# ==================== GET WINNERS ENDPOINT (SATU-SATUNYA) ====================
+# ==================== GET WINNERS ENDPOINT (YANG DIPERBAIKI) ====================
 @giveaways_bp.route('/<giveaway_id>/winners', methods=['GET'])
 def get_giveaway_winners(giveaway_id):
-    """Get winners for a specific giveaway"""
+    """
+    Mendapatkan daftar pemenang giveaway
+    FIXED: Menghapus u.photo_url dari query karena kolom tidak ada di database
+    """
     try:
         current_db = get_db()
         giveaway = current_db.get_giveaway(giveaway_id)
@@ -1829,11 +1832,11 @@ def get_giveaway_winners(giveaway_id):
                 'error': 'Giveaway not found'
             }), 404
         
-        # Ambil data pemenang dari database
+        # FIXED: Hapus u.photo_url dari query
         cursor = current_db.get_cursor()
         cursor.execute("""
             SELECT w.user_id, w.win_position, 
-                   u.fullname, u.username, u.photo_url
+                   u.fullname, u.username
             FROM winners w
             JOIN users u ON w.user_id = u.user_id
             WHERE w.giveaway_id = ?
@@ -1854,12 +1857,21 @@ def get_giveaway_winners(giveaway_id):
         winners = []
         for w in winners_data:
             prize_index = w['win_position'] - 1 if w['win_position'] else 0
+            
+            # Split fullname menjadi first_name dan last_name
+            name_parts = w['fullname'].split(' ') if w['fullname'] else ['User']
+            first_name = name_parts[0] if name_parts else 'User'
+            last_name = name_parts[1] if len(name_parts) > 1 else ''
+            
+            # FIXED: Generate avatar URL dari nama (tidak perlu kolom photo_url)
+            photo_url = generate_avatar_url(w['fullname'])
+            
             winners.append({
                 'id': w['user_id'],
-                'first_name': w['fullname'].split(' ')[0] if ' ' in w['fullname'] else w['fullname'],
-                'last_name': w['fullname'].split(' ')[1] if ' ' in w['fullname'] and len(w['fullname'].split(' ')) > 1 else '',
+                'first_name': first_name,
+                'last_name': last_name,
                 'username': w['username'],
-                'photo_url': w['photo_url'],
+                'photo_url': photo_url,  # <-- GENERATED, bukan dari database
                 'prize_index': prize_index,
                 'prize': prizes[prize_index] if prize_index < len(prizes) else 'Hadiah',
                 'win_position': w['win_position']
@@ -1893,6 +1905,7 @@ if __name__ == "__main__":
     ║  👥 Feature: Users & Giveaways            ║
     ║  🔄 Auto-reconnect: Active                ║
     ║  ⏰ Auto-expire: Active (every 60s)       ║
+    ║  ✅ FIX: Winners tanpa photo_url          ║
     ╚══════════════════════════════════════════╝
     """)
     
@@ -1921,6 +1934,7 @@ if __name__ == "__main__":
     print(f"   • GET /api/chatid/check-role/<username>/<user_id> - Check if user is admin/owner")
     print(f"🔄 Auto-reconnect: Active (cek setiap 2 detik)")
     print(f"⏰ Auto-expire: Active (cek setiap 60 detik)")
+    print(f"✅ FIX: Winners endpoint sekarang generate avatar dari nama")
     print(f"\n📌 Press CTRL+C to stop\n")
     
     app.run(host=Config.HOST, port=port, debug=Config.DEBUG, threaded=True)
