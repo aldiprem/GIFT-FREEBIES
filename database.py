@@ -183,9 +183,93 @@ class Database:
             conn.commit()
             log_info("All tables created/verified")
             
+            cursor.execute("""
+            CREATE TABLE IF NOT EXISTS giveaway_messages (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                giveaway_id TEXT NOT NULL,
+                chat_id INTEGER NOT NULL,
+                chat_username TEXT,
+                chat_title TEXT,
+                message_id INTEGER NOT NULL,
+                created_at TEXT,
+                UNIQUE(giveaway_id, chat_id)
+            )
+            """)
+            
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_giveaway_messages_giveaway_id ON giveaway_messages(giveaway_id)")
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_giveaway_messages_chat_id ON giveaway_messages(chat_id)")
+            
+            conn.commit()
+            log_info("All tables created/verified including giveaway_messages")
+            
         except Exception as e:
             log_error(f"Error initializing database: {e}")
+
+    def save_giveaway_message(self, giveaway_id, chat_id, chat_username, chat_title, message_id):
+        """Menyimpan message_id giveaway di channel/group"""
+        cursor = self.get_cursor()
+        try:
+            now = get_jakarta_time()
+            
+            cursor.execute("""
+            INSERT OR REPLACE INTO giveaway_messages 
+            (giveaway_id, chat_id, chat_username, chat_title, message_id, created_at)
+            VALUES (?, ?, ?, ?, ?, ?)
+            """, (giveaway_id, chat_id, chat_username, chat_title, message_id, now))
+            
+            self.conn.commit()
+            log_info(f"✅ Saved message ID {message_id} for giveaway {giveaway_id} in chat {chat_id}")
+            return True
+        except Exception as e:
+            log_error(f"Error saving giveaway message: {e}")
+            return False
+        finally:
+            cursor.close()
     
+    def get_giveaway_messages(self, giveaway_id):
+        """Mendapatkan semua pesan giveaway yang dikirim ke channel/group"""
+        cursor = self.get_cursor()
+        try:
+            cursor.execute("""
+            SELECT * FROM giveaway_messages 
+            WHERE giveaway_id = ?
+            """, (giveaway_id,))
+            
+            return [dict(msg) for msg in cursor.fetchall()]
+        finally:
+            cursor.close()
+    
+    def get_giveaway_message_by_chat(self, giveaway_id, chat_id):
+        """Mendapatkan message ID untuk giveaway di chat tertentu"""
+        cursor = self.get_cursor()
+        try:
+            cursor.execute("""
+            SELECT * FROM giveaway_messages 
+            WHERE giveaway_id = ? AND chat_id = ?
+            """, (giveaway_id, chat_id))
+            
+            msg = cursor.fetchone()
+            return dict(msg) if msg else None
+        finally:
+            cursor.close()
+    
+    def delete_giveaway_messages(self, giveaway_id):
+        """Menghapus semua pesan giveaway (saat giveaway dihapus)"""
+        cursor = self.get_cursor()
+        try:
+            cursor.execute("""
+            DELETE FROM giveaway_messages WHERE giveaway_id = ?
+            """, (giveaway_id,))
+            
+            self.conn.commit()
+            log_info(f"✅ Deleted all messages for giveaway {giveaway_id}")
+            return True
+        except Exception as e:
+            log_error(f"Error deleting giveaway messages: {e}")
+            return False
+        finally:
+            cursor.close()
+
     def reset_database(self):
         """Mereset database dengan menghapus file dan membuat ulang"""
         try:
