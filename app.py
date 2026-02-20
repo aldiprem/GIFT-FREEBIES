@@ -809,6 +809,11 @@ def get_all_giveaways():
         
         giveaways = current_db.get_all_giveaways(status=status, limit=limit, offset=offset)
         
+        # Pastikan setiap giveaway memiliki participants_count
+        for g in giveaways:
+            if 'participants_count' not in g:
+                g['participants_count'] = 0
+        
         return jsonify({
             'success': True,
             'count': len(giveaways),
@@ -837,6 +842,10 @@ def get_giveaway(giveaway_id):
                     'username': creator['username'],
                     'avatar': generate_avatar_url(creator['fullname'])
                 }
+            
+            # Pastikan participants_count ada
+            if 'participants_count' not in giveaway:
+                giveaway['participants_count'] = 0
             
             return jsonify({
                 'success': True,
