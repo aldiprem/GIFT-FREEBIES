@@ -562,7 +562,229 @@
           }
       }
   
-      // ... (kode HTML yang sama sampai bagian ACTION BUTTONS)
+      // Buat HTML untuk syarat
+      let reqHtml = '';
+      if (requirements.length === 0) {
+          reqHtml = '<div class="requirement-item">Tidak ada syarat khusus</div>';
+      } else {
+          requirements.forEach(req => {
+              let label = req;
+              if (req === 'subscribe') label = 'Subscribe Channel';
+              else if (req === 'premium') label = 'Akun Premium';
+              else if (req === 'nonpremium') label = 'Akun Non-Premium';
+              else if (req === 'aktif') label = 'Akun Aktif';
+              else if (req === 'share') label = 'Share Postingan';
+              
+              reqHtml += `<div class="requirement-item">${escapeHtml(label)}</div>`;
+          });
+      }
+  
+      // Buat HTML untuk hadiah
+      let prizesHtml = '';
+      prizes.forEach((prize, index) => {
+          prizesHtml += `
+              <div class="prize-item">
+                  <span class="prize-number">${index + 1}</span>
+                  <span class="prize-text">${escapeHtml(prize)}</span>
+              </div>
+          `;
+      });
+  
+      // Buat HTML untuk channel
+      let channelsHtml = '';
+      if (channels.length > 0) {
+          channels.forEach(ch => {
+              const channelName = typeof ch === 'string' ? ch : (ch.title || ch.username || 'Channel');
+              const username = typeof ch === 'string' ? ch.replace('@', '') : (ch.username || '').replace('@', '');
+              const isVerified = typeof ch !== 'string' && ch.is_verified;
+              const channelUrl = `https://t.me/${username}`;
+              
+              channelsHtml += `
+                  <a href="${channelUrl}" target="_blank" class="panel-item channel-item" data-url="${channelUrl}">
+                      <div class="item-info">
+                          <div class="item-icon">📢</div>
+                          <div class="item-details">
+                              <div class="item-title">
+                                  ${escapeHtml(channelName)}
+                                  ${isVerified ? '<span style="color: #00e676; margin-left: 4px;">✓</span>' : ''}
+                              </div>
+                              <div class="item-subtitle channel">${username}</div>
+                          </div>
+                      </div>
+                      <div class="item-selector"></div>
+                  </a>
+              `;
+          });
+      } else {
+          channelsHtml = '<div class="empty-message">Tidak ada channel</div>';
+      }
+  
+      // Buat HTML untuk link
+      let linksHtml = '';
+      if (links.length > 0) {
+          links.forEach(link => {
+              const title = link.title || 'Tautan';
+              const url = link.url || '#';
+              linksHtml += `
+                  <a href="${escapeHtml(url)}" target="_blank" class="panel-item link-item" data-url="${escapeHtml(url)}">
+                      <div class="item-info">
+                          <div class="item-icon">🔗</div>
+                          <div class="item-details">
+                              <div class="item-title">${escapeHtml(title)}</div>
+                              <div class="item-subtitle">${escapeHtml(url)}</div>
+                          </div>
+                      </div>
+                      <div class="item-selector"></div>
+                  </a>
+              `;
+          });
+      } else {
+          linksHtml = '<div class="empty-message">Tidak ada link</div>';
+      }
+  
+      // Tentukan media (foto/video)
+      let mediaHtml = '';
+      if (giveaway.media_path) {
+          if (giveaway.media_type === 'video') {
+              mediaHtml = `
+                  <div class="detail-media">
+                      <video src="${giveaway.media_path}" class="detail-media-video" controls></video>
+                  </div>
+              `;
+          } else {
+              mediaHtml = `
+                  <div class="detail-media">
+                      <img src="${giveaway.media_path}" class="detail-media-image" alt="Giveaway Media" onerror="this.style.display='none'">
+                  </div>
+              `;
+          }
+      }
+  
+      // Format tanggal akhir
+      const endDateFormatted = giveaway.end_date ? formatDate(giveaway.end_date) : 'Tidak ditentukan';
+      
+      // Hitung sisa waktu untuk countdown (hanya untuk active)
+      let timeRemaining = '00:00:00:00';
+      let countdownActive = false;
+      
+      if (!isEnded && giveaway.end_date && giveaway.status === 'active') {
+          const endDateTime = new Date(giveaway.end_date).getTime();
+          const nowTime = new Date().getTime();
+          const diff = endDateTime - nowTime;
+          
+          if (diff > 0) {
+              countdownActive = true;
+              const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+              const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+              const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+              const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+              
+              timeRemaining = `${days.toString().padStart(2, '0')}:${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+          }
+      }
+  
+      // Fungsi untuk generate inisial dari nama
+      function getInitials(name) {
+          if (!name) return 'U';
+          return name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+      }
+  
+      // Fungsi untuk generate warna random berdasarkan user id
+      function getUserColor(userId) {
+          const colors = [
+              '#FF6B6B', '#4ECDC4', '#FFD166', '#A06CD5', '#F7B731',
+              '#45AAF2', '#FC5C65', '#26DE81', '#A55EEA', '#FF9F1C'
+          ];
+          return colors[Math.abs(userId) % colors.length];
+      }
+  
+      // Fungsi untuk generate warna random
+      function getRandomColor(index) {
+          const colors = [
+              '#FF6B6B', '#4ECDC4', '#FFD166', '#A06CD5', '#F7B731',
+              '#45AAF2', '#FC5C65', '#26DE81', '#A55EEA', '#FF9F1C'
+          ];
+          return colors[index % colors.length];
+      }
+  
+      // Buat HTML untuk pemenang (hanya untuk ended giveaway)
+      let winnersHtml = '';
+      if (isEnded && winners.length > 0) {
+          // Kelompokkan pemenang berdasarkan hadiah
+          const winnersByPrize = {};
+          winners.forEach(winner => {
+              const prizeIndex = winner.prize_index || 0;
+              if (!winnersByPrize[prizeIndex]) {
+                  winnersByPrize[prizeIndex] = [];
+              }
+              winnersByPrize[prizeIndex].push(winner);
+          });
+  
+          // Buat HTML untuk setiap hadiah dengan pemenangnya
+          prizes.forEach((prize, prizeIndex) => {
+              const prizeWinners = winnersByPrize[prizeIndex] || [];
+              
+              winnersHtml += `
+                  <div class="prize-winners-section">
+                      <div class="prize-winners-header">
+                          <span class="prize-number" style="background: ${getRandomColor(prizeIndex)};">${prizeIndex + 1}</span>
+                          <span class="prize-winners-title">${escapeHtml(prize)}</span>
+                          <span class="winners-count">${prizeWinners.length} pemenang</span>
+                      </div>
+                      
+                      <div class="winners-grid">
+              `;
+              
+              prizeWinners.forEach(winner => {
+                  const fullName = [winner.first_name, winner.last_name].filter(Boolean).join(' ') || 'User';
+                  const initials = getInitials(fullName);
+                  const bgColor = getUserColor(winner.id);
+                  const username = winner.username ? `@${winner.username}` : '(no username)';
+                  
+                  winnersHtml += `
+                      <div class="winner-card">
+                          <div class="winner-avatar" style="background: ${bgColor};">
+                              ${winner.photo_url ? 
+                                  `<img src="${winner.photo_url}" alt="${fullName}" class="winner-avatar-img">` : 
+                                  `<span class="winner-initials">${initials}</span>`
+                              }
+                          </div>
+                          <div class="winner-info">
+                              <div class="winner-name">${escapeHtml(fullName)}</div>
+                              <div class="winner-username">${escapeHtml(username)}</div>
+                              <div class="winner-id">ID: ${winner.id}</div>
+                          </div>
+                      </div>
+                  `;
+              });
+              
+              winnersHtml += `
+                      </div>
+                  </div>
+              `;
+          });
+      }
+  
+      // Buat HTML untuk partisipan
+      let participantsHtml = '';
+      participants.forEach(participant => {
+          const fullName = participant.fullname || 'User';
+          const initials = getInitials(fullName);
+          const bgColor = getUserColor(participant.user_id);
+          const username = participant.username ? `@${participant.username}` : '(no username)';
+          
+          participantsHtml += `
+              <div class="participant-item">
+                  <div class="participant-avatar" style="background: ${bgColor};">
+                      <span class="participant-initials">${initials}</span>
+                  </div>
+                  <div class="participant-info">
+                      <div class="participant-name">${escapeHtml(fullName)}</div>
+                      <div class="participant-username">${escapeHtml(username)}</div>
+                  </div>
+              </div>
+          `;
+      });
   
       // ACTION BUTTONS FIXED (HANYA UNTUK ACTIVE GIVEAWAY)
       let actionButtonsHtml = '';
@@ -749,7 +971,7 @@
                       </div>
                       ` : ''}
                       
-                      <!-- TIMER SECTION (HANYA UNTUK ACTIVE GIVEAWAY) -->
+                      <!-- TIMER SECTION (HANYA UNTUK ACTIVE GIVEWAW) -->
                       ${!isEnded ? `
                           <div class="detail-timer">
                               <div class="timer-label">BERAKHIR DALAM</div>
