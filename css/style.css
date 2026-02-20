@@ -1492,6 +1492,63 @@ em, i {
     100% { transform: translateX(0); }
 }
 
+/* Badge untuk ACTIVE giveaway */
+.giveaway-item.active {
+    position: relative;
+    overflow: hidden;
+}
+
+.active-badge {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: rgba(0, 200, 83, 0.15);
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
+    border: 1px solid rgba(0, 200, 83, 0.4);
+    border-radius: 20px;
+    padding: 4px 12px;
+    font-size: 11px;
+    font-weight: 600;
+    color: #00e676;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    z-index: 2;
+    animation: pulse-active 2s ease infinite;
+}
+
+@keyframes pulse-active {
+    0%, 100% {
+        box-shadow: 0 0 5px rgba(0, 200, 83, 0.3);
+    }
+    50% {
+        box-shadow: 0 0 15px rgba(0, 200, 83, 0.6);
+    }
+}
+
+/* Timer badge dengan warna khusus */
+.stat-badge.timer-badge {
+    background: rgba(255, 193, 7, 0.05);
+    border-color: rgba(255, 193, 7, 0.2);
+    color: #ffc107;
+}
+
+.stat-badge.timer-badge:hover {
+    background: rgba(255, 193, 7, 0.15);
+    border-color: #ffc107;
+}
+
+/* Responsive adjustments untuk badge */
+@media (max-width: 480px) {
+    .active-badge,
+    .ended-badge {
+        top: 8px;
+        right: 8px;
+        padding: 3px 10px;
+        font-size: 10px;
+    }
+}
+
 .giveaway-item p {
     font-size: 14px;
     color: var(--text-secondary);
