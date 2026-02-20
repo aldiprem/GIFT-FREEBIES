@@ -1,2542 +1,3063 @@
-/* ------------------------------------------------------------------
-   PAGE.CSS - GIVEAWAY DETAIL PAGE
-   ------------------------------------------------------------------ */
-/* Halaman ini khusus untuk menampilkan detail giveaway dengan ID tertentu */
-/* File: css/page.css */
+// Main JavaScript for Gift Freebies Telegram App
+(function() {
+  console.log('🎁 GIFT FREEBIES - Script started...');
 
-/* ------------------------------------------------------------------
-   1. RESET & BASE STYLES
-   ------------------------------------------------------------------ */
-*,
-*::before,
-*::after {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
-
-html {
-    font-size: 16px;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-    text-rendering: optimizeLegibility;
-}
-
-body {
-    font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-    background: linear-gradient(135deg, #0f0f1a, #1a1a2f);
-    min-height: 100vh;
-    display: flex;
-    align-items: flex-start;
-    justify-content: center;
-    padding: 16px;
-    position: relative;
-    overflow-x: hidden;
-    color: rgba(255, 255, 255, 0.95);
-    line-height: 1.5;
-}
-
-/* Efek Background Glow */
-body::before {
-    content: '';
-    position: fixed;
-    top: -50%;
-    left: -50%;
-    width: 200%;
-    height: 200%;
-    background: radial-gradient(circle at 30% 30%, rgba(0, 136, 255, 0.08) 0%, transparent 50%),
-                radial-gradient(circle at 70% 70%, rgba(100, 100, 255, 0.05) 0%, transparent 50%);
-    pointer-events: none;
-    z-index: -1;
-    animation: backgroundShift 30s ease infinite alternate;
-}
-
-/* ------------------------------------------------------------------
-   2. CSS VARIABLES (THEME)
-   ------------------------------------------------------------------ */
-:root {
-    --primary-blue: #0088ff;
-    --primary-blue-light: #4da6ff;
-    --primary-blue-dark: #0066cc;
-    --primary-blue-glow: rgba(0, 136, 255, 0.5);
-    
-    --text-primary: rgba(255, 255, 255, 0.95);
-    --text-secondary: rgba(255, 255, 255, 0.7);
-    --text-tertiary: rgba(255, 255, 255, 0.5);
-    --text-muted: rgba(255, 255, 255, 0.3);
-    
-    --border-glow: rgba(0, 170, 255, 0.3);
-    --border-soft: rgba(255, 255, 255, 0.08);
-    --border-hard: rgba(255, 255, 255, 0.15);
-    
-    --glass-bg: rgba(15, 25, 35, 0.25);
-    --glass-bg-dark: rgba(10, 15, 25, 0.4);
-    --glass-border: rgba(255, 255, 255, 0.08);
-    --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-    
-    --transition-normal: 0.3s ease;
-    
-    --radius-md: 12px;
-    --radius-lg: 16px;
-    --radius-xl: 20px;
-    --radius-xxl: 24px;
-    --radius-xxxl: 32px;
-    --radius-pill: 999px;
-    --radius-circle: 50%;
-}
-
-/* ------------------------------------------------------------------
-   3. ANIMATIONS
-   ------------------------------------------------------------------ */
-@keyframes backgroundShift {
-    0% { transform: translate(0, 0) rotate(0deg); }
-    100% { transform: translate(-2%, -2%) rotate(1deg); }
-}
-
-@keyframes slideDown {
-    from {
-        transform: translateY(-20px);
-        opacity: 0;
+  // ==================== FUNGSI GETARAN ====================
+  function vibrate(duration = 20) {
+    if (window.navigator && window.navigator.vibrate) {
+      window.navigator.vibrate(duration);
     }
-    to {
-        transform: translateY(0);
-        opacity: 1;
-    }
-}
-
-@keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
-}
-
-@keyframes spin {
-    to { transform: rotate(360deg); }
-}
-
-/* ------------------------------------------------------------------
-   27. GLOBAL SUBSCRIPTION MODAL
-   ------------------------------------------------------------------ */
-.global-subscription-modal {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.8);
-  backdrop-filter: blur(10px);
-  z-index: 10000;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  opacity: 0;
-  transition: opacity 0.3s ease;
-  pointer-events: none;
-}
-
-.global-subscription-modal.active {
-  opacity: 1;
-  pointer-events: all;
-}
-
-.global-subscription-modal .sync-loading-content {
-  width: 90%;
-  max-width: 320px;
-  background: var(--tg-theme-bg-color, #1e1e2e);
-  border-radius: 24px;
-  padding: 24px;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  transform: scale(0.95);
-  transition: transform 0.3s ease;
-}
-
-.global-subscription-modal.active .sync-loading-content {
-  transform: scale(1);
-}
-
-.global-subscription-modal .sync-loading-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 20px;
-}
-
-.global-subscription-modal .sync-loading-title {
-  font-size: 18px;
-  font-weight: 600;
-  color: var(--tg-theme-text-color, #fff);
-}
-
-.global-subscription-modal .sync-loading-spinner {
-  width: 24px;
-  height: 24px;
-  border: 3px solid rgba(255, 255, 255, 0.1);
-  border-top-color: #00e676;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-}
-
-.global-subscription-modal .sync-loading-body {
-  margin-top: 10px;
-}
-
-.global-subscription-modal .progress-info {
-  text-align: center;
-  font-size: 24px;
-  font-weight: 700;
-  color: white;
-  margin-bottom: 16px;
-}
-
-.global-subscription-modal .progress-current {
-  color: #00e676;
-}
-
-.global-subscription-modal .progress-separator {
-  color: rgba(255, 255, 255, 0.3);
-  margin: 0 4px;
-}
-
-.global-subscription-modal .progress-total {
-  color: rgba(255, 255, 255, 0.7);
-}
-
-.global-subscription-modal .sync-progress-bar {
-  height: 4px;
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 2px;
-  overflow: hidden;
-  margin: 16px 0;
-}
-
-.global-subscription-modal .sync-progress-fill {
-  height: 100%;
-  background: linear-gradient(90deg, #00e676, #00b0ff);
-  width: 0%;
-  transition: width 0.3s ease;
-}
-
-.global-subscription-modal .current-channel {
-  text-align: center;
-  font-size: 14px;
-  color: rgba(255, 255, 255, 0.8);
-  margin: 16px 0 8px 0;
-  padding: 8px;
-  background: rgba(0, 0, 0, 0.2);
-  border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.05);
-}
-
-.global-subscription-modal .current-channel .channel-name {
-  color: #00e676;
-  font-weight: 600;
-}
-
-.global-subscription-modal .sync-status {
-  text-align: center;
-  font-size: 14px;
-  color: var(--tg-theme-hint-color, #aaa);
-}
-
-/* Highlight untuk channel yang belum di-subscribe */
-.channel-item .item-selector.failed {
-  border-color: #ff6b6b;
-  background: rgba(255, 107, 107, 0.2);
-}
-
-.channel-item .item-selector.failed::after {
-  content: '✗';
-  color: #ff6b6b;
-  font-size: 14px;
-}
-
-/* ------------------------------------------------------------------
-   4. CONTAINER
-   ------------------------------------------------------------------ */
-.giveaway-detail-container {
-    width: 100%;
-    max-width: 480px;
-    margin: 0 auto;
-    position: relative;
-    z-index: 1;
-}
-
-/* ------------------------------------------------------------------
-   5. HEADER WITH BACK BUTTON
-   ------------------------------------------------------------------ */
-.detail-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 20px;
-}
-
-.detail-header .logo-box {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    flex: 1;
-}
-
-.detail-header .logo-img {
-    width: 36px;
-    height: 36px;
-    object-fit: contain;
-}
-
-.detail-header .logo-text {
-    font-size: 18px;
-    font-weight: 700;
-    letter-spacing: 1px;
-    text-transform: uppercase;
-    background: linear-gradient(135deg, #fff, #aaddff);
-    -webkit-background-clip: text;
-    background-clip: text;
-    -webkit-text-fill-color: transparent;
-}
-
-.detail-back-btn {
-    width: 40px;
-    height: 40px;
-    border-radius: var(--radius-circle);
-    background: rgba(255, 255, 255, 0.08);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    border: 1.5px solid rgba(255, 255, 255, 0.1);
-    color: white;
-    font-size: 20px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-    margin-left: 12px;
-    flex-shrink: 0;
-}
-
-.detail-back-btn:hover {
-    background: rgba(255, 255, 255, 0.15);
-    transform: scale(1.05);
-    border-color: var(--primary-blue);
-}
-
-/* ------------------------------------------------------------------
-   6. MAIN CARD
-   ------------------------------------------------------------------ */
-.detail-card {
-    background: rgba(15, 25, 40, 0.2);
-    backdrop-filter: blur(20px) saturate(200%);
-    -webkit-backdrop-filter: blur(20px) saturate(200%);
-    border: 1.5px solid rgba(0, 170, 255, 0.25);
-    border-radius: var(--radius-xxxl);
-    overflow: hidden;
-    box-shadow: 
-        0 20px 40px -10px rgba(0, 0, 0, 0.4),
-        inset 0 1px 2px rgba(255, 255, 255, 0.15);
-    position: relative;
-}
-
-.detail-card::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 60%;
-    background: linear-gradient(to bottom, 
-        rgba(255, 255, 255, 0.15) 0%, 
-        rgba(255, 255, 255, 0.05) 40%, 
-        transparent 100%);
-    pointer-events: none;
-    z-index: 1;
-}
-
-.detail-card-content {
-    position: relative;
-    z-index: 2;
-    padding: 0;
-}
-
-/* ------------------------------------------------------------------
-   7. MEDIA SECTION (FOTO BORDER ATAS)
-   ------------------------------------------------------------------ */
-.detail-media {
-    width: 100%;
-    border-bottom: 1.5px solid rgba(0, 170, 255, 0.25);
-    overflow: hidden;
-    background: rgba(0, 0, 0, 0.3);
-}
-
-.detail-media-image {
-    width: 100%;
-    max-height: 200px;
-    object-fit: cover;
-    display: block;
-}
-
-.detail-media-video {
-    width: 100%;
-    max-height: 200px;
-    display: block;
-    background: black;
-}
-
-/* ------------------------------------------------------------------
-   8. CONTENT SECTIONS (PADDING UNTUK SEMUA KECUALI MEDIA)
-   ------------------------------------------------------------------ */
-.detail-section {
-    padding: 0 20px;
-}
-
-.detail-section:first-of-type {
-    margin-top: 16px;
-}
-
-/* ------------------------------------------------------------------
-   9. STATUS BADGE
-   ------------------------------------------------------------------ */
-.detail-status {
-    display: inline-block;
-    padding: 4px 16px;
-    background: rgba(0, 200, 83, 0.15);
-    border: 1.5px solid rgba(0, 200, 83, 0.4);
-    border-radius: var(--radius-pill);
-    color: #00e676;
-    font-size: 12px;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    margin: 16px 20px 12px 20px;
-}
-
-.detail-status.ended {
-    background: rgba(255, 107, 107, 0.15);
-    border-color: rgba(255, 107, 107, 0.4);
-    color: #ff8a8a;
-}
-
-.detail-status.expired {
-    background: rgba(158, 158, 158, 0.15);
-    border-color: rgba(158, 158, 158, 0.4);
-    color: #bdbdbd;
-}
-
-/* ------------------------------------------------------------------
-   10. DESKRIPSI SECTION - 2 BARIS DENGAN TOMBOL EXPAND
-   ------------------------------------------------------------------ */
-.detail-description {
-    margin: 16px 0 20px 0;
-    padding: 0 20px;
-}
-
-.description-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 8px;
-}
-
-.description-title {
-    font-size: 16px;
-    font-weight: 600;
-    color: white;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.description-title::before {
-    content: '📄';
-    font-size: 18px;
-}
-
-.description-expand-btn {
-    background: rgba(255, 255, 255, 0.08);
-    border: 1.5px solid rgba(255, 255, 255, 0.1);
-    border-radius: var(--radius-pill);
-    color: white;
-    font-size: 12px;
-    font-weight: 500;
-    padding: 6px 16px;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    backdrop-filter: blur(5px);
-    -webkit-backdrop-filter: blur(5px);
-    letter-spacing: 0.3px;
-}
-
-.description-expand-btn:hover {
-    background: var(--primary-blue);
-    border-color: var(--primary-blue);
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 136, 255, 0.3);
-}
-
-.description-content {
-    background: rgba(10, 20, 30, 0.3);
-    border: 1.5px solid rgba(255, 255, 255, 0.05);
-    border-radius: var(--radius-xl);
-    padding: 16px;
-    color: var(--text-secondary);
-    font-size: 14px;
-    line-height: 1.6;
-    word-break: break-word;
-    transition: all 0.3s ease;
-}
-
-.description-content.collapsed {
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-    max-height: 80px;
-}
-
-.description-content.expanded {
-    max-height: 500px;
-    overflow-y: auto;
-}
-
-.description-content::-webkit-scrollbar {
-    width: 4px;
-}
-
-.description-content::-webkit-scrollbar-track {
-    background: rgba(255, 255, 255, 0.02);
-    border-radius: 4px;
-}
-
-.description-content::-webkit-scrollbar-thumb {
-    background: var(--primary-blue);
-    border-radius: 4px;
-}
-
-/* ------------------------------------------------------------------
-   11. SYARAT SECTION - SCROLL KANAN, TANPA BUBLE
-   ------------------------------------------------------------------ */
-.detail-requirements {
-    margin: 20px 0;
-    padding: 0 20px;
-}
-
-.requirements-title {
-    font-size: 16px;
-    font-weight: 600;
-    color: white;
-    margin-bottom: 12px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.requirements-title::before {
-    content: '🔐';
-    font-size: 18px;
-}
-
-.requirements-scroll {
-    overflow-x: auto;
-    overflow-y: hidden;
-    white-space: nowrap;
-    padding-bottom: 8px;
-    scrollbar-width: thin;
-    scrollbar-color: var(--primary-blue) rgba(255, 255, 255, 0.05);
-    -webkit-overflow-scrolling: touch;
-}
-
-.requirements-scroll::-webkit-scrollbar {
-    height: 4px;
-}
-
-.requirements-scroll::-webkit-scrollbar-track {
-    background: rgba(255, 255, 255, 0.05);
-    border-radius: 4px;
-}
-
-.requirements-scroll::-webkit-scrollbar-thumb {
-    background: var(--primary-blue);
-    border-radius: 4px;
-}
-
-.requirements-list {
-    display: inline-flex;
-    gap: 10px;
-    padding: 0 2px;
-}
-
-.requirement-item {
-    background: rgba(0, 136, 255, 0.12);
-    border: 1.5px solid rgba(0, 136, 255, 0.3);
-    border-radius: var(--radius-pill);
-    padding: 8px 18px;
-    color: white;
-    font-size: 13px;
-    font-weight: 500;
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    white-space: nowrap;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-}
-
-/* TANPA BUBLE - HANYA TEXT DENGAN STYLE FONT */
-.requirement-item span:first-child {
-    font-size: 14px;
-}
-
-/* ------------------------------------------------------------------
-   12. HADIAH SECTION - 2 BARIS DENGAN TOMBOL EXPAND
-   ------------------------------------------------------------------ */
-.detail-prizes {
-    margin: 20px 0;
-    padding: 0 20px;
-}
-
-.prizes-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 12px;
-}
-
-.prizes-title {
-    font-size: 16px;
-    font-weight: 600;
-    color: white;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.prizes-title::before {
-    content: '🎁';
-    font-size: 18px;
-}
-
-.prizes-expand-btn {
-    background: rgba(255, 255, 255, 0.08);
-    border: 1.5px solid rgba(255, 255, 255, 0.1);
-    border-radius: var(--radius-pill);
-    color: white;
-    font-size: 12px;
-    font-weight: 500;
-    padding: 6px 16px;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    backdrop-filter: blur(5px);
-    -webkit-backdrop-filter: blur(5px);
-    letter-spacing: 0.3px;
-}
-
-.prizes-expand-btn:hover {
-    background: var(--primary-blue);
-    border-color: var(--primary-blue);
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 136, 255, 0.3);
-}
-
-.prizes-list {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    transition: all 0.3s ease;
-}
-
-.prizes-list.collapsed {
-    max-height: 90px;
-    overflow: hidden;
-}
-
-.prizes-list.expanded {
-    max-height: 500px;
-    overflow-y: auto;
-}
-
-.prizes-list.expanded::-webkit-scrollbar {
-    width: 4px;
-}
-
-.prizes-list.expanded::-webkit-scrollbar-track {
-    background: rgba(255, 255, 255, 0.02);
-    border-radius: 4px;
-}
-
-.prizes-list.expanded::-webkit-scrollbar-thumb {
-    background: var(--primary-blue);
-    border-radius: 4px;
-}
-
-.prize-item {
-    background: rgba(0, 136, 255, 0.1);
-    border: 1.5px solid rgba(0, 136, 255, 0.2);
-    border-radius: var(--radius-xl);
-    padding: 12px 16px;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    transition: all 0.2s ease;
-}
-
-.prize-item:hover {
-    background: rgba(0, 136, 255, 0.15);
-    border-color: var(--primary-blue);
-    transform: translateX(5px);
-}
-
-.prize-number {
-    width: 28px;
-    height: 28px;
-    background: linear-gradient(135deg, var(--primary-blue), #4da6ff);
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 14px;
-    font-weight: 700;
-    color: white;
-    flex-shrink: 0;
-    box-shadow: 0 4px 8px rgba(0, 136, 255, 0.3);
-}
-
-/* HADIAH TANPA BUBLE - HANYA TEXT */
-.prize-text {
-    color: white;
-    font-size: 15px;
-    font-weight: 500;
-    word-break: break-word;
-    flex: 1;
-}
-
-/* ------------------------------------------------------------------
-   13. CHANNEL & LINK BUTTONS
-   ------------------------------------------------------------------ */
-.detail-buttons {
-    display: flex;
-    gap: 12px;
-    margin: 20px 0 16px 0;
-    padding: 0 20px;
-}
-
-.detail-action-btn {
-    flex: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    padding: 14px 0;
-    background: rgba(30, 40, 50, 0.3);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    border: 1.5px solid rgba(255, 255, 255, 0.1);
-    border-radius: var(--radius-xl);
-    color: white;
-    font-size: 15px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-}
-
-.detail-action-btn:hover {
-    transform: translateY(-2px);
-    background: rgba(40, 50, 60, 0.4);
-    border-color: rgba(255, 255, 255, 0.2);
-}
-
-.detail-action-btn.active {
-    background: rgba(0, 136, 255, 0.2);
-    border-color: var(--primary-blue);
-    color: white;
-}
-
-.detail-action-btn .btn-icon {
-    font-size: 18px;
-}
-
-/* ------------------------------------------------------------------
-   20. CUSTOM EYE BUTTON FOR CHANNEL & LINK
-   ------------------------------------------------------------------ */
-
-.eye-custom-btn {
-    width: 32px;
-    height: 32px;
-    background: rgba(255, 255, 255, 0.08);
-    backdrop-filter: blur(5px);
-    -webkit-backdrop-filter: blur(5px);
-    border: 1.5px solid rgba(255, 255, 255, 0.1);
-    border-radius: 50%;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    margin-left: 8px;
-    padding: 0;
-    flex-shrink: 0;
-}
-
-.eye-custom-btn:hover {
-    background: rgba(0, 136, 255, 0.2);
-    border-color: var(--primary-blue);
-    transform: scale(1.1);
-}
-
-.eye-custom-btn.active {
-    background: rgba(0, 136, 255, 0.3);
-    border-color: var(--primary-blue);
-    box-shadow: 0 0 15px rgba(0, 136, 255, 0.4);
-}
-
-.eye-custom-btn svg {
-    width: 18px;
-    height: 18px;
-    transition: all 0.2s ease;
-}
-
-.eye-custom-btn:hover svg path,
-.eye-custom-btn:hover svg circle {
-    fill: white;
-}
-
-.eye-custom-btn.active svg path,
-.eye-custom-btn.active svg circle {
-    fill: white;
-}
-
-/* Container untuk tombol channel dan link */
-.channel-link-container {
-    margin: 20px 0 16px 0;
-    padding: 0 20px;
-}
-
-.channel-link-row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    background: rgba(30, 40, 50, 0.3);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    border: 1.5px solid rgba(255, 255, 255, 0.1);
-    border-radius: var(--radius-xl);
-    padding: 12px 16px;
-    margin-bottom: 10px;
-    transition: all 0.2s ease;
-}
-
-.channel-link-row:hover {
-    background: rgba(40, 50, 60, 0.4);
-    border-color: rgba(255, 255, 255, 0.2);
-}
-
-.channel-link-label {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    color: white;
-    font-size: 15px;
-    font-weight: 600;
-}
-
-.channel-link-label .icon {
-    font-size: 20px;
-}
-
-.channel-link-label.channel .icon {
-    color: #0088ff;
-}
-
-.channel-link-label.link .icon {
-    color: #ffd700;
-}
-
-/* Panel container untuk channel dan link */
-.channel-panel-container,
-.link-panel-container {
-    margin: 0 20px 20px 20px;
-    transition: all 0.3s ease;
-}
-
-.channel-panel-container.hidden,
-.link-panel-container.hidden {
-    display: none;
-}
-
-/* Detail panel (untuk list channel/link) */
-.detail-panel {
-    background: rgba(10, 20, 30, 0.4);
-    backdrop-filter: blur(20px) saturate(200%);
-    -webkit-backdrop-filter: blur(20px) saturate(200%);
-    border: 1.5px solid rgba(0, 170, 255, 0.25);
-    border-radius: var(--radius-xxl);
-    overflow: hidden;
-    animation: slideDown 0.3s ease;
-    box-shadow: 0 15px 30px -5px rgba(0, 0, 0, 0.5);
-}
-
-.panel-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 16px 20px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-    background: rgba(0, 0, 0, 0.2);
-}
-
-.panel-title {
-    font-size: 16px;
-    font-weight: 600;
-    color: white;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.panel-title.channel::before {
-    content: '📢';
-    font-size: 18px;
-}
-
-.panel-title.link::before {
-    content: '🔗';
-    font-size: 18px;
-}
-
-.panel-close {
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    background: rgba(255, 255, 255, 0.08);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    color: white;
-    font-size: 16px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.2s ease;
-}
-
-.panel-close:hover {
-    background: rgba(255, 107, 107, 0.3);
-    transform: rotate(90deg);
-}
-
-.panel-content {
-    max-height: 300px;
-    overflow-y: auto;
-    padding: 12px 0;
-}
-
-.panel-content::-webkit-scrollbar {
-    width: 4px;
-}
-
-.panel-content::-webkit-scrollbar-track {
-    background: rgba(255, 255, 255, 0.02);
-}
-
-.panel-content::-webkit-scrollbar-thumb {
-    background: var(--primary-blue);
-    border-radius: 4px;
-}
-
-/* LIST ITEM UNTUK CHANNEL DAN LINK */
-.panel-item {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 14px 20px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.03);
-    transition: all 0.2s ease;
-    cursor: pointer;
-    text-decoration: none !important;
-    color: inherit;
-}
-
-.panel-item:hover {
-    background: rgba(0, 136, 255, 0.1);
-    text-decoration: none !important;
-}
-
-.panel-item:last-child {
-    border-bottom: none;
-}
-
-.item-info {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    flex: 1;
-    overflow: hidden;
-}
-
-.item-icon {
-    width: 40px;
-    height: 40px;
-    background: rgba(0, 136, 255, 0.15);
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 20px;
-    border: 1px solid rgba(0, 136, 255, 0.3);
-    flex-shrink: 0;
-}
-
-.item-details {
-    flex: 1;
-    overflow: hidden;
-}
-
-.item-title {
-    color: white;
-    font-size: 15px;
-    font-weight: 600;
-    margin-bottom: 4px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.item-subtitle {
-    color: rgba(255, 255, 255, 0.5);
-    font-size: 12px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.item-subtitle.channel::before {
-    content: '@';
-    color: var(--primary-blue);
-    margin-right: 2px;
-}
-
-/* TANDA LINGKARAN KOSONG UNTUK SELECTED */
-.item-selector {
-    width: 24px;
-    height: 24px;
-    border-radius: 50%;
-    border: 2px solid rgba(255, 255, 255, 0.3);
-    background: transparent;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: white;
-    font-size: 14px;
-    transition: all 0.2s ease;
-    margin-left: 12px;
-    flex-shrink: 0;
-}
-
-.item-selector.selected {
-    border-color: #10b981;
-    background: #10b981;
-}
-
-.item-selector.selected::after {
-    content: '✓';
-    color: white;
-    font-weight: bold;
-}
-
-/* LINK ITEM KHUSUS */
-.link-item .item-icon {
-    background: rgba(255, 215, 0, 0.15);
-    border-color: rgba(255, 215, 0, 0.3);
-    color: #ffd700;
-}
-
-/* Hilangkan mata di header */
-.eye-toggle-btn {
-    display: none !important;
-}
-
-.detail-header-right .eye-toggle-btn {
-    display: none !important;
-}
-
-/* ------------------------------------------------------------------
-   14. PANEL CHANNEL / LINK
-   ------------------------------------------------------------------ */
-.detail-panel {
-    margin: 0 20px 20px 20px;
-    background: rgba(10, 20, 30, 0.4);
-    backdrop-filter: blur(20px) saturate(200%);
-    -webkit-backdrop-filter: blur(20px) saturate(200%);
-    border: 1.5px solid rgba(0, 170, 255, 0.25);
-    border-radius: var(--radius-xxl);
-    overflow: hidden;
-    animation: slideDown 0.3s ease;
-    box-shadow: 0 15px 30px -5px rgba(0, 0, 0, 0.5);
-}
-
-.panel-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 16px 20px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-    background: rgba(0, 0, 0, 0.2);
-}
-
-.panel-title {
-    font-size: 16px;
-    font-weight: 600;
-    color: white;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.panel-title.channel::before {
-    content: '📢';
-    font-size: 18px;
-}
-
-.panel-title.link::before {
-    content: '🔗';
-    font-size: 18px;
-}
-
-.panel-close {
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    background: rgba(255, 255, 255, 0.08);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    color: white;
-    font-size: 16px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.2s ease;
-}
-
-.panel-close:hover {
-    background: rgba(255, 107, 107, 0.3);
-    transform: rotate(90deg);
-}
-
-.panel-content {
-    max-height: 300px;
-    overflow-y: auto;
-    padding: 12px 0;
-}
-
-.panel-content::-webkit-scrollbar {
-    width: 4px;
-}
-
-.panel-content::-webkit-scrollbar-track {
-    background: rgba(255, 255, 255, 0.02);
-}
-
-.panel-content::-webkit-scrollbar-thumb {
-    background: var(--primary-blue);
-    border-radius: 4px;
-}
-
-/* LIST ITEM UNTUK CHANNEL DAN LINK */
-.panel-item {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 14px 20px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.03);
-    transition: all 0.2s ease;
-    cursor: pointer;
-}
-
-.panel-item:hover {
-    background: rgba(0, 136, 255, 0.1);
-}
-
-.panel-item:last-child {
-    border-bottom: none;
-}
-
-.item-info {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    flex: 1;
-    overflow: hidden;
-}
-
-.item-icon {
-    width: 40px;
-    height: 40px;
-    background: rgba(0, 136, 255, 0.15);
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 20px;
-    border: 1px solid rgba(0, 136, 255, 0.3);
-    flex-shrink: 0;
-}
-
-.item-details {
-    flex: 1;
-    overflow: hidden;
-}
-
-.item-title {
-    color: white;
-    font-size: 15px;
-    font-weight: 600;
-    margin-bottom: 4px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.item-subtitle {
-    color: rgba(255, 255, 255, 0.5);
-    font-size: 12px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.item-subtitle.channel::before {
-    content: '@';
-    color: var(--primary-blue);
-    margin-right: 2px;
-}
-
-/* TANDA LINGKARAN KOSONG UNTUK SELECTED (CEKLIS NANTI) */
-.item-selector {
-    width: 24px;
-    height: 24px;
-    border-radius: 50%;
-    border: 2px solid rgba(255, 255, 255, 0.3);
-    background: transparent;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: white;
-    font-size: 14px;
-    transition: all 0.2s ease;
-    margin-left: 12px;
-    flex-shrink: 0;
-}
-
-.item-selector.selected {
-    border-color: #10b981;
-    background: #10b981;
-}
-
-.item-selector.selected::after {
-    content: '✓';
-    color: white;
-    font-weight: bold;
-}
-
-/* LINK ITEM KHUSUS */
-.link-item .item-icon {
-    background: rgba(255, 215, 0, 0.15);
-    border-color: rgba(255, 215, 0, 0.3);
-    color: #ffd700;
-}
-
-/* ------------------------------------------------------------------
-   15. TIMER SECTION
-   ------------------------------------------------------------------ */
-.detail-timer {
-    margin: 20px 20px 24px 20px;
-    background: rgba(0, 136, 255, 0.1);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-    border: 1.5px solid rgba(0, 170, 255, 0.3);
-    border-radius: var(--radius-xxl);
-    padding: 16px;
-    text-align: center;
-    box-shadow: 
-        0 10px 20px -8px rgba(0, 0, 0, 0.4),
-        inset 0 1px 2px rgba(255, 255, 255, 0.2);
-}
-
-.timer-label {
-    font-size: 12px;
-    color: rgba(255, 255, 255, 0.6);
-    text-transform: uppercase;
-    letter-spacing: 1.5px;
-    margin-bottom: 8px;
-}
-
-.timer-countdown {
-    font-size: 32px;
-    font-weight: 800;
-    background: linear-gradient(135deg, #fff, #aaddff);
-    -webkit-background-clip: text;
-    background-clip: text;
-    -webkit-text-fill-color: transparent;
-    font-family: 'Inter', 'SF Mono', 'Fira Code', monospace;
-    letter-spacing: 2px;
-    animation: timerPulse 2s ease infinite;
-    line-height: 1.2;
-    margin-bottom: 8px;
-}
-
-/* ------------------------------------------------------------------
-   PAGE.CSS - GIVEAWAY DETAIL PAGE (FINAL VERSION)
-   ------------------------------------------------------------------ */
-@keyframes timerPulse {
-    0%, 100% { text-shadow: 0 0 15px rgba(0, 136, 255, 0.3); }
-    50% { text-shadow: 0 0 25px rgba(0, 136, 255, 0.6); }
-}
-
-/* Pastikan hidden class berfungsi */
-.hidden {
-    display: none !important;
-}
-
-/* Pastikan panel item selector terlihat */
-.item-selector {
-    width: 24px;
-    height: 24px;
-    border-radius: 50%;
-    border: 2px solid rgba(255, 255, 255, 0.3);
-    background: transparent;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: white;
-    font-size: 14px;
-    transition: all 0.2s ease;
-    margin-left: 12px;
-    flex-shrink: 0;
-}
-
-.item-selector.selected {
-    border-color: #10b981;
-    background: #10b981;
-}
-
-.item-selector.selected::after {
-    content: '✓';
-    color: white;
-    font-weight: bold;
-}
-
-/* ------------------------------------------------------------------
-   16. ACTION BUTTONS FIXED
-   ------------------------------------------------------------------ */
-.detail-actions-fixed {
-    display: flex;
-    gap: 12px;
-    margin-top: 20px;
-    padding: 0 20px 16px 20px;
-}
-
-.detail-actions-fixed .btn {
-    flex: 1;
-    padding: 16px 0;
-    border: none;
-    border-radius: var(--radius-pill);
-    font-size: 15px;
-    font-weight: 700;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    position: relative;
-    overflow: hidden;
-    letter-spacing: 0.5px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-}
-
-.btn-participate {
-    background: linear-gradient(135deg, #0088ff, #6c5ce7);
-    color: white;
-    box-shadow: 0 8px 20px rgba(0, 136, 255, 0.4);
-}
-
-.btn-participate:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 12px 28px rgba(0, 136, 255, 0.6);
-}
-
-.btn-share {
-    background: rgba(255, 255, 255, 0.08);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    border: 1.5px solid rgba(255, 255, 255, 0.15);
-    color: white;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-}
-
-.btn-share:hover {
-    background: rgba(255, 255, 255, 0.15);
-    transform: translateY(-3px);
-    border-color: rgba(255, 255, 255, 0.3);
-}
-
-/* Tombol partisipasi disabled */
-.btn-participate.disabled {
-  background: linear-gradient(135deg, #4a5568, #2d3748);
-  opacity: 0.7;
-  cursor: not-allowed;
-  pointer-events: none;
-  box-shadow: none;
-  transform: none;
-  filter: grayscale(0.5);
-}
-
-.btn-participate.disabled:hover {
-  transform: none;
-  box-shadow: none;
-}
-
-.btn-participate.disabled:active {
-  transform: none;
-}
-
-/* ------------------------------------------------------------------
-   17. EMPTY STATE & LOADING
-   ------------------------------------------------------------------ */
-.empty-message {
-    text-align: center;
-    padding: 60px 20px;
-    color: var(--text-muted);
-    font-size: 15px;
-}
-
-.loading-state {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 60px 20px;
-}
-
-.loading-state .spinner {
-    width: 48px;
-    height: 48px;
-    border: 3px solid rgba(255, 255, 255, 0.05);
-    border-top: 3px solid var(--primary-blue);
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
-    margin-bottom: 16px;
-}
-
-.loading-state p {
-    color: var(--text-secondary);
-    font-size: 15px;
-}
-
-/* ------------------------------------------------------------------
-   18. UTILITY CLASSES
-   ------------------------------------------------------------------ */
-.hidden {
-    display: none !important;
-}
-
-.text-gradient {
-    background: linear-gradient(135deg, #fff, #aaddff);
-    -webkit-background-clip: text;
-    background-clip: text;
-    -webkit-text-fill-color: transparent;
-}
-
-/* ------------------------------------------------------------------
-   21. CHANNEL & LINK BUTTONS IN ONE ROW
-   ------------------------------------------------------------------ */
-
-.channel-link-row-container {
-  display: flex;
-  gap: 12px;
-  margin: 20px 0 16px 0;
-  padding: 0 20px;
-}
-
-.channel-link-row-container .channel-link-row {
-  flex: 1;
-  margin-bottom: 0;
-}
-
-.channel-link-row-container .channel-link-row .eye-custom-btn {
-  margin-left: auto;
-}
-
-/* Perbaikan untuk panel container */
-.channel-panel-container,
-.link-panel-container {
-  margin: 0 20px 20px 20px;
-  transition: all 0.3s ease;
-}
-
-.channel-panel-container.hidden,
-.link-panel-container.hidden {
-  display: none;
-}
-
-/* Perbaikan untuk panel item link */
-.panel-item {
-  text-decoration: none !important;
-  color: inherit !important;
-}
-
-.panel-item:hover {
-  text-decoration: none !important;
-}
-
-.panel-item:link,
-.panel-item:visited,
-.panel-item:hover,
-.panel-item:active {
-  text-decoration: none !important;
-  color: inherit !important;
-}
-
-/* Perbaikan untuk header */
-.detail-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 20px;
-  position: relative;
-}
-
-.detail-header .logo-box {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex: 1;
-  background: transparent !important;
-  border: none !important;
-  box-shadow: none !important;
-  padding: 8px 0 !important;
-}
-
-.detail-back-btn {
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.08);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border: 1.5px solid rgba(255, 255, 255, 0.1);
-  color: white;
-  font-size: 24px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-  flex-shrink: 0;
-}
-
-.detail-back-btn:hover {
-  background: rgba(255, 255, 255, 0.15);
-  transform: scale(1.05);
-  border-color: var(--primary-blue);
-}
-
-/* ------------------------------------------------------------------
-   22. WINNERS SECTION STYLES
-   ------------------------------------------------------------------ */
-.detail-winners {
-  margin: 20px 0;
-  padding: 0 20px;
-}
-
-.winners-title {
-  font-size: 16px;
-  font-weight: 600;
-  color: white;
-  margin-bottom: 16px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.prize-winners-section {
-  margin-bottom: 24px;
-  background: rgba(255, 255, 255, 0.02);
-  border-radius: var(--radius-xl);
-  padding: 16px;
-}
-
-.prize-winners-header {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 16px;
-  padding-bottom: 12px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-}
-
-.prize-winners-header .prize-number {
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 14px;
-  font-weight: 700;
-  color: white;
-  flex-shrink: 0;
-}
-
-.prize-winners-title {
-  font-size: 15px;
-  font-weight: 600;
-  color: white;
-  flex: 1;
-}
-
-.winners-count {
-  font-size: 12px;
-  color: var(--text-tertiary);
-  background: rgba(255, 255, 255, 0.05);
-  padding: 4px 10px;
-  border-radius: var(--radius-pill);
-}
-
-.winners-grid {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.winner-card {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  background: rgba(0, 136, 255, 0.05);
-  border: 1px solid rgba(0, 136, 255, 0.1);
-  border-radius: var(--radius-lg);
-  padding: 12px;
-  transition: all 0.2s ease;
-}
-
-.winner-card:hover {
-  background: rgba(0, 136, 255, 0.1);
-  border-color: var(--primary-blue);
-  transform: translateX(5px);
-}
-
-.winner-avatar {
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
-  flex-shrink: 0;
-  border: 2px solid rgba(255, 255, 255, 0.2);
-}
-
-.winner-avatar-img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.winner-initials {
-  color: white;
-  font-size: 18px;
-  font-weight: 600;
-}
-
-.winner-info {
-  flex: 1;
-  overflow: hidden;
-}
-
-.winner-name {
-  font-size: 15px;
-  font-weight: 600;
-  color: white;
-  margin-bottom: 2px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.winner-username {
-  font-size: 12px;
-  color: var(--text-secondary);
-  margin-bottom: 2px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.winner-id {
-  font-size: 11px;
-  color: var(--text-tertiary);
-  font-family: 'SF Mono', monospace;
-}
-
-/* ------------------------------------------------------------------
-   24. DETAIL HEADER RIGHT
-   ------------------------------------------------------------------ */
-.detail-header-right {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.detail-header-right .eye-custom-btn {
-  margin-left: 0;
-  width: 40px;
-  height: 40px;
-}
-
-.detail-header-right .eye-custom-btn svg {
-  width: 22px;
-  height: 22px;
-}
-
-/* Responsive adjustments */
-@media (max-width: 480px) {
-  .participants-grid {
-    grid-template-columns: 1fr;
   }
 
-  .winner-avatar {
-    width: 40px;
-    height: 40px;
-  }
+  // ==================== KONFIGURASI ====================
+  const API_BASE_URL = 'https://individually-threaded-jokes-letting.trycloudflare.com';
 
-  .winner-name {
-    font-size: 14px;
-  }
-}
+  // ==================== DOM ELEMENTS ====================
+  const elements = {
+    loading: document.getElementById('loading'),
+    error: document.getElementById('error'),
+    profileContent: document.getElementById('profileContent'),
+    profilePhoto: document.getElementById('profilePhoto'),
+    profilePhotoWrapper: document.getElementById('profilePhotoWrapper'),
+    profileNameDisplay: document.getElementById('profileNameDisplay'),
+    profileUsernameDisplay: document.getElementById('profileUsernameDisplay'),
+    profileIdDisplay: document.getElementById('profileIdDisplay'),
+    totalCreate: document.getElementById('totalCreate'),
+    languageCode: document.getElementById('languageCode'),
+    participations: document.getElementById('participations'),
+    wins: document.getElementById('wins'),
+    settingsBtn: document.getElementById('settingsBtn'),
+    activeBtn: document.getElementById('activeBtn'),
+    endedBtn: document.getElementById('endedBtn'),
+    giveawayContent: document.getElementById('giveawayContent'),
+    createGiveawayBtn: document.getElementById('createGiveawayBtn'),
+    giveawayButtons: document.querySelector('.giveaway-buttons')
+  };
 
-/* ------------------------------------------------------------------
-   26. LINK TIMER STYLES
-   ------------------------------------------------------------------ */
-.link-timer {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    z-index: 100;
-    background: rgba(0, 0, 0, 0.8);
-    backdrop-filter: blur(5px);
-    border-radius: 50%;
-    width: 80px;
-    height: 80px;
-    animation: timerAppear 0.3s ease;
-}
-
-.link-timer-circle {
-    position: relative;
-    width: 60px;
-    height: 60px;
-}
-
-.link-timer-svg {
-    width: 60px;
-    height: 60px;
-    transform: rotate(-90deg);
-}
-
-.link-timer-bg {
-    stroke: rgba(255, 255, 255, 0.1);
-    stroke-width: 2;
-}
-
-.link-timer-progress {
-    stroke: #00e676;
-    stroke-width: 2;
-    stroke-linecap: round;
-    transition: stroke-dashoffset 0.1s linear;
-}
-
-.link-timer-text {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    color: white;
-    font-size: 20px;
-    font-weight: 700;
-}
-
-.link-timer-label {
-    color: white;
-    font-size: 10px;
-    margin-top: 8px;
-    white-space: nowrap;
-    background: rgba(0, 0, 0, 0.5);
-    padding: 2px 8px;
-    border-radius: 12px;
-}
-
-@keyframes timerAppear {
-    from {
-        opacity: 0;
-        transform: translate(-50%, -50%) scale(0.5);
+  // ==================== STATE ====================
+  let globalNodal = null;
+  let currentUser = null;
+  let currentGiveawayType = 'active';
+    let allGiveaways = { active: [], ended: [] };
+  
+    // ==================== GUEST USER DATA ====================
+    const guestUser = {
+      id: 999999999,
+      first_name: 'Guest',
+      last_name: 'User',
+      username: 'guest',
+      language_code: 'id',
+      is_premium: false,
+      total_participations: 0,
+      total_wins: 0
+    };
+  
+    // ==================== FUNGSI UTILITY ====================
+    function showError(msg, isDetailError = false) {
+      vibrate(30);
+      if (elements.loading) elements.loading.style.display = 'none';
+      if (elements.error) {
+        elements.error.style.display = 'flex';
+        const errorDiv = elements.error.querySelector('div');
+        if (errorDiv) errorDiv.textContent = `❌ ${msg}`;
+      }
+      if (isDetailError && elements.profileContent) {
+        elements.profileContent.style.display = 'none';
+      }
     }
-    to {
-        opacity: 1;
-        transform: translate(-50%, -50%) scale(1);
+  
+    function showProfile() {
+      if (elements.loading) elements.loading.style.display = 'none';
+      if (elements.error) elements.error.style.display = 'none';
+      if (elements.profileContent) elements.profileContent.style.display = 'block';
+      if (elements.giveawayButtons) elements.giveawayButtons.style.display = 'flex';
     }
-}
-
-/* Pastikan link-item punya position relative untuk timer */
-.link-item {
-    position: relative;
-}
-
-.winners-border-container {
-    margin: 16px 20px 20px 20px;
-    background: rgba(20, 30, 45, 0.3);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-    border: 1.5px solid rgba(255, 215, 0, 0.3);
-    border-radius: var(--radius-xxl);
-    padding: 16px;
-    box-shadow: 0 10px 25px -8px rgba(0, 0, 0, 0.5);
-    position: relative;
-    overflow: hidden;
-}
-
-.winners-border-container::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 60%;
-    background: linear-gradient(to bottom, 
-        rgba(255, 215, 0, 0.1) 0%, 
-        transparent 100%);
-    pointer-events: none;
-    z-index: 1;
-}
-
-.winners-list-compact {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    position: relative;
-    z-index: 2;
-}
-
-.winner-compact-item {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    background: rgba(0, 0, 0, 0.2);
-    border: 1px solid rgba(255, 215, 0, 0.15);
-    border-radius: var(--radius-lg);
-    padding: 10px;
-    transition: all 0.2s ease;
-}
-
-.winner-compact-item:hover {
-    border-color: rgba(255, 215, 0, 0.4);
-    background: rgba(255, 215, 0, 0.05);
-    transform: translateX(5px);
-}
-
-.winner-compact-left {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    flex: 1;
-    min-width: 0;
-}
-
-.winner-prize-number {
-    width: 28px;
-    height: 28px;
-    background: linear-gradient(135deg, #ffd700, #ffa500);
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 12px;
-    font-weight: 700;
-    color: white;
-    flex-shrink: 0;
-    box-shadow: 0 2px 5px rgba(255, 215, 0, 0.3);
-}
-
-.winner-compact-avatar {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    overflow: hidden;
-    flex-shrink: 0;
-    border: 2px solid rgba(255, 215, 0, 0.3);
-}
-
-.winner-compact-avatar-img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-}
-
-.winner-compact-initials {
-    color: white;
-    font-size: 16px;
-    font-weight: 700;
-    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-}
-
-.winner-compact-info {
-    min-width: 0;
-    flex: 1;
-}
-
-.winner-compact-name {
-    font-size: 14px;
-    font-weight: 600;
-    color: white;
-    margin-bottom: 2px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.winner-compact-username {
-    font-size: 11px;
-    color: rgba(255, 255, 255, 0.5);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.winner-compact-prize {
-    font-size: 13px;
-    font-weight: 500;
-    color: #ffd700;
-    margin-left: 8px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    max-width: 120px;
-    text-align: right;
-}
-
-.winners-expand-btn {
-    width: 100%;
-    margin-top: 16px;
-    padding: 10px 0;
-    background: rgba(255, 215, 0, 0.1);
-    border: 1.5px solid rgba(255, 215, 0, 0.2);
-    border-radius: var(--radius-pill);
-    color: #ffd700;
-    font-size: 13px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
-    position: relative;
-    z-index: 2;
-}
-
-.winners-expand-btn:hover {
-    background: rgba(255, 215, 0, 0.2);
-    border-color: rgba(255, 215, 0, 0.4);
-    transform: translateY(-2px);
-    box-shadow: 0 5px 15px rgba(255, 215, 0, 0.2);
-}
-
-.expand-icon {
-    font-size: 12px;
-    transition: transform 0.3s ease;
-}
-
-/* ===== STYLE UNTUK WINNERS DI DETAIL HALAMAN ===== */
-
-/* Warna medal untuk teks hadiah */
-.winner-prize-name {
-  font-size: 12px;
-  font-weight: 600;
-  margin-top: 4px;
-  padding: 2px 8px;
-  border-radius: 12px;
-  display: inline-block;
-  background: rgba(0, 0, 0, 0.2);
-  backdrop-filter: blur(2px);
-}
-
-.winner-prize-name.prize-gold {
-  color: #ffd700;
-  text-shadow: 0 0 10px rgba(255, 215, 0, 0.3);
-}
-
-.winner-prize-name.prize-silver {
-  color: #c0c0c0;
-  text-shadow: 0 0 10px rgba(192, 192, 192, 0.3);
-}
-
-.winner-prize-name.prize-bronze {
-  color: #cd7f32;
-  text-shadow: 0 0 10px rgba(205, 127, 50, 0.3);
-}
-
-.winner-prize-name.prize-default {
-  color: #4da6ff;
-  text-shadow: 0 0 10px rgba(0, 136, 255, 0.3);
-}
-
-/* Untuk modal winners */
-.winner-modal-prize-name {
-  font-size: 12px;
-  font-weight: 600;
-  margin-top: 4px;
-  padding: 2px 8px;
-  border-radius: 12px;
-  display: inline-block;
-  background: rgba(0, 0, 0, 0.2);
-}
-
-.winner-modal-prize-name.prize-gold {
-  color: #ffd700;
-}
-
-.winner-modal-prize-name.prize-silver {
-  color: #c0c0c0;
-}
-
-.winner-modal-prize-name.prize-bronze {
-  color: #cd7f32;
-}
-
-.winner-modal-prize-name.prize-default {
-  color: #4da6ff;
-}
-
-/* Badge ENDED di header */
-.detail-ended-badge {
-  background: linear-gradient(135deg, #ff3b3b, #c62828);
-  backdrop-filter: blur(5px);
-  -webkit-backdrop-filter: blur(5px);
-  border: 1px solid rgba(255, 107, 107, 0.5);
-  border-radius: 20px;
-  padding: 6px 16px;
-  font-size: 12px;
-  font-weight: 700;
-  color: white;
-  letter-spacing: 0.8px;
-  text-transform: uppercase;
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
-  box-shadow: 0 0 15px rgba(255, 59, 59, 0.6);
-  animation: endedBadgeBlink 1.5s ease infinite;
-  margin-right: 8px;
-}
-
-/* Hapus status badge yang lama untuk ended */
-.detail-status.ended {
-  display: none; /* Sembunyikan status badge di bawah header */
-}
-
-/* Perbaiki header right */
-.detail-header-right {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-/* ------------------------------------------------------------------
-   30. WINNERS MODAL STYLES
-   ------------------------------------------------------------------ */
-.winners-modal {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.8);
-    backdrop-filter: blur(10px);
-    z-index: 10000;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    opacity: 0;
-    visibility: hidden;
-    transition: opacity 0.3s ease, visibility 0.3s ease;
-    pointer-events: none;
-}
-
-.winners-modal.active {
-    opacity: 1;
-    visibility: visible;
-    pointer-events: all;
-}
-
-.winners-modal-content {
-    width: 90%;
-    max-width: 400px;
-    max-height: 80vh;
-    background: rgba(20, 30, 45, 0.95);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border: 1.5px solid rgba(255, 215, 0, 0.3);
-    border-radius: var(--radius-xxl);
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-    transform: scale(0.95);
-    transition: transform 0.3s ease;
-}
-
-.winners-modal.active .winners-modal-content {
-    transform: scale(1);
-}
-
-.winners-modal-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 16px 20px;
-    border-bottom: 1px solid rgba(255, 215, 0, 0.2);
-    background: rgba(0, 0, 0, 0.2);
-}
-
-.winners-modal-header h3 {
-    font-size: 18px;
-    font-weight: 700;
-    color: white;
-    background: linear-gradient(135deg, #fff, #ffd700);
-    -webkit-background-clip: text;
-    background-clip: text;
-    -webkit-text-fill-color: transparent;
-}
-
-.winners-modal-close {
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    background: rgba(255, 255, 255, 0.08);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    color: white;
-    font-size: 16px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.2s ease;
-}
-
-.winners-modal-close:hover {
-    background: rgba(255, 107, 107, 0.3);
-    transform: rotate(90deg);
-}
-
-.winners-modal-list {
-    padding: 16px;
-    overflow-y: auto;
-    max-height: calc(80vh - 80px);
-}
-
-.winners-modal-list::-webkit-scrollbar {
-    width: 4px;
-}
-
-.winners-modal-list::-webkit-scrollbar-track {
-    background: rgba(255, 255, 255, 0.02);
-    border-radius: 4px;
-}
-
-.winners-modal-list::-webkit-scrollbar-thumb {
-    background: #ffd700;
-    border-radius: 4px;
-}
-
-.winner-modal-item {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    background: rgba(0, 0, 0, 0.2);
-    border: 1px solid rgba(255, 215, 0, 0.15);
-    border-radius: var(--radius-lg);
-    padding: 12px;
-    margin-bottom: 8px;
-}
-
-.winner-modal-item:last-child {
-    margin-bottom: 0;
-}
-
-.winner-modal-left {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    flex: 1;
-    min-width: 0;
-}
-
-.winner-modal-prize-number {
-    width: 30px;
-    height: 30px;
-    background: linear-gradient(135deg, #ffd700, #ffa500);
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 13px;
-    font-weight: 700;
-    color: white;
-    flex-shrink: 0;
-}
-
-.winner-modal-avatar {
-    width: 44px;
-    height: 44px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    overflow: hidden;
-    flex-shrink: 0;
-    border: 2px solid rgba(255, 215, 0, 0.3);
-}
-
-.winner-modal-avatar-img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-}
-
-.winner-modal-initials {
-    color: white;
-    font-size: 18px;
-    font-weight: 700;
-}
-
-.winner-modal-info {
-    min-width: 0;
-    flex: 1;
-}
-
-.winner-modal-name {
-    font-size: 15px;
-    font-weight: 600;
-    color: white;
-    margin-bottom: 2px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.winner-modal-username {
-    font-size: 12px;
-    color: rgba(255, 255, 255, 0.5);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.winner-modal-prize {
-    font-size: 14px;
-    font-weight: 500;
-    color: #ffd700;
-    margin-left: 12px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    max-width: 150px;
-    text-align: right;
-}
-
-/* ------------------------------------------------------------------
-   31. PARTICIPANTS MODAL STYLES (POPUP DI TENGAH)
-   ------------------------------------------------------------------ */
-.participants-modal {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.8);
-  backdrop-filter: blur(10px);
-  z-index: 10000;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  opacity: 0;
-  visibility: hidden;
-  transition: opacity 0.3s ease, visibility 0.3s ease;
-  pointer-events: none;
-}
-
-.participants-modal.active {
-  opacity: 1;
-  visibility: visible;
-  pointer-events: all;
-}
-
-.participants-modal-content {
-  width: 90%;
-  max-width: 380px;
-  max-height: 70vh;
-  background: rgba(20, 30, 45, 0.95);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1.5px solid var(--primary-blue);
-  border-radius: var(--radius-xxl);
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  transform: scale(0.95);
-  transition: transform 0.3s ease;
-}
-
-.participants-modal.active .participants-modal-content {
-  transform: scale(1);
-}
-
-.participants-modal-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 16px 20px;
-  border-bottom: 1px solid rgba(0, 136, 255, 0.2);
-  background: rgba(0, 0, 0, 0.2);
-}
-
-.participants-modal-header h3 {
-  font-size: 18px;
-  font-weight: 700;
-  color: white;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.participants-modal-header h3::before {
-  content: '👥';
-  font-size: 20px;
-}
-
-.participants-modal-close {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  color: white;
-  font-size: 16px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s ease;
-}
-
-.participants-modal-close:hover {
-  background: rgba(255, 107, 107, 0.3);
-  transform: rotate(90deg);
-}
-
-.participants-modal-list {
-  padding: 16px;
-  overflow-y: auto;
-  max-height: calc(70vh - 80px);
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 8px;
-}
-
-.participants-modal-list::-webkit-scrollbar {
-  width: 4px;
-}
-
-.participants-modal-list::-webkit-scrollbar-track {
-  background: rgba(255, 255, 255, 0.02);
-  border-radius: 4px;
-}
-
-.participants-modal-list::-webkit-scrollbar-thumb {
-  background: var(--primary-blue);
-  border-radius: 4px;
-}
-
-.participant-modal-item {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  background: rgba(0, 0, 0, 0.2);
-  border: 1px solid rgba(0, 136, 255, 0.1);
-  border-radius: var(--radius-lg);
-  padding: 12px;
-}
-
-.participant-modal-avatar {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
-  flex-shrink: 0;
-  border: 2px solid rgba(0, 136, 255, 0.3);
-}
-
-.participant-modal-initials {
-  color: white;
-  font-size: 16px;
-  font-weight: 700;
-}
-
-.participant-modal-info {
-  flex: 1;
-  min-width: 0;
-}
-
-.participant-modal-name {
-  font-size: 14px;
-  font-weight: 600;
-  color: white;
-  margin-bottom: 2px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.participant-modal-username {
-  font-size: 11px;
-  color: rgba(255, 255, 255, 0.5);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-/* ------------------------------------------------------------------
-   32. HAPUS PANEL PARTICIPANTS YANG LAMA
-   ------------------------------------------------------------------ */
-.participants-panel-container {
-  display: none !important;
-}
-
-/* ------------------------------------------------------------------
-   33. CHANNEL & LINK STACK STYLES (DI TUMPUK)
-   ------------------------------------------------------------------ */
-.channel-stack-container {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  margin: 20px 0 16px 0;
-  padding: 0 20px;
-}
-
-.channel-stack-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  background: rgba(30, 40, 50, 0.3);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border: 1.5px solid rgba(255, 255, 255, 0.1);
-  border-radius: var(--radius-xl);
-  padding: 14px 20px;
-  transition: all 0.2s ease;
-}
-
-.channel-stack-row:hover {
-  background: rgba(40, 50, 60, 0.4);
-  border-color: rgba(255, 255, 255, 0.2);
-}
-
-.channel-stack-label {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  color: white;
-  font-size: 16px;
-  font-weight: 600;
-}
-
-.channel-stack-label .icon {
-  font-size: 22px;
-}
-
-.channel-stack-label.channel .icon {
-  color: #0088ff;
-}
-
-.channel-stack-label.link .icon {
-  color: #ffd700;
-}
-
-.channel-stack-row .eye-custom-btn {
-  margin-left: auto;
-}
-
-/* ------------------------------------------------------------------
-   19. RESPONSIVE
-   ------------------------------------------------------------------ */
-@media (max-width: 480px) {
-    body {
-        padding: 12px;
+  
+    function generateAvatarUrl(name) {
+      if (!name) return 'https://ui-avatars.com/api/?name=U&size=120&background=1e88e5&color=fff';
+      return `https://ui-avatars.com/api/?name=${encodeURIComponent(name.charAt(0).toUpperCase())}&size=120&background=1e88e5&color=fff`;
     }
-    
-    .timer-countdown {
-        font-size: 28px;
+  
+    function addPremiumIndicator(isPremium) {
+      if (!elements.profilePhotoWrapper) return;
+      const oldIndicator = elements.profilePhotoWrapper.querySelector('.premium-indicator, .free-indicator');
+      if (oldIndicator) oldIndicator.remove();
+      const indicator = document.createElement('div');
+      indicator.className = isPremium ? 'premium-indicator' : 'free-indicator';
+      elements.profilePhotoWrapper.appendChild(indicator);
     }
-    
-    .detail-actions-fixed {
-        padding: 0 16px 16px 16px;
+  
+    function formatDate(dateString) {
+      if (!dateString) return '-';
+      try {
+        const date = new Date(dateString);
+        return date.toLocaleString('id-ID', {
+          year: 'numeric', month: 'short', day: 'numeric',
+          hour: '2-digit', minute: '2-digit'
+        });
+      } catch (e) {
+        return dateString;
+      }
     }
-    
-    .detail-actions-fixed .btn {
-        padding: 14px 0;
+  
+    function formatTimeRemaining(endDate) {
+      if (!endDate) return 'Tidak terbatas';
+      
+      const now = new Date();
+      const end = new Date(endDate);
+      const diff = end - now;
+      
+      if (diff <= 0) return 'Berakhir';
+      
+      const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+      const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+      const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+      
+      if (days > 0) return `${days} hari`;
+      if (hours > 0) return `${hours} jam`;
+      if (minutes > 0) return `${minutes} menit`;
+      return 'Beberapa detik';
+    }
+  
+    function escapeHtml(text) {
+      if (!text) return '';
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+  
+    /**
+     * Show toast notification
+     */
+    function showToast(message, type = 'info', duration = 2000) {
+      // Cek apakah sudah ada container toast
+      let toastContainer = document.querySelector('.toast-container');
+      
+      if (!toastContainer) {
+        toastContainer = document.createElement('div');
+        toastContainer.className = 'toast-container';
+        toastContainer.style.cssText = `
+          position: fixed;
+          bottom: 20px;
+          left: 20px;
+          right: 20px;
+          z-index: 9999;
+          display: flex;
+          flex-direction: column;
+          gap: 10px;
+          pointer-events: none;
+        `;
+        document.body.appendChild(toastContainer);
+      }
+      
+      const toast = document.createElement('div');
+      toast.className = `toast toast-${type}`;
+      toast.style.cssText = `
+        background: ${type === 'success' ? '#10b981' : type === 'error' ? '#ef4444' : type === 'warning' ? '#f59e0b' : '#3b82f6'};
+        color: white;
+        padding: 12px 16px;
+        border-radius: 12px;
         font-size: 14px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        animation: slideUp 0.3s ease;
+        pointer-events: auto;
+        text-align: center;
+      `;
+      toast.textContent = message;
+      
+      toastContainer.appendChild(toast);
+      
+      setTimeout(() => {
+        toast.style.animation = 'fadeOut 0.3s ease';
+        setTimeout(() => {
+          toast.remove();
+          if (toastContainer.children.length === 0) {
+            toastContainer.remove();
+          }
+        }, 300);
+      }, duration);
     }
-}
+  
+    // Tambahkan CSS animations jika belum ada
+    if (!document.querySelector('#toast-styles')) {
+      const style = document.createElement('style');
+      style.id = 'toast-styles';
+      style.textContent = `
+        @keyframes slideUp {
+          from {
+            transform: translateY(100%);
+            opacity: 0;
+          }
+          to {
+            transform: translateY(0);
+            opacity: 1;
+          }
+        }
+        
+        @keyframes fadeOut {
+          to {
+            opacity: 0;
+            transform: translateY(100%);
+          }
+        }
+      `;
+      document.head.appendChild(style);
+    }
+  
+  async function fetchUserFromApi(userId) {
+    try {
+      console.log(`📡 Fetching user data for ID: ${userId}`);
+      const res = await fetch(`${API_BASE_URL}/api/users/${userId}`, {
+        headers: { 'Accept': 'application/json' },
+        mode: 'cors'
+      });
+  
+      if (!res.ok) {
+        console.log(`API response not OK: ${res.status}`);
+        return null;
+      }
+  
+      const data = await res.json();
+      console.log('📥 User data response:', data);
+  
+      if (data.success && data.user) {
+        return data.user;
+      } else if (data.user) {
+        return data.user;
+      } else {
+        return null;
+      }
+    } catch (error) {
+      console.log('API fetch error:', error);
+      return null;
+    }
+  }
 
-@media (max-width: 380px) {
-    .timer-countdown {
-        font-size: 24px;
+  async function fetchUserGiveawayCount(userId) {
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/giveaways/user/${userId}?limit=1`, {
+        headers: { 'Accept': 'application/json' },
+        mode: 'cors'
+      });
+      if (!res.ok) return 0;
+      const data = await res.json();
+      return data.count || 0;
+    } catch (error) {
+      console.log('Giveaway count fetch error:', error);
+      return 0;
+    }
+  }
+
+    // ==================== FUNGSI: FETCH ALL GIVEAWAYS ====================
+    async function fetchAllGiveaways() {
+      try {
+        console.log('📡 Fetching all giveaways...');
+        console.log('API URL:', API_BASE_URL);
+    
+        // Ambil active giveaways
+        const activeUrl = `${API_BASE_URL}/api/giveaways?status=active&limit=50`;
+        console.log('Active URL:', activeUrl);
+    
+        const activeRes = await fetch(activeUrl, {
+          headers: { 'Accept': 'application/json' },
+          mode: 'cors'
+        });
+    
+        // Ambil ended giveaways
+        const endedUrl = `${API_BASE_URL}/api/giveaways?status=ended&limit=50`;
+        console.log('Ended URL:', endedUrl);
+    
+        const endedRes = await fetch(endedUrl, {
+          headers: { 'Accept': 'application/json' },
+          mode: 'cors'
+        });
+    
+        console.log('Active response status:', activeRes.status);
+        console.log('Ended response status:', endedRes.status);
+    
+        let activeGiveaways = [];
+        let endedGiveaways = [];
+    
+        if (activeRes.ok) {
+          const activeData = await activeRes.json();
+          console.log('Active data:', activeData);
+    
+          if (activeData.giveaways && Array.isArray(activeData.giveaways)) {
+            activeGiveaways = activeData.giveaways;
+    
+            // Log untuk debugging
+            console.log(`📊 Active giveaways from API: ${activeGiveaways.length}`);
+            activeGiveaways.forEach((g, i) => {
+              const now = new Date();
+              const endDate = g.end_date ? new Date(g.end_date) : null;
+              const isExpired = endDate && now > endDate;
+              console.log(`  ${i+1}. ID: ${g.giveaway_id || g.id}, Status: ${g.status}, End: ${g.end_date}, Expired: ${isExpired}`);
+            });
+          } else {
+            activeGiveaways = [];
+          }
+        } else {
+          console.warn('Failed to fetch active giveaways:', activeRes.status);
+        }
+    
+        if (endedRes.ok) {
+          const endedData = await endedRes.json();
+          console.log('Ended data:', endedData);
+    
+          if (endedData.giveaways && Array.isArray(endedData.giveaways)) {
+            endedGiveaways = endedData.giveaways;
+            console.log(`📊 Ended giveaways from API: ${endedGiveaways.length}`);
+          } else {
+            endedGiveaways = [];
+          }
+        } else {
+          console.warn('Failed to fetch ended giveaways:', endedRes.status);
+        }
+    
+        console.log(`✅ Loaded ${activeGiveaways.length} active, ${endedGiveaways.length} ended giveaways`);
+    
+        return {
+          active: activeGiveaways,
+          ended: endedGiveaways
+        };
+      } catch (error) {
+        console.error('❌ Error fetching giveaways:', error);
+        return { active: [], ended: [] };
+      }
+    }
+  
+    // ==================== FUNGSI: FETCH GIVEAWAY DETAIL (DIPINDAHKAN KE ATAS) ====================
+    async function fetchGiveawayDetail(id) {
+      try {
+        console.log(`📡 Fetching giveaway detail for ID: ${id}`);
+        const response = await fetch(`${API_BASE_URL}/api/giveaways/${id}`, {
+          headers: { 'Accept': 'application/json' },
+          mode: 'cors'
+        });
+        
+        if (!response.ok) {
+          if (response.status === 404) throw new Error('Giveaway tidak ditemukan');
+          throw new Error(`Gagal memuat data: ${response.status}`);
+        }
+        
+        const result = await response.json();
+        console.log('📥 Giveaway detail response:', result);
+        
+        // Handle berbagai format response
+        if (result && result.giveaway_id) {
+          // Jika langsung objek giveaway
+          return result;
+        } else if (result.success && result.giveaway) {
+          // Jika dengan properti success
+          return result.giveaway;
+        } else {
+          console.error('Format response tidak dikenal:', result);
+          throw new Error('Data giveaway tidak valid');
+        }
+      } catch (error) {
+        console.error('❌ Error fetching giveaway:', error);
+        throw error;
+      }
+    }
+  
+  // ==================== FUNGSI: DISPLAY GIVEAWAYS ====================
+  function displayGiveaways(type) {
+    vibrate(15);
+    currentGiveawayType = type;
+  
+    const giveaways = allGiveaways[type] || [];
+  
+    console.log(`Displaying ${type} giveaways:`, giveaways);
+    console.log(`Total ${type} giveaways:`, giveaways.length);
+  
+    if (giveaways.length === 0) {
+      elements.giveawayContent.innerHTML = `<div class="empty-message">Tidak ada ${type === 'active' ? 'giveaway aktif' : 'giveaway selesai'}</div>`;
+      return;
+    }
+  
+    let html = '';
+  
+    giveaways.forEach(giveaway => {
+      // PERBAIKAN: Pastikan giveaway_id ada
+      const giveawayId = giveaway.giveaway_id || giveaway.id;
+      const prizeText = Array.isArray(giveaway.prizes) ?
+        (giveaway.prizes[0] || 'Giveaway') :
+        (giveaway.prizes || 'Giveaway');
+  
+      // Hitung total hadiah
+      const totalPrizes = Array.isArray(giveaway.prizes) ? giveaway.prizes.length : 1;
+  
+      // PERBAIKAN: participants_count adalah jumlah peserta giveaway
+      const participants = giveaway.participants_count || 0;
+  
+      // Ambil deskripsi giveaway (ambil 100 karakter pertama)
+      const description = giveaway.giveaway_text || 'Tidak ada deskripsi';
+      const shortDescription = description.length > 100 ?
+        description.substring(0, 100) + '...' :
+        description;
+  
+      // Tentukan apakah giveaway sudah expired berdasarkan end_date
+      const now = new Date();
+      const endDate = giveaway.end_date ? new Date(giveaway.end_date) : null;
+      const isExpired = endDate && now > endDate;
+  
+      // Format waktu tersisa untuk active giveaway
+      let timeRemaining = '';
+      if (type === 'active' && !isExpired && giveaway.end_date) {
+        timeRemaining = formatTimeRemaining(giveaway.end_date);
+      }
+  
+      // PERBAIKAN: Jika status dari API adalah 'active' tapi sudah expired,
+      // maka harus masuk ke tab ENDED, bukan ACTIVE
+      if (type === 'active') {
+        // Hanya tampilkan yang benar-benar active (belum expired)
+        if (!isExpired) {
+          html += `
+            <div class="giveaway-item" data-id="${giveawayId}">
+              <h3>${escapeHtml(prizeText)}</h3>
+              <p class="giveaway-description">${escapeHtml(shortDescription)}</p>
+              <div class="giveaway-stats">
+                <span class="stat-badge">🏆 ${totalPrizes} hadiah</span>
+                <span class="stat-badge">👥 ${participants} peserta</span>
+                ${timeRemaining ? `<span class="stat-badge time-badge">⏰ ${timeRemaining}</span>` : ''}
+              </div>
+              <div class="active-badge">ACTIVE</div>
+            </div>
+          `;
+        }
+      } else if (type === 'ended') {
+        if (isExpired || giveaway.status === 'ended') {
+          // Ambil 3 hadiah pertama jika ada
+          const prizesList = Array.isArray(giveaway.prizes) ? giveaway.prizes : [];
+          const topPrizes = prizesList.slice(0, 3);
+      
+          // Tentukan warna untuk nomor hadiah berdasarkan urutan
+          const getPrizeColor = (index) => {
+            if (index === 0) return 'gold'; // #1 Emas
+            if (index === 1) return 'silver'; // #2 Perak
+            if (index === 2) return 'bronze'; // #3 Perunggu
+            return 'default';
+          };
+      
+          // Buat HTML untuk daftar hadiah (vertikal) dengan warna berbeda
+          let prizesHtml = '';
+          if (topPrizes.length > 0) {
+            topPrizes.forEach((prize, idx) => {
+              const prizeColor = getPrizeColor(idx);
+              prizesHtml += `
+                <div class="ended-prize-item">
+                  <span class="ended-prize-number ended-prize-${prizeColor}">#${idx + 1}</span>
+                  <span class="ended-prize-text">${escapeHtml(prize)}</span>
+                </div>
+              `;
+            });
+          } else {
+            prizesHtml = `<div class="ended-prize-item">
+              <span class="ended-prize-number ended-prize-default">#1</span>
+              <span class="ended-prize-text">${escapeHtml(prizeText)}</span>
+            </div>`;
+          }
+      
+          // Buat ID yang dipotong (8 karakter pertama + ...)
+          const shortId = giveawayId.length > 10 ?
+            giveawayId.substring(0, 8) + '...' :
+            giveawayId;
+      
+          html += `
+            <div class="giveaway-item ended" data-id="${giveawayId}">
+              <!-- Header dengan ID (bisa dicopy) dan badge SELESAI -->
+              <div class="ended-header">
+                <span class="ended-id" onclick="copyToClipboard('${giveawayId}')" title="Klik untuk copy ID">#${shortId}</span>
+                <span class="ended-badge-ended">SELESAI</span>
+              </div>
+              
+              <!-- HILANGKAN <h3> (nama hadiah utama) -->
+              
+              <!-- Daftar Hadiah (vertikal) dengan warna medal -->
+              <div class="ended-prizes-list">
+                ${prizesHtml}
+              </div>
+              
+              <!-- Stats (total hadiah dan partisipasi) di baris atas, sejajar dengan header -->
+              <div class="ended-stats-row">
+                <div class="ended-stat-item-small">
+                  <span class="ended-stat-icon">🎁</span>
+                  <span class="ended-stat-value">${totalPrizes}</span>
+                </div>
+                <div class="ended-stat-item-small">
+                  <span class="ended-stat-icon">👥</span>
+                  <span class="ended-stat-value">${participants}</span>
+                </div>
+              </div>
+            </div>
+          `;
+        }
+      }
+    });
+  
+    // Jika setelah filter tidak ada yang ditampilkan, tampilkan pesan kosong
+    if (html === '') {
+      elements.giveawayContent.innerHTML = `<div class="empty-message">Tidak ada ${type === 'active' ? 'giveaway aktif' : 'giveaway selesai'}</div>`;
+      return;
+    }
+  
+    elements.giveawayContent.innerHTML = html;
+  
+    // Tambahkan event listener ke setiap item giveaway
+    document.querySelectorAll('.giveaway-item').forEach(item => {
+      item.addEventListener('click', () => {
+        const giveawayId = item.dataset.id;
+        if (giveawayId) {
+          window.location.href = `?search=${giveawayId}`;
+        }
+      });
+    });
+  }
+
+  // ==================== FUNGSI COPY ID ====================
+  window.copyToClipboard = function(text) {
+    // Gunakan API Clipboard modern
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(() => {
+        showToast('✅ ID Giveaway berhasil dicopy!', 'success', 1500);
+      }).catch(() => {
+        // Fallback untuk yang gagal
+        fallbackCopy(text);
+      });
+    } else {
+      // Fallback untuk browser lama
+      fallbackCopy(text);
+    }
+  };
+  
+  function fallbackCopy(text) {
+    const textarea = document.createElement('textarea');
+    textarea.value = text;
+    textarea.style.position = 'fixed';
+    textarea.style.opacity = '0';
+    document.body.appendChild(textarea);
+    textarea.select();
+  
+    try {
+      document.execCommand('copy');
+      showToast('✅ ID Giveaway berhasil dicopy!', 'success', 1500);
+    } catch (err) {
+      showToast('❌ Gagal menyalin ID', 'error', 1500);
+    }
+  
+    document.body.removeChild(textarea);
+  }
+
+  // ==================== FUNGSI: RENDER GIVEAWAY DETAIL ====================
+  async function renderGiveawayDetail(giveaway) {
+      // Sembunyikan elemen profil dan tombol giveaway
+      if (elements.profileContent) elements.profileContent.style.display = 'none';
+      if (elements.giveawayButtons) elements.giveawayButtons.style.display = 'none';
+      if (elements.loading) elements.loading.style.display = 'none';
+      if (elements.error) elements.error.style.display = 'none';
+      
+      // ===== PENTING: SEMBUNYIKAN SETTINGS BUTTON =====
+      if (elements.settingsBtn) elements.settingsBtn.style.display = 'none';
+      
+      // ===== PENTING: SEMBUNYIKAN TOP CONTAINER (LOGO DAN PROFILE) =====
+      const topContainer = document.querySelector('.top-container');
+      if (topContainer) topContainer.style.display = 'none';
+  
+      const container = elements.giveawayContent;
+      if (!container) return;
+  
+      // Tentukan status
+      let statusClass = 'detail-status';
+      let statusText = giveaway.status || 'Active';
+      const now = new Date();
+      const endDate = giveaway.end_date ? new Date(giveaway.end_date) : null;
+      const isExpired = giveaway.status === 'active' && endDate && now > endDate;
+      
+      if (isExpired || giveaway.status === 'ended') {
+          statusText = 'Ended';
+          statusClass += ' ended';
+      } else if (giveaway.status === 'deleted') {
+          statusText = 'Deleted';
+          statusClass += ' expired';
+      } else {
+          statusText = 'Active';
+          statusClass += ' active';
+      }
+  
+      // Tentukan apakah ini ended giveaway
+      const isEnded = (giveaway.status === 'ended') || isExpired;
+  
+      // CEK APAKAH USER SUDAH BERPARTISIPASI
+      let hasParticipated = false;
+      if (currentUser && !isEnded) {
+          try {
+              const checkResponse = await fetch(`${API_BASE_URL}/api/giveaways/${giveaway.giveaway_id}/participants`, {
+                  headers: { 'Accept': 'application/json' },
+                  mode: 'cors'
+              });
+              
+              if (checkResponse.ok) {
+                  const participantsData = await checkResponse.json();
+                  hasParticipated = participantsData.participants.some(p => p.user_id == currentUser.id);
+                  console.log('👤 User has participated:', hasParticipated);
+              }
+          } catch (error) {
+              console.error('Error checking participation:', error);
+          }
+      }
+  
+      // Siapkan data untuk ditampilkan
+      const prizes = Array.isArray(giveaway.prizes) ? giveaway.prizes : [];
+      const requirements = Array.isArray(giveaway.requirements) ? giveaway.requirements : [];
+      const channels = Array.isArray(giveaway.channels) ? giveaway.channels : [];
+      const links = Array.isArray(giveaway.links) ? giveaway.links : [];
+  
+      // ===== AMBIL DATA WINNERS DAN PARTICIPANTS DARI API =====
+      let winners = [];
+      let participants = [];
+      
+      if (isEnded) {
+          try {
+              // Ambil data pemenang
+              const winnersResponse = await fetch(`${API_BASE_URL}/api/giveaways/${giveaway.giveaway_id}/winners`, {
+                  headers: { 'Accept': 'application/json' },
+                  mode: 'cors'
+              });
+              
+              if (winnersResponse.ok) {
+                  const winnersData = await winnersResponse.json();
+                  winners = winnersData.winners || [];
+                  console.log('🏆 Winners loaded:', winners);
+              }
+              
+              // Ambil data partisipan
+              const participantsResponse = await fetch(`${API_BASE_URL}/api/giveaways/${giveaway.giveaway_id}/participants`, {
+                  headers: { 'Accept': 'application/json' },
+                  mode: 'cors'
+              });
+              
+              if (participantsResponse.ok) {
+                  const participantsData = await participantsResponse.json();
+                  participants = participantsData.participants || [];
+                  console.log('👥 Participants loaded:', participants);
+              }
+              
+          } catch (error) {
+              console.error('❌ Error fetching winners/participants:', error);
+          }
+      }
+  
+      // Buat HTML untuk syarat
+      let reqHtml = '';
+      if (requirements.length === 0) {
+          reqHtml = '<div class="requirement-item">Tidak ada syarat khusus</div>';
+      } else {
+          requirements.forEach(req => {
+              let label = req;
+              if (req === 'subscribe') label = 'Subscribe Channel';
+              else if (req === 'premium') label = 'Akun Premium';
+              else if (req === 'nonpremium') label = 'Akun Non-Premium';
+              else if (req === 'aktif') label = 'Akun Aktif';
+              else if (req === 'share') label = 'Share Postingan';
+              
+              reqHtml += `<div class="requirement-item">${escapeHtml(label)}</div>`;
+          });
+      }
+  
+      // Buat HTML untuk hadiah
+      let prizesHtml = '';
+      prizes.forEach((prize, index) => {
+          prizesHtml += `
+              <div class="prize-item">
+                  <span class="prize-number">${index + 1}</span>
+                  <span class="prize-text">${escapeHtml(prize)}</span>
+              </div>
+          `;
+      });
+  
+      // Buat HTML untuk channel
+      let channelsHtml = '';
+      if (channels.length > 0) {
+          channels.forEach(ch => {
+              const channelName = typeof ch === 'string' ? ch : (ch.title || ch.username || 'Channel');
+              const username = typeof ch === 'string' ? ch.replace('@', '') : (ch.username || '').replace('@', '');
+              const isVerified = typeof ch !== 'string' && ch.is_verified;
+              const channelUrl = `https://t.me/${username}`;
+              
+              channelsHtml += `
+                  <a href="${channelUrl}" target="_blank" class="panel-item channel-item" data-url="${channelUrl}">
+                      <div class="item-info">
+                          <div class="item-icon">📢</div>
+                          <div class="item-details">
+                              <div class="item-title">
+                                  ${escapeHtml(channelName)}
+                                  ${isVerified ? '<span style="color: #00e676; margin-left: 4px;">✓</span>' : ''}
+                              </div>
+                              <div class="item-subtitle channel">${username}</div>
+                          </div>
+                      </div>
+                      <div class="item-selector"></div>
+                  </a>
+              `;
+          });
+      } else {
+          channelsHtml = '<div class="empty-message">Tidak ada channel</div>';
+      }
+  
+      // Buat HTML untuk link
+      let linksHtml = '';
+      if (links.length > 0) {
+          links.forEach(link => {
+              const title = link.title || 'Tautan';
+              const url = link.url || '#';
+              linksHtml += `
+                  <a href="${escapeHtml(url)}" target="_blank" class="panel-item link-item" data-url="${escapeHtml(url)}">
+                      <div class="item-info">
+                          <div class="item-icon">🔗</div>
+                          <div class="item-details">
+                              <div class="item-title">${escapeHtml(title)}</div>
+                              <div class="item-subtitle">${escapeHtml(url)}</div>
+                          </div>
+                      </div>
+                      <div class="item-selector"></div>
+                  </a>
+              `;
+          });
+      } else {
+          linksHtml = '<div class="empty-message">Tidak ada link</div>';
+      }
+  
+      // Tentukan media (foto/video)
+      let mediaHtml = '';
+      if (giveaway.media_path) {
+          if (giveaway.media_type === 'video') {
+              mediaHtml = `
+                  <div class="detail-media">
+                      <video src="${giveaway.media_path}" class="detail-media-video" controls></video>
+                  </div>
+              `;
+          } else {
+              mediaHtml = `
+                  <div class="detail-media">
+                      <img src="${giveaway.media_path}" class="detail-media-image" alt="Giveaway Media" onerror="this.style.display='none'">
+                  </div>
+              `;
+          }
+      }
+  
+      // Format tanggal akhir
+      const endDateFormatted = giveaway.end_date ? formatDate(giveaway.end_date) : 'Tidak ditentukan';
+      
+      // Hitung sisa waktu untuk countdown (hanya untuk active)
+      let timeRemaining = '00:00:00:00';
+      let countdownActive = false;
+      
+      if (!isEnded && giveaway.end_date && giveaway.status === 'active') {
+          const endDateTime = new Date(giveaway.end_date).getTime();
+          const nowTime = new Date().getTime();
+          const diff = endDateTime - nowTime;
+          
+          if (diff > 0) {
+              countdownActive = true;
+              const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+              const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+              const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+              const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+              
+              timeRemaining = `${days.toString().padStart(2, '0')}:${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+          }
+      }
+  
+      // Fungsi untuk generate inisial dari nama
+      function getInitials(name) {
+          if (!name) return 'U';
+          return name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+      }
+  
+      // Fungsi untuk generate warna random berdasarkan user id
+      function getUserColor(userId) {
+          const colors = [
+              '#FF6B6B', '#4ECDC4', '#FFD166', '#A06CD5', '#F7B731',
+              '#45AAF2', '#FC5C65', '#26DE81', '#A55EEA', '#FF9F1C'
+          ];
+          return colors[Math.abs(userId) % colors.length];
+      }
+  
+      // Fungsi untuk generate warna random
+      function getRandomColor(index) {
+          const colors = [
+              '#FF6B6B', '#4ECDC4', '#FFD166', '#A06CD5', '#F7B731',
+              '#45AAF2', '#FC5C65', '#26DE81', '#A55EEA', '#FF9F1C'
+          ];
+          return colors[index % colors.length];
+      }
+  
+      // ===== BUAT HTML UNTUK PEMENANG (TAMPILAN BARU - DENGAN WARNA MEDAL PADA TEKS HADIAH) =====
+      let winnersHtml = '';
+      if (isEnded && winners.length > 0) {
+        // Tampilkan hanya 2 pemenang pertama
+        const displayWinners = winners.slice(0, 2);
+        const hasMoreWinners = winners.length > 2;
+      
+        // Fungsi untuk mendapatkan warna medal berdasarkan prize index
+        const getPrizeColorClass = (prizeIndex) => {
+          if (prizeIndex === 0) return 'prize-gold'; // #1 Emas
+          if (prizeIndex === 1) return 'prize-silver'; // #2 Perak
+          if (prizeIndex === 2) return 'prize-bronze'; // #3 Perunggu
+          return 'prize-default';
+        };
+      
+        winnersHtml = `
+              <div class="winners-border-container">
+                  <div class="winners-list-compact">
+          `;
+      
+        displayWinners.forEach((winner, index) => {
+          const fullName = [winner.first_name, winner.last_name].filter(Boolean).join(' ') || winner.fullname || 'User';
+          const username = winner.username ? `@${winner.username}` : '(no username)';
+          const prizeIndex = winner.prize_index !== undefined ? winner.prize_index : index;
+          const prizeName = winner.prize || (prizes[prizeIndex] || `Hadiah ${prizeIndex + 1}`);
+          const bgColor = getUserColor(winner.id || winner.user_id);
+          const prizeColorClass = getPrizeColorClass(prizeIndex);
+      
+          winnersHtml += `
+                  <div class="winner-compact-item">
+                      <div class="winner-compact-left">
+                          <div class="winner-compact-avatar" style="background: ${bgColor};">
+                              ${winner.photo_url ? 
+                                  `<img src="${winner.photo_url}" alt="${fullName}" class="winner-compact-avatar-img">` : 
+                                  `<span class="winner-compact-initials">${getInitials(fullName)}</span>`
+                              }
+                          </div>
+                          <div class="winner-compact-info">
+                              <div class="winner-compact-name">${escapeHtml(fullName)}</div>
+                              <div class="winner-compact-username">${escapeHtml(username)}</div>
+                              <!-- Nama hadiah dipindahkan ke bawah username dengan warna medal -->
+                              <div class="winner-prize-name ${prizeColorClass}">${escapeHtml(prizeName)}</div>
+                          </div>
+                      </div>
+                      <!-- Hapus winner-compact-prize (hadiah di samping) -->
+                  </div>
+              `;
+        });
+      
+        winnersHtml += `</div>`;
+      
+        // Tambahkan tombol "Tampilkan Semua" jika lebih dari 2 pemenang
+        if (hasMoreWinners) {
+          winnersHtml += `
+                  <button class="winners-expand-btn" id="expandWinnersBtn">
+                      <span>Tampilkan Semua (${winners.length})</span>
+                      <span class="expand-icon">▼</span>
+                  </button>
+              `;
+        }
+      
+        winnersHtml += `</div>`;
+      
+        // Tambahkan modal untuk menampilkan semua pemenang (hidden by default)
+        if (hasMoreWinners) {
+          let allWinnersHtml = '';
+          winners.forEach((winner, index) => {
+            const fullName = [winner.first_name, winner.last_name].filter(Boolean).join(' ') || winner.fullname || 'User';
+            const username = winner.username ? `@${winner.username}` : '(no username)';
+            const prizeIndex = winner.prize_index !== undefined ? winner.prize_index : index;
+            const prizeName = winner.prize || (prizes[prizeIndex] || `Hadiah ${prizeIndex + 1}`);
+            const bgColor = getUserColor(winner.id || winner.user_id);
+            const prizeColorClass = getPrizeColorClass(prizeIndex);
+      
+            allWinnersHtml += `
+                      <div class="winner-modal-item">
+                          <div class="winner-modal-left">
+                              <div class="winner-modal-avatar" style="background: ${bgColor};">
+                                  ${winner.photo_url ? 
+                                      `<img src="${winner.photo_url}" alt="${fullName}" class="winner-modal-avatar-img">` : 
+                                      `<span class="winner-modal-initials">${getInitials(fullName)}</span>`
+                                  }
+                              </div>
+                              <div class="winner-modal-info">
+                                  <div class="winner-modal-name">${escapeHtml(fullName)}</div>
+                                  <div class="winner-modal-username">${escapeHtml(username)}</div>
+                                  <div class="winner-modal-prize-name ${prizeColorClass}">${escapeHtml(prizeName)}</div>
+                              </div>
+                          </div>
+                      </div>
+                  `;
+          });
+      
+          winnersHtml += `
+                  <div class="winners-modal" id="winnersModal">
+                      <div class="winners-modal-content">
+                          <div class="winners-modal-header">
+                              <h3>Semua Pemenang</h3>
+                              <button class="winners-modal-close" id="closeWinnersModalBtn">✕</button>
+                          </div>
+                          <div class="winners-modal-list">
+                              ${allWinnersHtml}
+                          </div>
+                      </div>
+                  </div>
+              `;
+        }
+      }
+  
+      // ===== BUAT HTML UNTUK MODAL PARTICIPANTS (BUKAN PANEL BAWAH) =====
+      let participantsModalHtml = '';
+      if (isEnded && participants.length > 0) {
+          let participantsListHtml = '';
+          participants.forEach(participant => {
+              const fullName = participant.fullname || 'User';
+              const username = participant.username ? `@${participant.username}` : '(no username)';
+              const bgColor = getUserColor(participant.user_id);
+              
+              participantsListHtml += `
+                  <div class="participant-modal-item">
+                      <div class="participant-modal-avatar" style="background: ${bgColor};">
+                          <span class="participant-modal-initials">${getInitials(fullName)}</span>
+                      </div>
+                      <div class="participant-modal-info">
+                          <div class="participant-modal-name">${escapeHtml(fullName)}</div>
+                          <div class="participant-modal-username">${escapeHtml(username)}</div>
+                      </div>
+                  </div>
+              `;
+          });
+          
+          participantsModalHtml = `
+              <div class="participants-modal" id="participantsModal">
+                  <div class="participants-modal-content">
+                      <div class="participants-modal-header">
+                          <h3>Daftar Partisipan (${participants.length})</h3>
+                          <button class="participants-modal-close" id="closeParticipantsModalBtn">✕</button>
+                      </div>
+                      <div class="participants-modal-list">
+                          ${participantsListHtml}
+                      </div>
+                  </div>
+              </div>
+          `;
+      }
+  
+      // ACTION BUTTONS FIXED (HANYA UNTUK ACTIVE GIVEAWAY)
+      let actionButtonsHtml = '';
+      if (!isEnded) {
+          if (hasParticipated) {
+              // Jika sudah berpartisipasi, tampilkan tombol disabled
+              actionButtonsHtml = `
+                  <div class="detail-actions-fixed">
+                      <button class="btn btn-participate disabled" id="detailParticipateBtn" disabled>
+                          <span>✓</span>
+                          <span>MENGIKUTI</span>
+                      </button>
+                      <button class="btn btn-share" id="detailShareBtn">
+                          <span>📤</span>
+                          <span>BAGIKAN</span>
+                      </button>
+                  </div>
+              `;
+          } else {
+              // Jika belum, tampilkan tombol partisipasi normal
+              actionButtonsHtml = `
+                  <div class="detail-actions-fixed">
+                      <button class="btn btn-participate" id="detailParticipateBtn">
+                          <span>✓</span>
+                          <span>PARTISIPASI</span>
+                      </button>
+                      <button class="btn btn-share" id="detailShareBtn">
+                          <span>📤</span>
+                          <span>BAGIKAN</span>
+                      </button>
+                  </div>
+              `;
+          }
+      }
+  
+      // Gabungkan semua HTML
+      const detailHtml = `
+          <div class="giveaway-detail-container">
+              <!-- HEADER dengan tombol back dan badge ENDED (untuk ended giveaway) -->
+              <div class="detail-header">
+                  <div class="logo-box" style="background: transparent; border: none; box-shadow: none; padding: 8px 0;">
+                      <img src="img/logo.png" class="logo-img" alt="logo" onerror="this.style.display='none'">
+                      <span class="logo-text">GIFT FREEBIES</span>
+                  </div>
+                  <div class="detail-header-right">
+                      ${isEnded ? `<span class="detail-ended-badge">ENDED</span>` : ''}
+                      ${isEnded && participants.length > 0 ? `
+                          <button class="eye-custom-btn" id="toggleParticipantsBtn" title="Lihat Partisipan">
+                              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                  <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5z" fill="white"/>
+                                  <circle cx="12" cy="12" r="3" fill="white"/>
+                              </svg>
+                          </button>
+                      ` : ''}
+                      <button class="detail-back-btn" id="backToIndexBtn">←</button>
+                  </div>
+              </div>
+              
+              <!-- MAIN CARD -->
+              <div class="detail-card">
+                  ${mediaHtml}
+                  
+                  <div class="detail-card-content">
+                      <!-- STATUS BADGE -->
+                      <div class="${statusClass}">${statusText}</div>
+                      
+                      <!-- DESKRIPSI SECTION (HANYA UNTUK ACTIVE) -->
+                      ${!isEnded ? `
+                      <div class="detail-description">
+                          <div class="description-header">
+                              <div class="description-title">Deskripsi</div>
+                              ${giveaway.giveaway_text && giveaway.giveaway_text.length > 100 ? '<button class="description-expand-btn" id="expandDescriptionBtn">Lihat Lengkap</button>' : ''}
+                          </div>
+                          <div class="description-content ${giveaway.giveaway_text && giveaway.giveaway_text.length > 100 ? 'collapsed' : ''}" id="descriptionContent">
+                              ${giveaway.giveaway_text || '<em>Tidak ada deskripsi</em>'}
+                          </div>
+                      </div>
+                      ` : ''}
+                      
+                      <!-- HADIAH SECTION (HANYA UNTUK ACTIVE) -->
+                      ${!isEnded ? `
+                      <div class="detail-prizes">
+                          <div class="prizes-header">
+                              <div class="prizes-title">Hadiah</div>
+                              ${prizes.length > 2 ? '<button class="prizes-expand-btn" id="expandPrizesBtn">Lihat Semua</button>' : ''}
+                          </div>
+                          <div class="prizes-list ${prizes.length > 2 ? 'collapsed' : ''}" id="prizesList">
+                              ${prizesHtml}
+                          </div>
+                      </div>
+                      ` : ''}
+                      
+                      <!-- SYARAT SECTION -->
+                      <div class="detail-requirements">
+                          <div class="requirements-title">Syarat</div>
+                          <div class="requirements-scroll">
+                              <div class="requirements-list">
+                                  ${reqHtml}
+                              </div>
+                          </div>
+                      </div>
+                      
+                      <!-- WINNERS SECTION (HANYA UNTUK ENDED GIVEAWAY) - TANPA JUDUL -->
+                      ${isEnded && winners.length > 0 ? winnersHtml : ''}
+                      
+                      <!-- CHANNEL & LINK BUTTONS (DITUMPUK - CHANNEL DI ATAS, LINK DI BAWAH) -->
+                      ${channels.length > 0 || links.length > 0 ? `
+                      <div class="channel-stack-container">
+                          ${channels.length > 0 ? `
+                          <div class="channel-stack-row">
+                              <div class="channel-stack-label">
+                                  <span class="icon">📢</span>
+                                  <span>CHANNEL</span>
+                              </div>
+                              <button class="eye-custom-btn" id="toggleChannelBtn">
+                                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                      <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5z" fill="white"/>
+                                      <circle cx="12" cy="12" r="3" fill="white"/>
+                                  </svg>
+                              </button>
+                          </div>
+                          ` : ''}
+                          
+                          ${links.length > 0 ? `
+                          <div class="channel-stack-row">
+                              <div class="channel-stack-label link">
+                                  <span class="icon">🔗</span>
+                                  <span>LINK</span>
+                              </div>
+                              <button class="eye-custom-btn" id="toggleLinkBtn">
+                                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                      <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5z" fill="white"/>
+                                      <circle cx="12" cy="12" r="3" fill="white"/>
+                                  </svg>
+                              </button>
+                          </div>
+                          ` : ''}
+                      </div>
+                      ` : ''}
+                      
+                      <!-- PANEL CHANNEL (AWALNYA HIDDEN) -->
+                      ${channels.length > 0 ? `
+                      <div class="channel-panel-container hidden" id="channelPanelContainer">
+                          <div class="detail-panel">
+                              <div class="panel-header">
+                                  <div class="panel-title channel">Daftar Channel</div>
+                                  <button class="panel-close" id="closeChannelPanelBtn">✕</button>
+                              </div>
+                              <div class="panel-content" id="channelsList">
+                                  ${channelsHtml}
+                              </div>
+                          </div>
+                      </div>
+                      ` : ''}
+                      
+                      <!-- PANEL LINK (AWALNYA HIDDEN) -->
+                      ${links.length > 0 ? `
+                      <div class="link-panel-container hidden" id="linkPanelContainer">
+                          <div class="detail-panel">
+                              <div class="panel-header">
+                                  <div class="panel-title link">Daftar Link</div>
+                                  <button class="panel-close" id="closeLinkPanelBtn">✕</button>
+                              </div>
+                              <div class="panel-content" id="linksList">
+                                  ${linksHtml}
+                              </div>
+                          </div>
+                      </div>
+                      ` : ''}
+                      
+                      <!-- TIMER SECTION (HANYA UNTUK ACTIVE GIVEAWAY) -->
+                      ${!isEnded ? `
+                          <div class="detail-timer">
+                              <div class="timer-label">BERAKHIR DALAM</div>
+                              <div class="timer-countdown" id="detailCountdown">${timeRemaining}</div>
+                              <div class="timer-end-date">
+                                  <span>${endDateFormatted}</span>
+                              </div>
+                          </div>
+                      ` : ''}
+                  </div>
+              </div>
+              
+              <!-- ACTION BUTTONS FIXED -->
+              ${actionButtonsHtml}
+              
+              <!-- MODAL PARTICIPANTS -->
+              ${participantsModalHtml}
+          </div>
+      `;
+  
+      container.innerHTML = detailHtml;
+      container.style.display = 'block';
+  
+      // Setup event listeners untuk halaman detail
+      setupDetailEventListeners(giveaway, prizes, countdownActive, isEnded);
+  }
+  
+  // ==================== FUNGSI: SETUP EVENT LISTENERS UNTUK DETAIL ====================
+  function setupDetailEventListeners(giveaway, prizes, countdownActive, isEnded) {
+      // Tombol back
+      const backBtn = document.getElementById('backToIndexBtn');
+      if (backBtn) {
+          // Hapus event listener lama jika ada
+          backBtn.replaceWith(backBtn.cloneNode(true));
+          const newBackBtn = document.getElementById('backToIndexBtn');
+          if (newBackBtn) {
+              newBackBtn.addEventListener('click', function(e) {
+                  e.preventDefault();
+                  goBackToIndex();
+              });
+          }
+      }
+  
+      // Tombol mata untuk Partisipan (hanya untuk ended) - SEKARANG MODAL
+      const toggleParticipantsBtn = document.getElementById('toggleParticipantsBtn');
+      
+      if (toggleParticipantsBtn) {
+          // Hapus event listener lama
+          toggleParticipantsBtn.replaceWith(toggleParticipantsBtn.cloneNode(true));
+          const newToggleParticipantsBtn = document.getElementById('toggleParticipantsBtn');
+          
+          if (newToggleParticipantsBtn) {
+              newToggleParticipantsBtn.addEventListener('click', (e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  
+                  // Tampilkan modal participants
+                  const modal = document.getElementById('participantsModal');
+                  if (modal) {
+                      modal.classList.add('active');
+                      
+                      // Tambahkan event listener untuk menutup modal
+                      const closeBtn = document.getElementById('closeParticipantsModalBtn');
+                      if (closeBtn) {
+                          closeBtn.addEventListener('click', () => {
+                              modal.classList.remove('active');
+                          });
+                      }
+                      
+                      // Klik di luar modal untuk menutup
+                      modal.addEventListener('click', (e) => {
+                          if (e.target === modal) {
+                              modal.classList.remove('active');
+                          }
+                      });
+                  }
+                  
+                  vibrate(15);
+              });
+          }
+      }
+      
+      // Event listener untuk tombol expand winners
+      const expandWinnersBtn = document.getElementById('expandWinnersBtn');
+      if (expandWinnersBtn) {
+          expandWinnersBtn.addEventListener('click', (e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              
+              const modal = document.getElementById('winnersModal');
+              if (modal) {
+                  modal.classList.add('active');
+                  
+                  const closeBtn = document.getElementById('closeWinnersModalBtn');
+                  if (closeBtn) {
+                      closeBtn.addEventListener('click', () => {
+                          modal.classList.remove('active');
+                      });
+                  }
+                  
+                  modal.addEventListener('click', (e) => {
+                      if (e.target === modal) {
+                          modal.classList.remove('active');
+                      }
+                  });
+              }
+              
+              vibrate(10);
+          });
+      }
+  
+      // Tombol mata untuk Channel
+      const toggleChannelBtn = document.getElementById('toggleChannelBtn');
+      const channelPanelContainer = document.getElementById('channelPanelContainer');
+      const closeChannelPanelBtn = document.getElementById('closeChannelPanelBtn');
+  
+      if (toggleChannelBtn && channelPanelContainer) {
+          toggleChannelBtn.addEventListener('click', (e) => {
+              e.preventDefault();
+              e.stopPropagation();
+  
+              // Tutup panel link jika terbuka
+              const toggleLinkBtn = document.getElementById('toggleLinkBtn');
+              const linkPanelContainer = document.getElementById('linkPanelContainer');
+  
+              if (linkPanelContainer && !linkPanelContainer.classList.contains('hidden')) {
+                  linkPanelContainer.classList.add('hidden');
+                  if (toggleLinkBtn) toggleLinkBtn.classList.remove('active');
+              }
+  
+              // Toggle panel channel
+              channelPanelContainer.classList.toggle('hidden');
+  
+              // Toggle active state tombol
+              toggleChannelBtn.classList.toggle('active');
+  
+              vibrate(15);
+          });
+      }
+  
+      if (closeChannelPanelBtn && channelPanelContainer) {
+          closeChannelPanelBtn.addEventListener('click', (e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              channelPanelContainer.classList.add('hidden');
+              if (toggleChannelBtn) {
+                  toggleChannelBtn.classList.remove('active');
+              }
+          });
+      }
+  
+      // Tombol mata untuk Link
+      const toggleLinkBtn = document.getElementById('toggleLinkBtn');
+      const linkPanelContainer = document.getElementById('linkPanelContainer');
+      const closeLinkPanelBtn = document.getElementById('closeLinkPanelBtn');
+  
+      if (toggleLinkBtn && linkPanelContainer) {
+          toggleLinkBtn.addEventListener('click', (e) => {
+              e.preventDefault();
+              e.stopPropagation();
+  
+              // Tutup panel channel jika terbuka
+              if (channelPanelContainer && !channelPanelContainer.classList.contains('hidden')) {
+                  channelPanelContainer.classList.add('hidden');
+                  if (toggleChannelBtn) {
+                      toggleChannelBtn.classList.remove('active');
+                  }
+              }
+  
+              // Toggle panel link
+              linkPanelContainer.classList.toggle('hidden');
+  
+              // Toggle active state tombol
+              toggleLinkBtn.classList.toggle('active');
+  
+              vibrate(15);
+          });
+      }
+  
+      if (closeLinkPanelBtn && linkPanelContainer) {
+          closeLinkPanelBtn.addEventListener('click', (e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              linkPanelContainer.classList.add('hidden');
+              if (toggleLinkBtn) {
+                  toggleLinkBtn.classList.remove('active');
+              }
+          });
+      }
+  
+      // Expand deskripsi
+      const expandDescBtn = document.getElementById('expandDescriptionBtn');
+      const descContent = document.getElementById('descriptionContent');
+  
+      if (expandDescBtn && descContent) {
+          expandDescBtn.addEventListener('click', () => {
+              const isCollapsed = descContent.classList.contains('collapsed');
+  
+              if (isCollapsed) {
+                  descContent.classList.remove('collapsed');
+                  descContent.classList.add('expanded');
+                  expandDescBtn.textContent = 'Tutup';
+              } else {
+                  descContent.classList.add('collapsed');
+                  descContent.classList.remove('expanded');
+                  expandDescBtn.textContent = 'Lihat Lengkap';
+              }
+  
+              vibrate(10);
+          });
+      }
+  
+      // Expand hadiah
+      const expandPrizesBtn = document.getElementById('expandPrizesBtn');
+      const prizesList = document.getElementById('prizesList');
+  
+      if (expandPrizesBtn && prizesList) {
+          expandPrizesBtn.addEventListener('click', () => {
+              const isCollapsed = prizesList.classList.contains('collapsed');
+  
+              if (isCollapsed) {
+                  prizesList.classList.remove('collapsed');
+                  prizesList.classList.add('expanded');
+                  expandPrizesBtn.textContent = 'Tutup';
+              } else {
+                  prizesList.classList.add('collapsed');
+                  prizesList.classList.remove('expanded');
+                  expandPrizesBtn.textContent = 'Lihat Semua';
+              }
+  
+              vibrate(10);
+          });
+      }
+  
+      // Klik pada item channel - LANGSUNG BUKA LINK (TANPA VERIFIKASI MANUAL)
+      document.querySelectorAll('.channel-item').forEach(item => {
+        // Hapus event listener lama dengan clone
+        const newItem = item.cloneNode(true);
+        item.parentNode.replaceChild(newItem, item);
+      
+        newItem.addEventListener('click', function(e) {
+          e.preventDefault();
+      
+          // Ambil URL channel
+          const channelUrl = this.dataset.url;
+          if (channelUrl) {
+            // Buka link di browser eksternal
+            window.open(channelUrl, '_blank');
+      
+            // Tampilkan toast info
+            showToast('🔍 Channel dibuka, verifikasi akan dilakukan saat partisipasi', 'info', 2000);
+          }
+      
+          vibrate(10);
+        });
+      });
+      
+      // Klik pada item link - VERIFIKASI BACKGROUND 5 DETIK
+      document.querySelectorAll('.link-item').forEach(item => {
+        // Hapus event listener lama dengan clone
+        const newItem = item.cloneNode(true);
+        item.parentNode.replaceChild(newItem, item);
+      
+        let linkVerificationTimer = null;
+        let isVerifying = false;
+      
+        newItem.addEventListener('click', function(e) {
+          e.preventDefault();
+      
+          // Ambil URL link
+          const linkUrl = this.dataset.url;
+          const selector = this.querySelector('.item-selector');
+      
+          // Cek apakah sudah pernah di-verify sebelumnya
+          if (selector && selector.classList.contains('selected')) {
+            // Jika sudah pernah, langsung buka link
+            window.open(linkUrl, '_blank');
+            return;
+          }
+      
+          // Jika sedang dalam proses verifikasi, jangan lakukan apa-apa
+          if (isVerifying) return;
+      
+          // Tandai sedang verifikasi
+          isVerifying = true;
+      
+          // BUKA LINK SEGERA
+          window.open(linkUrl, '_blank');
+      
+          // Tampilkan toast bahwa verifikasi dimulai
+          showToast('⏳ Memverifikasi link...', 'info', 2000);
+      
+          // Set timer 5 detik untuk verifikasi di background
+          linkVerificationTimer = setTimeout(() => {
+            // Verifikasi selesai, beri centang
+            if (selector) {
+              selector.classList.add('selected');
+      
+              // Simpan ke sessionStorage bahwa link ini sudah di-verify
+              const linkId = linkUrl || '';
+              sessionStorage.setItem(`link_clicked_${linkId}`, 'true');
+      
+              // Tampilkan toast sukses
+              showToast('✅ Link berhasil diverifikasi!', 'success', 2000);
+            }
+      
+            isVerifying = false;
+          }, 5000); // 5 detik
+        });
+      
+        // Cleanup timer jika item dihapus
+        newItem.addEventListener('remove', () => {
+          if (linkVerificationTimer) {
+            clearTimeout(linkVerificationTimer);
+          }
+        });
+      });
+      
+      // Fungsi untuk menangani press pada link (timer)
+      function startLinkPress(item) {
+        if (isLinkTimerActive) return;
+      
+        // Cek apakah sudah pernah di-select sebelumnya
+        const selector = item.querySelector('.item-selector');
+        if (selector && selector.classList.contains('selected')) {
+          return; // Sudah pernah di-select
+        }
+      
+        isLinkTimerActive = true;
+        currentLinkItem = item;
+        linkTimerStart = Date.now();
+        linkTimerRemaining = 5;
+      
+        // Tampilkan timer indicator
+        showLinkTimer(item, 5);
+      
+        // Mulai interval untuk update timer
+        linkTimerInterval = setInterval(() => {
+          const elapsed = (Date.now() - linkTimerStart) / 1000;
+          linkTimerRemaining = Math.max(0, 5 - elapsed);
+      
+          updateLinkTimer(item, linkTimerRemaining);
+      
+          if (linkTimerRemaining <= 0) {
+            // Timer selesai, beri centang dan buka link
+            completeLinkPress(item);
+          }
+        }, 100);
+      
+        // Timeout untuk keamanan (5 detik)
+        linkTimer = setTimeout(() => {
+          completeLinkPress(item);
+        }, 5000);
+      }
+      
+      function completeLinkPress(item) {
+        if (!isLinkTimerActive || currentLinkItem !== item) return;
+      
+        // Hapus timer
+        clearTimeout(linkTimer);
+        clearInterval(linkTimerInterval);
+      
+        // Beri centang
+        const selector = item.querySelector('.item-selector');
+        if (selector) {
+          selector.classList.add('selected');
+      
+          // Simpan ke sessionStorage bahwa link ini sudah di-click
+          const linkId = item.dataset.url || '';
+          sessionStorage.setItem(`link_clicked_${linkId}`, 'true');
+        }
+      
+        // Hapus indicator timer
+        hideLinkTimer(item);
+      
+        // Buka link
+        const linkUrl = item.dataset.url;
+        if (linkUrl) {
+          window.open(linkUrl, '_blank');
+        }
+      
+        // Tampilkan toast sukses
+        showToast('✅ Link berhasil diverifikasi!', 'success', 2000);
+      
+        isLinkTimerActive = false;
+        currentLinkItem = null;
+      }
+  
+      // Tombol partisipasi (hanya untuk active)
+      if (!isEnded) {
+          const participateBtn = document.getElementById('detailParticipateBtn');
+          if (participateBtn) {
+              participateBtn.addEventListener('click', () => {
+                  handleParticipate(giveaway);
+              });
+          }
+      
+          // Tombol share
+          const shareBtn = document.getElementById('detailShareBtn');
+          if (shareBtn) {
+              shareBtn.addEventListener('click', () => {
+                  vibrate(10);
+      
+                  // Set flag bahwa user sudah share
+                  sessionStorage.setItem(`shared_${giveaway.giveaway_id}`, 'true');
+      
+                  // Panggil fungsi share
+                  shareGiveaway(giveaway.giveaway_id || giveaway.id, prizes[0] || 'Giveaway');
+      
+                  showToast('✅ Berhasil membagikan! Silakan klik PARTISIPASI', 'success', 2000);
+              });
+          }
+      }
+      
+      // Mulai countdown jika aktif
+      if (countdownActive && giveaway.end_date) {
+          startDetailCountdown(giveaway.end_date);
+      }
+  }
+    
+    // ==================== FUNGSI: KEMBALI KE INDEX (DIPERBAIKI) ====================
+    function goBackToIndex() {
+      console.log('🔙 Kembali ke index...');
+    
+      // Reset state aplikasi
+      currentGiveawayType = 'active';
+    
+      // Tampilkan kembali elemen yang disembunyikan
+      if (elements.profileContent) {
+        elements.profileContent.style.display = 'block';
+      }
+    
+      if (elements.giveawayButtons) {
+        elements.giveawayButtons.style.display = 'flex';
+      }
+    
+      if (elements.settingsBtn) {
+        elements.settingsBtn.style.display = 'flex';
+      }
+    
+      // Tampilkan kembali top container
+      const topContainer = document.querySelector('.top-container');
+      if (topContainer) {
+        topContainer.style.display = 'flex';
+      }
+    
+      // Hapus konten detail
+      const container = elements.giveawayContent;
+      if (container) {
+        container.innerHTML = '';
+        container.style.display = 'block';
+      }
+    
+      // Hentikan countdown
+      if (window.detailCountdownInterval) {
+        clearInterval(window.detailCountdownInterval);
+        window.detailCountdownInterval = null;
+      }
+    
+      // Hapus parameter search dari URL
+      const url = new URL(window.location.href);
+      url.searchParams.delete('search');
+    
+      // CARA PALING MUDAH: Refresh halaman setelah menghapus parameter
+      window.location.href = url.toString();
+    
+      // Kode di bawah ini TIDAK AKAN dieksekusi karena redirect
+    }
+  
+    // ==================== FUNGSI: COUNTDOWN UNTUK DETAIL ====================
+    function startDetailCountdown(endDate) {
+        const countdownEl = document.getElementById('detailCountdown');
+        if (!countdownEl) return;
+    
+        function updateCountdown() {
+            const now = new Date().getTime();
+            const end = new Date(endDate).getTime();
+            const diff = end - now;
+    
+            if (diff <= 0) {
+                countdownEl.textContent = '00:00:00:00';
+                return;
+            }
+    
+            const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+    
+            countdownEl.textContent = `${days.toString().padStart(2, '0')}:${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        }
+    
+        updateCountdown();
+        const interval = setInterval(updateCountdown, 1000);
+        window.detailCountdownInterval = interval;
+    }
+  
+  // ==================== FUNGSI: SHARE GIVEAWAY ====================
+  function shareGiveaway(giveawayId, prize) {
+    vibrate(10);
+  
+    const botUsername = 'freebiestbot';
+    const miniAppUrl = `https://t.me/${botUsername}/giveaway?startapp=${giveawayId}`;
+  
+    // Format pesan yang akan dibagikan
+    const shareText = `🎁 **IKUTI GIVEAWAY MENARIK!**\n\n${prize || 'Giveaway'}\n\n__Klik link di bawah ini untuk mengikuti:__\n${miniAppUrl}`;
+    const telegramShareUrl = `https://t.me/share/url?url=${encodeURIComponent(miniAppUrl)}&text=${encodeURIComponent(shareText)}`;
+  
+    console.log('Sharing giveaway dengan pesan:', shareText);
+  
+    if (window.Telegram?.WebApp) {
+      const tg = window.Telegram.WebApp;
+  
+      try {
+        if (tg.openTelegramLink) {
+          tg.openTelegramLink(telegramShareUrl);
+          showToast('Membuka Telegram untuk berbagi...', 'success', 1500);
+        }
+        else if (tg.openLink) {
+          tg.openLink(telegramShareUrl);
+          showToast('Membuka Telegram untuk berbagi...', 'success', 1500);
+        }
+        else {
+          window.open(telegramShareUrl, '_blank');
+          showToast('Berhasil membuka link share', 'success', 1500);
+        }
+      } catch (error) {
+        console.error('Error sharing giveaway:', error);
+        window.open(telegramShareUrl, '_blank');
+      }
+    } else {
+      if (navigator.share) {
+        navigator.share({
+          title: 'GiftFreebies Giveaway',
+          text: shareText,
+          url: miniAppUrl
+        }).catch((error) => {
+          console.log('Share cancelled or failed:', error);
+          window.open(telegramShareUrl, '_blank');
+        });
+      } else {
+        window.open(telegramShareUrl, '_blank');
+      }
+    }
+  }
+
+    async function updateUI(user) {
+      // Simpan user ke currentUser
+      currentUser = user;
+    
+      const fullName = user.fullname || [user.first_name, user.last_name].filter(Boolean).join(' ') || 'No Name';
+      const username = user.username ? (user.username.startsWith('@') ? user.username : `@${user.username}`) : '(no username)';
+      const isPremium = user.is_premium || false;
+      const userId = user.user_id || user.id || '-';
+    
+      if (elements.profileNameDisplay) elements.profileNameDisplay.textContent = fullName;
+      if (elements.profileUsernameDisplay) elements.profileUsernameDisplay.textContent = username;
+      if (elements.profileIdDisplay) elements.profileIdDisplay.textContent = `ID: ${userId}`;
+    
+      const totalCreate = await fetchUserGiveawayCount(userId);
+    
+      if (elements.totalCreate) elements.totalCreate.textContent = totalCreate;
+      if (elements.languageCode) elements.languageCode.textContent = (user.language_code || 'id').toUpperCase();
+    
+      // Pastikan total_participations terbaca
+      const participations = user.total_participations || 0;
+      if (elements.participations) elements.participations.textContent = participations;
+    
+      const wins = user.total_wins || 0;
+      if (elements.wins) elements.wins.textContent = wins;
+    
+      if (elements.profilePhoto) {
+        elements.profilePhoto.src = user.photo_url || generateAvatarUrl(fullName);
+      }
+    
+      addPremiumIndicator(isPremium);
+      showProfile();
+    }
+  
+    /**
+     * Menerapkan tema Telegram ke CSS variables
+     */
+    function applyTelegramTheme(tg) {
+      if (!tg || !tg.themeParams) return;
+      
+      try {
+        const theme = tg.themeParams;
+        console.log('🎨 Applying Telegram theme');
+        
+        if (theme.bg_color) {
+          document.documentElement.style.setProperty('--tg-theme-bg-color', theme.bg_color);
+        }
+        if (theme.text_color) {
+          document.documentElement.style.setProperty('--tg-theme-text-color', theme.text_color);
+        }
+        if (theme.hint_color) {
+          document.documentElement.style.setProperty('--tg-theme-hint-color', theme.hint_color);
+        }
+        if (theme.link_color) {
+          document.documentElement.style.setProperty('--tg-theme-link-color', theme.link_color);
+        }
+        if (theme.button_color) {
+          document.documentElement.style.setProperty('--tg-theme-button-color', theme.button_color);
+        }
+        if (theme.button_text_color) {
+          document.documentElement.style.setProperty('--tg-theme-button-text-color', theme.button_text_color);
+        }
+      } catch (themeError) {
+        console.warn('⚠️ Error applying Telegram theme:', themeError);
+      }
+    }
+  
+    /**
+     * Setup event listeners tambahan
+     */
+    function setupAdditionalEventListeners() {
+      // Handle tombol back browser
+      window.addEventListener('popstate', (event) => {
+        console.log('📍 Popstate event:', event);
+        // Refresh data saat user navigasi
+        if (!window.location.search.includes('search=')) {
+          // Jika tidak ada parameter search, refresh halaman utama
+          window.location.reload();
+        }
+      });
+      
+      // Handle visibility change (misal user switch tab)
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') {
+          console.log('👀 Tab menjadi aktif - refresh data jika perlu');
+          // Refresh data jika diperlukan
+          if (!window.location.search.includes('search=')) {
+            // Refresh giveaway list
+            fetchAllGiveaways().then(giveaways => {
+              allGiveaways = giveaways;
+              displayGiveaways(currentGiveawayType);
+            });
+          }
+        }
+      });
+      
+      // Handle online/offline
+      window.addEventListener('online', () => {
+        console.log('🌐 Koneksi internet tersambung kembali');
+        showToast('Koneksi internet tersambung kembali', 'success', 2000);
+        
+        // Refresh data
+        if (!window.location.search.includes('search=')) {
+          fetchAllGiveaways().then(giveaways => {
+            allGiveaways = giveaways;
+            displayGiveaways(currentGiveawayType);
+          });
+        }
+      });
+      
+      window.addEventListener('offline', () => {
+        console.log('📡 Koneksi internet terputus');
+        showToast('Koneksi internet terputus', 'warning', 3000);
+      });
+    }
+  
+  async function checkUserSubscriptionWithModal(giveawayId, channelUsername, userId) {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const cleanUsername = channelUsername.replace('@', '');
+  
+        // Tampilkan loading modal
+        const modal = showSubscriptionLoadingModal(cleanUsername);
+  
+        // Panggil API untuk check subscription
+        const response = await fetch(`${API_BASE_URL}/api/check-subscription`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          },
+          mode: 'cors',
+          body: JSON.stringify({
+            user_id: userId,
+            channel_username: cleanUsername
+          })
+        });
+  
+        if (response.status === 202) {
+          // Langsung polling status
+          updateLoadingModalStatus(modal, 'Memeriksa keanggotaan...');
+  
+          // Polling status
+          const pollResult = await pollSubscriptionStatus(cleanUsername, userId, modal);
+          resolve(pollResult);
+  
+        } else if (response.ok) {
+          const data = await response.json();
+  
+          if (data.is_subscribed) {
+            updateLoadingModalSuccess(modal, cleanUsername, data.channel_info);
+            setTimeout(() => {
+              completeLoadingModal(modal, true);
+              resolve(true);
+            }, 1500);
+          } else {
+            updateLoadingModalError(modal, `Anda belum subscribe ke @${cleanUsername}`);
+            setTimeout(() => {
+              completeLoadingModal(modal, false);
+              resolve(false);
+            }, 1500);
+          }
+        } else {
+          const error = await response.json();
+          updateLoadingModalError(modal, error.error || 'Gagal mengecek subscription');
+          setTimeout(() => {
+            completeLoadingModal(modal, false);
+            resolve(false);
+          }, 1500);
+        }
+  
+      } catch (error) {
+        console.error('Error checking subscription:', error);
+        reject(error);
+      }
+    });
+  }
+  
+  // ==================== FUNGSI POLLING STATUS SUBSCRIPTION ====================
+  async function pollSubscriptionStatus(channelUsername, userId, modal) {
+      const maxAttempts = 20;
+      let attempts = 0;
+      
+      return new Promise((resolve) => {
+          const pollInterval = setInterval(async () => {
+              attempts++;
+              
+              try {
+                  const response = await fetch(`${API_BASE_URL}/api/check-subscription-status/${channelUsername}/${userId}`);
+                  
+                  if (response.ok) {
+                      const data = await response.json();
+                      
+                      if (data.completed) {
+                          clearInterval(pollInterval);
+                          
+                          if (data.result.is_subscribed) {
+                              updateLoadingModalSuccess(modal, channelUsername, data.result.channel_info);
+                              setTimeout(() => {
+                                  completeLoadingModal(modal, true);
+                                  resolve(true);
+                              }, 1500);
+                          } else {
+                              updateLoadingModalError(modal, `Anda belum subscribe ke @${channelUsername}`);
+                              setTimeout(() => {
+                                  completeLoadingModal(modal, false);
+                                  resolve(false);
+                              }, 1500);
+                          }
+                          
+                      } else if (data.requires_sync) {
+                          updateLoadingModalStatus(modal, 'Mengambil data channel...');
+                      } else {
+                          updateLoadingModalStatus(modal, 'Memeriksa keanggotaan...');
+                      }
+                  }
+                  
+                  if (attempts >= maxAttempts) {
+                      clearInterval(pollInterval);
+                      updateLoadingModalError(modal, 'Timeout! Silakan coba lagi.');
+                      setTimeout(() => {
+                          completeLoadingModal(modal, false);
+                          resolve(false);
+                      }, 1500);
+                  }
+                  
+              } catch (error) {
+                  console.error('Polling error:', error);
+                  if (attempts >= maxAttempts) {
+                      clearInterval(pollInterval);
+                      updateLoadingModalError(modal, 'Gagal terhubung ke server');
+                      setTimeout(() => {
+                          completeLoadingModal(modal, false);
+                          resolve(false);
+                      }, 1500);
+                  }
+              }
+          }, 1500);
+      });
+  }
+  
+  // ==================== FUNGSI LOADING MODAL UNTUK SUBSCRIPTION ====================
+  let subscriptionModal = null;
+  let subscriptionTypingInterval = null;
+  let subscriptionTypingIndex = 0;
+  let subscriptionTypingLines = [];
+
+  // ==================== FUNGSI CEK SYARAT PREMIUM ====================
+  function checkPremiumRequirement(userIsPremium, requirement) {
+    if (requirement === 'premium') {
+      return userIsPremium === true;
+    } else if (requirement === 'nonpremium') {
+      return userIsPremium === false;
+    }
+    return true;
+  }
+
+  function showSubscriptionLoadingModal(channelUsername) {
+      const existingModal = document.querySelector('.subscription-loading-modal');
+      if (existingModal) {
+          existingModal.remove();
+      }
+      
+      if (subscriptionTypingInterval) {
+          clearInterval(subscriptionTypingInterval);
+          subscriptionTypingInterval = null;
+      }
+      
+      subscriptionTypingIndex = 0;
+      
+      subscriptionTypingLines = [
+          { text: `🔍 Memeriksa keanggotaan di @${channelUsername}...`, delay: 300 },
+          { text: `👤 Mengecek status subscribe...`, delay: 400 },
+          { text: `⏳ Mohon tunggu sebentar...`, delay: 500 }
+      ];
+      
+      subscriptionModal = document.createElement('div');
+      subscriptionModal.className = 'subscription-loading-modal';
+      subscriptionModal.innerHTML = `
+          <div class="sync-loading-content">
+              <div class="sync-loading-header">
+                  <div class="sync-loading-title">🔍 Memeriksa Subscription</div>
+                  <div class="sync-loading-spinner"></div>
+              </div>
+              <div class="sync-loading-body">
+                  <div class="sync-typing-container">
+                      <div class="sync-typing-content" id="subscriptionTypingContent"></div>
+                  </div>
+                  <div class="sync-progress-bar">
+                      <div class="sync-progress-fill" id="subscriptionProgressFill"></div>
+                  </div>
+                  <div class="sync-status" id="subscriptionStatus">Memulai...</div>
+              </div>
+          </div>
+      `;
+      
+      document.body.appendChild(subscriptionModal);
+      
+      setTimeout(() => {
+          subscriptionModal.classList.add('active');
+      }, 10);
+      
+      startSubscriptionTypingEffect();
+      
+      return subscriptionModal;
+  }
+  
+  function startSubscriptionTypingEffect() {
+      const typingContent = document.getElementById('subscriptionTypingContent');
+      if (!typingContent) return;
+      
+      typingContent.innerHTML = '';
+      subscriptionTypingIndex = 0;
+      
+      function typeNextLine() {
+          if (subscriptionTypingIndex >= subscriptionTypingLines.length) {
+              updateSubscriptionStatus('Memeriksa...');
+              updateSubscriptionProgress(50);
+              return;
+          }
+          
+          const line = subscriptionTypingLines[subscriptionTypingIndex];
+          const lineElement = document.createElement('div');
+          lineElement.className = 'sync-typing-line';
+          lineElement.style.opacity = '0';
+          lineElement.textContent = line.text;
+          typingContent.appendChild(lineElement);
+          
+          setTimeout(() => {
+              lineElement.style.opacity = '1';
+          }, 50);
+          
+          const progress = ((subscriptionTypingIndex + 1) / subscriptionTypingLines.length) * 40;
+          updateSubscriptionProgress(progress);
+          
+          if (subscriptionTypingIndex === 0) {
+              updateSubscriptionStatus('Menghubungi server...');
+          } else if (subscriptionTypingIndex === 1) {
+              updateSubscriptionStatus('Memeriksa keanggotaan...');
+          }
+          
+          subscriptionTypingIndex++;
+          
+          setTimeout(typeNextLine, line.delay || 400);
+      }
+      
+      typeNextLine();
+  }
+  
+  function updateSubscriptionStatus(status) {
+      const statusEl = document.getElementById('subscriptionStatus');
+      if (statusEl) {
+          statusEl.textContent = status;
+      }
+  }
+  
+  function updateSubscriptionProgress(percent) {
+      const progressFill = document.getElementById('subscriptionProgressFill');
+      if (progressFill) {
+          progressFill.style.width = `${percent}%`;
+      }
+  }
+  
+  function updateLoadingModalStatus(modal, status) {
+      updateSubscriptionStatus(status);
+      updateSubscriptionProgress(60);
+  }
+  
+  function updateLoadingModalSuccess(modal, channelUsername, channelInfo) {
+      const typingContent = document.getElementById('subscriptionTypingContent');
+      if (!typingContent) return;
+      
+      const successLine = document.createElement('div');
+      successLine.className = 'sync-typing-line success';
+      successLine.innerHTML = `✅ Anda sudah subscribe ke @${channelUsername}!`;
+      typingContent.appendChild(successLine);
+      
+      if (channelInfo) {
+          const infoLine = document.createElement('div');
+          infoLine.className = 'sync-typing-line success';
+          infoLine.innerHTML = `📢 ${channelInfo.title || channelUsername}`;
+          typingContent.appendChild(infoLine);
+      }
+      
+      updateSubscriptionStatus('✅ Berhasil!');
+      updateSubscriptionProgress(100);
+  }
+  
+  function updateLoadingModalError(modal, errorMessage) {
+      const typingContent = document.getElementById('subscriptionTypingContent');
+      if (!typingContent) return;
+      
+      const errorLine = document.createElement('div');
+      errorLine.className = 'sync-typing-line';
+      errorLine.style.borderLeftColor = '#ff6b6b';
+      errorLine.innerHTML = `❌ ${errorMessage}`;
+      typingContent.appendChild(errorLine);
+      
+      updateSubscriptionStatus('❌ Gagal');
+      updateSubscriptionProgress(100);
+  }
+  
+  function completeLoadingModal(modal, success) {
+      if (!modal) return;
+      
+      setTimeout(() => {
+          modal.classList.remove('active');
+          setTimeout(() => {
+              if (modal && modal.parentNode) {
+                  modal.remove();
+              }
+              if (subscriptionModal === modal) {
+                  subscriptionModal = null;
+              }
+          }, 300);
+      }, success ? 1500 : 2000);
+  }
+  
+    // ==================== STATE UNTUK LINK TIMER ====================
+    let linkTimer = null;
+    let linkTimerInterval = null;
+    let currentLinkItem = null;
+    let linkTimerStart = 0;
+    let linkTimerRemaining = 5;
+    let isLinkTimerActive = false;
+    
+    // ==================== FUNGSI SETUP LINK TIMER ====================
+    function setupLinkTimers() {
+        // Hapus event listener lama
+        document.querySelectorAll('.link-item').forEach(item => {
+            const newItem = item.cloneNode(true);
+            item.parentNode.replaceChild(newItem, item);
+        });
+    
+        // Tambahkan event listener baru
+        document.querySelectorAll('.link-item').forEach(item => {
+            let touchTimer = null;
+            let isPressing = false;
+            let pressStartTime = 0;
+            
+            // Untuk mouse (desktop)
+            item.addEventListener('mousedown', (e) => {
+                e.preventDefault();
+                startLinkPress(item);
+            });
+    
+            item.addEventListener('mouseup', () => {
+                cancelLinkPress(item);
+            });
+    
+            item.addEventListener('mouseleave', () => {
+                cancelLinkPress(item);
+            });
+    
+            // Untuk touch (mobile)
+            item.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                startLinkPress(item);
+            });
+    
+            item.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                cancelLinkPress(item);
+            });
+    
+            item.addEventListener('touchcancel', (e) => {
+                e.preventDefault();
+                cancelLinkPress(item);
+            });
+    
+            // Klik normal (tetap buka link)
+            item.addEventListener('click', (e) => {
+                // Jika sedang dalam mode press, jangan buka link
+                if (isLinkTimerActive && currentLinkItem === item) {
+                    e.preventDefault();
+                    return;
+                }
+                // Biarkan link berfungsi normal
+            });
+        });
     }
     
-    .detail-action-btn {
-        font-size: 13px;
-        padding: 12px 0;
+    function startLinkPress(item) {
+        if (isLinkTimerActive) return;
+        
+        // Cek apakah sudah pernah di-select sebelumnya
+        const selector = item.querySelector('.item-selector');
+        if (selector && selector.classList.contains('selected')) {
+            return; // Sudah pernah di-select
+        }
+        
+        isLinkTimerActive = true;
+        currentLinkItem = item;
+        linkTimerStart = Date.now();
+        linkTimerRemaining = 5;
+        
+        // Tampilkan timer indicator
+        showLinkTimer(item, 5);
+        
+        // Mulai interval untuk update timer
+        linkTimerInterval = setInterval(() => {
+            const elapsed = (Date.now() - linkTimerStart) / 1000;
+            linkTimerRemaining = Math.max(0, 5 - elapsed);
+            
+            updateLinkTimer(item, linkTimerRemaining);
+            
+            if (linkTimerRemaining <= 0) {
+                // Timer selesai, beri centang
+                completeLinkPress(item);
+            }
+        }, 100);
+        
+        // Timeout untuk keamanan (5 detik)
+        linkTimer = setTimeout(() => {
+            completeLinkPress(item);
+        }, 5000);
     }
     
-    .item-title {
-        font-size: 14px;
+    function cancelLinkPress(item) {
+        if (!isLinkTimerActive || currentLinkItem !== item) return;
+        
+        // Hapus timer
+        clearTimeout(linkTimer);
+        clearInterval(linkTimerInterval);
+        
+        // Hapus indicator timer
+        hideLinkTimer(item);
+        
+        isLinkTimerActive = false;
+        currentLinkItem = null;
     }
     
-    .item-subtitle {
-        font-size: 11px;
+    function completeLinkPress(item) {
+        if (!isLinkTimerActive || currentLinkItem !== item) return;
+        
+        // Hapus timer
+        clearTimeout(linkTimer);
+        clearInterval(linkTimerInterval);
+        
+        // Beri centang
+        const selector = item.querySelector('.item-selector');
+        if (selector) {
+            selector.classList.add('selected');
+            
+            // Simpan ke sessionStorage bahwa link ini sudah di-click
+            const linkId = item.dataset.url || '';
+            sessionStorage.setItem(`link_clicked_${linkId}`, 'true');
+        }
+        
+        // Hapus indicator timer
+        hideLinkTimer(item);
+        
+        // Tampilkan toast sukses
+        showToast('✅ Link berhasil diverifikasi!', 'success', 2000);
+        
+        isLinkTimerActive = false;
+        currentLinkItem = null;
     }
-}
+    
+    function showLinkTimer(item, seconds) {
+        // Hapus timer lama jika ada
+        const oldTimer = item.querySelector('.link-timer');
+        if (oldTimer) oldTimer.remove();
+        
+        // Buat element timer
+        const timer = document.createElement('div');
+        timer.className = 'link-timer';
+        timer.innerHTML = `
+            <div class="link-timer-circle">
+                <svg viewBox="0 0 36 36" class="link-timer-svg">
+                    <circle cx="18" cy="18" r="16" fill="none" class="link-timer-bg"></circle>
+                    <circle cx="18" cy="18" r="16" fill="none" class="link-timer-progress" 
+                            stroke-dasharray="100" stroke-dashoffset="0"></circle>
+                </svg>
+                <span class="link-timer-text">${seconds}</span>
+            </div>
+            <div class="link-timer-label">Tahan untuk verifikasi</div>
+        `;
+        
+        item.appendChild(timer);
+    }
+    
+    function updateLinkTimer(item, seconds) {
+        const timerText = item.querySelector('.link-timer-text');
+        const progress = item.querySelector('.link-timer-progress');
+        
+        if (timerText) {
+            timerText.textContent = Math.ceil(seconds);
+        }
+        
+        if (progress) {
+            const offset = 100 - (seconds / 5) * 100;
+            progress.style.strokeDashoffset = offset;
+        }
+    }
+    
+    function hideLinkTimer(item) {
+        const timer = item.querySelector('.link-timer');
+        if (timer) {
+            timer.remove();
+        }
+    }
 
-/* Pulse animation untuk tombol share */
-@keyframes pulse {
-  0% {
-    box-shadow: 0 0 0 0 rgba(255, 107, 107, 0.7);
-  }
-  70% {
-    box-shadow: 0 0 0 10px rgba(255, 107, 107, 0);
-  }
-  100% {
-    box-shadow: 0 0 0 0 rgba(255, 107, 107, 0);
-  }
-}
+    // ==================== FUNGSI CEK STATUS AKTIF (PERNAH BERPARTISIPASI) ====================
+    async function checkUserActiveStatus(userId) {
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/users/${userId}/participation-history`, {
+          headers: { 'Accept': 'application/json' },
+          mode: 'cors'
+        });
+    
+        if (!response.ok) return false;
+    
+        const data = await response.json();
+        // Jika total_participations > 0, berarti pernah berpartisipasi
+        return data.total_participations > 0;
+    
+      } catch (error) {
+        console.error('Error checking active status:', error);
+        return false;
+      }
+    }
 
-.pulse-animation {
-  animation: pulse 1.5s infinite;
-}
+    // ==================== UPDATE FUNGSI CHECKALLREQUIREMENTS (SESUAI SYARAT) ====================
+    async function checkAllRequirements(giveaway, user) {
+      const requirements = giveaway.requirements || [];
+      const channels = giveaway.channels || [];
+      const links = giveaway.links || [];
+    
+      const failedRequirements = [];
+      const channelStatuses = {};
+      const linkStatuses = {};
+    
+      // ===== CEK PREMIUM / NON-PREMIUM =====
+      if (requirements.includes('premium') && !user.is_premium) {
+        failedRequirements.push('premium');
+        showToast('❌ Giveaway ini khusus untuk pengguna Premium', 'error', 3000);
+        return {
+          passed: false,
+          failed: ['premium'],
+          channelStatuses: {},
+          linkStatuses: {}
+        };
+      }
+    
+      if (requirements.includes('nonpremium') && user.is_premium) {
+        failedRequirements.push('nonpremium');
+        showToast('❌ Giveaway ini khusus untuk pengguna Non-Premium', 'error', 3000);
+        return {
+          passed: false,
+          failed: ['nonpremium'],
+          channelStatuses: {},
+          linkStatuses: {}
+        };
+      }
+    
+      // ===== CEK STATUS AKTIF (PERNAH BERPARTISIPASI) =====
+      if (requirements.includes('aktif')) {
+        const isActive = await checkUserActiveStatus(user.id);
+        if (!isActive) {
+          failedRequirements.push('aktif');
+          showToast('❌ Anda harus pernah berpartisipasi di giveaway lain', 'error', 3000);
+          return {
+            passed: false,
+            failed: ['aktif'],
+            channelStatuses: {},
+            linkStatuses: {}
+          };
+        }
+      }
+    
+      // ===== CEK SHARE (TOMBOL BAGIKAN) =====
+      if (requirements.includes('share')) {
+        const hasShared = sessionStorage.getItem(`shared_${giveaway.giveaway_id}`) === 'true';
+        if (!hasShared) {
+          failedRequirements.push('share');
+          // Tampilkan toast dan buka panel share
+          showToast('❌ Anda harus membagikan giveaway ini terlebih dahulu', 'warning', 3000);
+    
+          // Buka panel share (bisa ditambahkan logic untuk membuka modal share)
+          setTimeout(() => {
+            const shareBtn = document.getElementById('detailShareBtn');
+            if (shareBtn) {
+              shareBtn.scrollIntoView({ behavior: 'smooth', block: 'center' });
+              shareBtn.classList.add('pulse-animation');
+              setTimeout(() => shareBtn.classList.remove('pulse-animation'), 2000);
+            }
+          }, 500);
+    
+          return {
+            passed: false,
+            failed: ['share'],
+            channelStatuses: {},
+            linkStatuses: {}
+          };
+        }
+      }
+    
+      // ===== CEK SUBSCRIBE CHANNEL =====
+      if (requirements.includes('subscribe') && channels.length > 0) {
+        // Tampilkan loading modal SATU KALI untuk semua channel
+        const modal = showGlobalSubscriptionModal(channels.length);
+    
+        // Proses pengecekan channel satu per satu
+        for (let i = 0; i < channels.length; i++) {
+          const channel = channels[i];
+          const channelUsername = typeof channel === 'string' ? channel : channel.username;
+    
+          // Update status di modal
+          updateGlobalModalStatus(modal, i + 1, channels.length, channelUsername);
+    
+          try {
+            // Panggil API untuk check subscription
+            const response = await fetch(`${API_BASE_URL}/api/check-subscription`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+              },
+              mode: 'cors',
+              body: JSON.stringify({
+                user_id: user.id,
+                channel_username: channelUsername.replace('@', '')
+              })
+            });
+    
+            if (response.status === 202) {
+              const pollResult = await pollGlobalSubscriptionStatus(channelUsername, user.id, modal, i + 1, channels.length);
+              channelStatuses[channelUsername] = pollResult;
+              if (!pollResult) {
+                failedRequirements.push(`subscribe:${channelUsername}`);
+              }
+            } else if (response.ok) {
+              const data = await response.json();
+              channelStatuses[channelUsername] = data.is_subscribed || false;
+              if (!data.is_subscribed) {
+                failedRequirements.push(`subscribe:${channelUsername}`);
+              }
+            } else {
+              channelStatuses[channelUsername] = false;
+              failedRequirements.push(`subscribe:${channelUsername}`);
+            }
+    
+          } catch (error) {
+            console.error(`Error checking channel ${channelUsername}:`, error);
+            channelStatuses[channelUsername] = false;
+            failedRequirements.push(`subscribe:${channelUsername}`);
+          }
+        }
+    
+        // Tutup modal setelah semua pengecekan selesai
+        completeGlobalModal(modal);
+      }
+    
+      // ===== CEK LINK CLICKS =====
+      if (links.length > 0) {
+        // Cek setiap link apakah sudah di-click (dari sessionStorage)
+        links.forEach(link => {
+          const linkId = link.url || link;
+          const hasClicked = sessionStorage.getItem(`link_clicked_${linkId}`) === 'true';
+          linkStatuses[linkId] = hasClicked;
+          if (!hasClicked) {
+            failedRequirements.push(`link:${linkId}`);
+          }
+        });
+      }
+    
+      // Update tampilan selector berdasarkan status
+      updateChannelSelectors(channelStatuses);
+      updateLinkSelectors(linkStatuses);
+    
+      // Jika ada channel yang tidak disubscribe, buka panel channel
+      const hasChannelFailures = failedRequirements.some(req => req.startsWith('subscribe:'));
+      if (hasChannelFailures) {
+        setTimeout(() => {
+          const channelPanel = document.getElementById('channelPanelContainer');
+          const toggleChannelBtn = document.getElementById('toggleChannelBtn');
+    
+          if (channelPanel && channelPanel.classList.contains('hidden')) {
+            channelPanel.classList.remove('hidden');
+            if (toggleChannelBtn) {
+              toggleChannelBtn.classList.add('active');
+            }
+          }
+    
+          if (channelPanel) {
+            channelPanel.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }
+        }, 500);
+      }
+    
+      // Jika ada link yang belum di-click, buka panel link
+      const hasLinkFailures = failedRequirements.some(req => req.startsWith('link:'));
+      if (hasLinkFailures) {
+        setTimeout(() => {
+          const linkPanel = document.getElementById('linkPanelContainer');
+          const toggleLinkBtn = document.getElementById('toggleLinkBtn');
+    
+          if (linkPanel && linkPanel.classList.contains('hidden')) {
+            linkPanel.classList.remove('hidden');
+            if (toggleLinkBtn) {
+              toggleLinkBtn.classList.add('active');
+            }
+          }
+    
+          if (linkPanel) {
+            linkPanel.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }
+        }, 500);
+      }
+    
+      return {
+        passed: failedRequirements.length === 0,
+        failed: failedRequirements,
+        channelStatuses: channelStatuses,
+        linkStatuses: linkStatuses
+      };
+    }
+    
+    // ==================== FUNGSI UPDATE LINK SELECTORS ====================
+    function updateLinkSelectors(linkStatuses) {
+        document.querySelectorAll('.link-item').forEach(item => {
+            const linkUrl = item.dataset.url;
+            if (linkUrl && linkStatuses[linkUrl] === true) {
+                const selector = item.querySelector('.item-selector');
+                if (selector) {
+                    selector.classList.add('selected');
+                }
+            }
+        });
+    }
+    
+    // ==================== FUNGSI UPDATE CHANNEL SELECTORS ====================
+    function updateChannelSelectors(channelStatuses) {
+        // Update selector di panel channel
+        document.querySelectorAll('.channel-item').forEach(item => {
+            const channelUrl = item.dataset.url;
+            if (channelUrl) {
+                const username = channelUrl.replace('https://t.me/', '');
+                
+                if (channelStatuses[username] === true) {
+                    const selector = item.querySelector('.item-selector');
+                    if (selector) {
+                        selector.classList.add('selected');
+                    }
+                }
+            }
+        });
+    }
+    
+    // ==================== FUNGSI HANDLE PARTICIPATE (MODIFIED) ====================
+    async function handleParticipate(giveaway) {
+        try {
+            vibrate(15);
+            
+            if (!currentUser) {
+                showToast('Silakan login terlebih dahulu', 'warning', 2000);
+                return;
+            }
+            
+            console.log('🎯 Processing participation for giveaway:', giveaway.giveaway_id);
+            console.log('👤 Current user:', currentUser);
+            
+            // Cek syarat (dengan modal global)
+            const requirementCheck = await checkAllRequirements(giveaway, currentUser);
+            
+            if (!requirementCheck.passed) {
+                // Tampilkan toast notifikasi
+                showToast('❌ Anda belum subscribe ke semua channel yang diperlukan', 'error', 3000);
+                
+                // Refresh halaman setelah 1 detik
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1000);
+                
+                return;
+            }
+            
+            showToast('Menyimpan partisipasi...', 'info', 1000);
+            
+            const result = await saveParticipation(giveaway.giveaway_id, currentUser);
+            
+            if (result.success) {
+                showToast('✅ Berhasil berpartisipasi!', 'success', 2000);
+                
+                // Update UI partisipasi
+                if (elements.participations) {
+                    const currentCount = parseInt(elements.participations.textContent) || 0;
+                    elements.participations.textContent = currentCount + 1;
+                }
+                
+                // Reset flag share
+                sessionStorage.removeItem(`shared_${giveaway.giveaway_id}`);
+                
+                // Refresh halaman setelah 1 detik
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1000);
+                
+            } else {
+                showToast(result.message || 'Gagal berpartisipasi', 'error', 2000);
+                
+                // Refresh halaman setelah 1.5 detik
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1500);
+            }
+            
+        } catch (error) {
+            console.error('Error in handleParticipate:', error);
+            showToast(error.message || 'Terjadi kesalahan', 'error', 2000);
+            
+            // Refresh halaman setelah 1.5 detik
+            setTimeout(() => {
+                window.location.reload();
+            }, 1500);
+        }
+    }
+
+    // ==================== FUNGSI SIMPAN PARTISIPASI ====================
+    async function saveParticipation(giveawayId, userData) {
+      try {
+        console.log(`📝 Saving participation for giveaway ${giveawayId}`);
+    
+        const response = await fetch(`${API_BASE_URL}/api/giveaways/${giveawayId}/participate`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          },
+          mode: 'cors',
+          body: JSON.stringify({
+            user_id: userData.id,
+            fullname: userData.fullname || [userData.first_name, userData.last_name].filter(Boolean).join(' '),
+            username: userData.username,
+            is_premium: userData.is_premium || false
+          })
+        });
+    
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Failed to save participation');
+        }
+    
+        const data = await response.json();
+        return data;
+    
+      } catch (error) {
+        console.error('Error saving participation:', error);
+        throw error;
+      }
+    }
+
+  function showGlobalSubscriptionModal(totalChannels) {
+    const existingModal = document.querySelector('.global-subscription-modal');
+    if (existingModal) {
+      existingModal.remove();
+    }
+  
+    globalModal = document.createElement('div');
+    globalModal.className = 'global-subscription-modal';
+    globalModal.innerHTML = `
+          <div class="sync-loading-content">
+              <div class="sync-loading-header">
+                  <div class="sync-loading-title">🔍 Memeriksa Keanggotaan</div>
+                  <div class="sync-loading-spinner"></div>
+              </div>
+              <div class="sync-loading-body">
+                  <div class="progress-info">
+                      <span class="progress-current" id="globalProgressCurrent">0</span>
+                      <span class="progress-separator">/</span>
+                      <span class="progress-total" id="globalProgressTotal">${totalChannels}</span>
+                  </div>
+                  <div class="sync-progress-bar">
+                      <div class="sync-progress-fill" id="globalProgressFill" style="width: 0%"></div>
+                  </div>
+                  <div class="current-channel" id="globalCurrentChannel">
+                      Memulai pengecekan...
+                  </div>
+                  <div class="sync-status" id="globalStatus">Memeriksa channel 1 dari ${totalChannels}</div>
+              </div>
+          </div>
+      `;
+  
+    document.body.appendChild(globalModal);
+  
+    setTimeout(() => {
+      globalModal.classList.add('active');
+    }, 10);
+  
+    return globalModal;
+  }
+  
+  function updateGlobalModalStatus(modal, current, total, channelUsername) {
+    if (!modal) return;
+  
+    const progressFill = document.getElementById('globalProgressFill');
+    const progressCurrent = document.getElementById('globalProgressCurrent');
+    const currentChannel = document.getElementById('globalCurrentChannel');
+    const statusEl = document.getElementById('globalStatus');
+  
+    if (progressFill) {
+      const percent = (current / total) * 100;
+      progressFill.style.width = `${percent}%`;
+    }
+  
+    if (progressCurrent) {
+      progressCurrent.textContent = current;
+    }
+  
+    if (currentChannel) {
+      currentChannel.innerHTML = `<span class="channel-name">@${channelUsername.replace('@', '')}</span>`;
+    }
+  
+    if (statusEl) {
+      statusEl.textContent = `Memeriksa channel ${current} dari ${total}`;
+    }
+  }
+  
+  function completeGlobalModal(modal) {
+    if (!modal) return;
+  
+    const progressFill = document.getElementById('globalProgressFill');
+    const statusEl = document.getElementById('globalStatus');
+    const currentChannel = document.getElementById('globalCurrentChannel');
+  
+    if (progressFill) {
+      progressFill.style.width = '100%';
+    }
+  
+    if (statusEl) {
+      statusEl.textContent = 'Pengecekan selesai!';
+    }
+  
+    if (currentChannel) {
+      currentChannel.innerHTML = '✅ Semua channel telah diperiksa';
+    }
+  
+    setTimeout(() => {
+      modal.classList.remove('active');
+      setTimeout(() => {
+        if (modal && modal.parentNode) {
+          modal.remove();
+        }
+        if (globalModal === modal) {
+          globalModal = null;
+        }
+      }, 300);
+    }, 1000);
+  }
+  
+  // ==================== FUNGSI POLLING GLOBAL ====================
+  async function pollGlobalSubscriptionStatus(channelUsername, userId, modal, current, total) {
+    const maxAttempts = 20;
+    let attempts = 0;
+  
+    return new Promise((resolve) => {
+      const pollInterval = setInterval(async () => {
+        attempts++;
+  
+        try {
+          const response = await fetch(`${API_BASE_URL}/api/check-subscription-status/${channelUsername}/${userId}`);
+  
+          if (response.ok) {
+            const data = await response.json();
+  
+            if (data.completed) {
+              clearInterval(pollInterval);
+  
+              // Update status di modal
+              updateGlobalModalStatus(modal, current, total, channelUsername);
+  
+              resolve(data.result.is_subscribed || false);
+              return;
+            }
+          }
+  
+          if (attempts >= maxAttempts) {
+            clearInterval(pollInterval);
+            resolve(false);
+          }
+  
+        } catch (error) {
+          console.error('Polling error:', error);
+          if (attempts >= maxAttempts) {
+            clearInterval(pollInterval);
+            resolve(false);
+          }
+        }
+      }, 1500);
+    });
+  }
+  
+  // ==================== FUNGSI UPDATE CHANNEL SELECTORS ====================
+  function updateChannelSelectors(channelStatuses) {
+    // Update selector di panel channel
+    document.querySelectorAll('.channel-item').forEach(item => {
+      const channelUrl = item.dataset.url;
+      if (channelUrl) {
+        const username = channelUrl.replace('https://t.me/', '');
+  
+        if (channelStatuses[username] === true) {
+          const selector = item.querySelector('.item-selector');
+          if (selector) {
+            selector.classList.add('selected');
+          }
+        }
+      }
+    });
+  }
+  
+  // ==================== FUNGSI UPDATE LINK SELECTORS ====================
+  function updateLinkSelectors(linkStatuses) {
+    document.querySelectorAll('.link-item').forEach(item => {
+      const linkUrl = item.dataset.url;
+      if (linkUrl && linkStatuses[linkUrl] === true) {
+        const selector = item.querySelector('.item-selector');
+        if (selector) {
+          selector.classList.add('selected');
+        }
+      }
+    });
+  }
+
+  // ==================== INIT UTAMA ====================
+  async function init() {
+    console.log('🚀 INITIALIZING APPLICATION...');
+  
+    try {
+      // ==================== CEK KONEKSI API ====================
+      console.log('🔍 Checking API connection...');
+      let apiConnected = false;
+  
+      try {
+        const healthCheck = await fetch(`${API_BASE_URL}/api/health`, {
+          method: 'GET',
+          headers: { 'Accept': 'application/json' },
+          mode: 'cors'
+        });
+  
+        if (healthCheck.ok) {
+          const healthData = await healthCheck.json();
+          console.log('✅ API Connected:', healthData);
+          apiConnected = true;
+        } else {
+          console.warn('⚠️ API health check failed:', healthCheck.status);
+        }
+      } catch (healthError) {
+        console.warn('⚠️ API connection error:', healthError.message);
+      }
+  
+      if (!apiConnected) {
+        console.warn('⚠️ Using application in offline mode - some features may be limited');
+        showToast('⚠️ Koneksi ke server terputus. Beberapa fitur mungkin tidak berfungsi.', 'warning', 3000);
+      }
+  
+      // ==================== CEK PARAMETER URL ====================
+      const urlParams = new URLSearchParams(window.location.search);
+      const giveawayIdFromUrl = urlParams.get('search');
+      console.log('🔍 URL search param:', giveawayIdFromUrl);
+  
+      // ==================== CEK PARAMETER TELEGRAM ====================
+      let telegramStartParam = null;
+      let telegramUserData = null;
+  
+      if (window.Telegram?.WebApp) {
+        console.log('📱 Running inside Telegram Web App');
+        const tg = window.Telegram.WebApp;
+  
+        // Expand dan ready kan Web App
+        tg.expand();
+        tg.ready();
+  
+        // Ambil start_param
+        if (tg.initDataUnsafe?.start_param) {
+          telegramStartParam = tg.initDataUnsafe.start_param;
+          console.log('📱 Telegram start_param:', telegramStartParam);
+        }
+  
+        // Ambil data user
+        if (tg.initDataUnsafe?.user) {
+          telegramUserData = tg.initDataUnsafe.user;
+          console.log('📱 Telegram user data:', telegramUserData);
+        }
+  
+        // Terapkan tema Telegram
+        applyTelegramTheme(tg);
+      } else {
+        console.log('🌐 Running in standalone web browser');
+      }
+  
+      // ==================== AMBIL DATA USER (UNTUK SEMUA MODE) ====================
+      let user = null;
+  
+      if (telegramUserData) {
+        // Ada user Telegram
+        console.log('📱 Menggunakan data user Telegram');
+  
+        try {
+          // Coba ambil data user dari API
+          const apiUser = await fetchUserFromApi(telegramUserData.id);
+  
+          if (apiUser) {
+            // Gabungkan data dari Telegram dan API
+            user = {
+              ...telegramUserData,
+              ...apiUser,
+              // Pastikan field-field penting ada
+              fullname: apiUser.fullname || [telegramUserData.first_name, telegramUserData.last_name].filter(Boolean).join(' '),
+              username: apiUser.username || telegramUserData.username,
+              is_premium: apiUser.is_premium || telegramUserData.is_premium || false
+            };
+            console.log('✅ Data user dari API:', apiUser);
+          } else {
+            // Fallback ke data Telegram saja
+            user = telegramUserData;
+            console.log('ℹ️ Menggunakan data user Telegram (tanpa data API)');
+          }
+        } catch (userError) {
+          console.error('❌ Error fetching user from API:', userError);
+          // Fallback ke data Telegram
+          user = telegramUserData;
+          console.log('ℹ️ Fallback ke data user Telegram karena error API');
+        }
+  
+      } else {
+        // Guest mode (tidak di Telegram atau tidak ada data user)
+        console.log('👤 Menggunakan guest mode');
+        user = { ...guestUser }; // Copy guest user
+      }
+  
+      // Simpan user ke currentUser GLOBAL
+      currentUser = user;
+      console.log('👤 Current user set:', currentUser);
+  
+      // ==================== PRIORITASKAN ID GIVEAWAY ====================
+      // Prioritaskan: URL param > Telegram start_param
+      const finalGiveawayId = giveawayIdFromUrl || telegramStartParam;
+  
+      if (finalGiveawayId) {
+        // === MODE DETAIL GIVEAWAY ===
+        console.log('🎯 Menampilkan detail giveaway untuk ID:', finalGiveawayId);
+  
+        try {
+          // Tampilkan loading
+          if (elements.loading) {
+            elements.loading.style.display = 'flex';
+            const loadingText = elements.loading.querySelector('p');
+            if (loadingText) loadingText.textContent = 'Memuat detail giveaway...';
+          }
+  
+          // Sembunyikan error jika sebelumnya muncul
+          if (elements.error) elements.error.style.display = 'none';
+  
+          // Fetch data giveaway
+          console.log('📡 Fetching giveaway detail...');
+          const giveawayData = await fetchGiveawayDetail(finalGiveawayId);
+  
+          if (!giveawayData) {
+            throw new Error('Data giveaway tidak ditemukan');
+          }
+  
+          console.log('✅ Giveaway data loaded:', giveawayData);
+  
+          // Sembunyikan loading
+          if (elements.loading) elements.loading.style.display = 'none';
+  
+          // Render detail giveaway
+          renderGiveawayDetail(giveawayData);
+  
+        } catch (error) {
+          console.error('❌ Gagal memuat detail giveaway:', error);
+  
+          // Sembunyikan loading
+          if (elements.loading) elements.loading.style.display = 'none';
+  
+          // Tampilkan error
+          showError(
+            error.message || 'Gagal memuat detail giveaway. Pastikan koneksi internet Anda stabil.',
+            true
+          );
+        }
+  
+        return; // STOP EKSEKUSI DI SINI
+      }
+  
+      // ==================== MODE PROFIL (TANPA PARAMETER) ====================
+      console.log('👤 Mode profil - menampilkan halaman utama');
+  
+      // ==================== UPDATE UI PROFIL ====================
+      try {
+        await updateUI(user);
+        console.log('✅ UI profil berhasil diupdate');
+      } catch (uiError) {
+        console.error('❌ Error updating UI:', uiError);
+        showError('Gagal menampilkan profil. Silakan refresh halaman.', false);
+      }
+  
+      // ==================== FETCH GIVEAWAYS ====================
+      try {
+        console.log('📡 Fetching all giveaways...');
+        allGiveaways = await fetchAllGiveaways();
+  
+        // Debug: tampilkan status masing-masing giveaway
+        if (allGiveaways.active.length > 0) {
+          console.log('Active giveaways status check:');
+          allGiveaways.active.forEach((g, i) => {
+            console.log(`  ${i+1}. ID: ${g.giveaway_id || g.id}, Status: ${g.status}`);
+          });
+        }
+  
+        if (allGiveaways.ended.length > 0) {
+          console.log('Ended giveaways status check:');
+          allGiveaways.ended.forEach((g, i) => {
+            console.log(`  ${i+1}. ID: ${g.giveaway_id || g.id}, Status: ${g.status}`);
+          });
+        }
+  
+        if (allGiveaways.active.length === 0 && allGiveaways.ended.length === 0) {
+          console.log('ℹ️ Tidak ada giveaway ditemukan');
+          showToast('Belum ada giveaway yang tersedia', 'info', 2000);
+        } else {
+          console.log(`✅ Loaded ${allGiveaways.active.length} active, ${allGiveaways.ended.length} ended giveaways`);
+        }
+      } catch (giveawaysError) {
+        console.error('❌ Error fetching giveaways:', giveawaysError);
+        allGiveaways = { active: [], ended: [] };
+        showToast('Gagal memuat daftar giveaway', 'error', 3000);
+      }
+  
+      // ==================== TAMPILKAN GIVEAWAY ====================
+      try {
+        // Aktifkan tombol active secara default
+        if (elements.activeBtn) elements.activeBtn.classList.add('active');
+        if (elements.endedBtn) elements.endedBtn.classList.remove('active');
+  
+        // Tampilkan giveaway active
+        displayGiveaways('active');
+        console.log('✅ Giveaway ditampilkan');
+      } catch (displayError) {
+        console.error('❌ Error displaying giveaways:', displayError);
+        if (elements.giveawayContent) {
+          elements.giveawayContent.innerHTML = `
+                      <div class="empty-message">
+                          <p>Gagal menampilkan giveaway</p>
+                          <button onclick="location.reload()" class="retry-btn">Coba Lagi</button>
+                      </div>
+                  `;
+        }
+      }
+  
+      // ==================== SETUP EVENT LISTENERS TAMBAHAN ====================
+      setupAdditionalEventListeners();
+  
+      console.log('🎉 Inisialisasi selesai!');
+  
+    } catch (fatalError) {
+      // Fatal error - sesuatu yang sangat salah
+      console.error('💥 Fatal error in init():', fatalError);
+  
+      // Tampilkan error di UI
+      if (elements.loading) elements.loading.style.display = 'none';
+      if (elements.error) {
+        elements.error.style.display = 'flex';
+        const errorDiv = elements.error.querySelector('div');
+        if (errorDiv) {
+          errorDiv.textContent = '❌ Terjadi kesalahan fatal. Silakan refresh halaman.';
+        }
+      }
+    }
+  }
+
+  // ==================== EVENT LISTENERS ====================
+  if (elements.settingsBtn) {
+    elements.settingsBtn.addEventListener('click', () => {
+      vibrate(20);
+      alert('Settings Menu');
+    });
+  }
+
+  if (elements.createGiveawayBtn) {
+    elements.createGiveawayBtn.addEventListener('click', () => {
+      vibrate(15);
+      window.location.href = 'create.html';
+    });
+  }
+
+  if (elements.activeBtn) {
+    elements.activeBtn.addEventListener('click', () => {
+      vibrate(10);
+      elements.activeBtn.classList.add('active');
+      if (elements.endedBtn) elements.endedBtn.classList.remove('active');
+      displayGiveaways('active');
+    });
+  }
+
+  if (elements.endedBtn) {
+    elements.endedBtn.addEventListener('click', () => {
+      vibrate(10);
+      elements.endedBtn.classList.add('active');
+      if (elements.activeBtn) elements.activeBtn.classList.remove('active');
+      displayGiveaways('ended');
+    });
+  }
+
+  // ==================== START ====================
+  init();
+})();
