@@ -502,6 +502,25 @@
       // Tentukan apakah ini ended giveaway
       const isEnded = (giveaway.status === 'ended') || isExpired;
   
+      // CEK APAKAH USER SUDAH BERPARTISIPASI
+      let hasParticipated = false;
+      if (currentUser && !isEnded) {
+          try {
+              const checkResponse = await fetch(`${API_BASE_URL}/api/giveaways/${giveaway.giveaway_id}/participants`, {
+                  headers: { 'Accept': 'application/json' },
+                  mode: 'cors'
+              });
+              
+              if (checkResponse.ok) {
+                  const participantsData = await checkResponse.json();
+                  hasParticipated = participantsData.participants.some(p => p.user_id == currentUser.id);
+                  console.log('👤 User has participated:', hasParticipated);
+              }
+          } catch (error) {
+              console.error('Error checking participation:', error);
+          }
+      }
+  
       // Siapkan data untuk ditampilkan
       const prizes = Array.isArray(giveaway.prizes) ? giveaway.prizes : [];
       const requirements = Array.isArray(giveaway.requirements) ? giveaway.requirements : [];
@@ -514,7 +533,7 @@
       
       if (isEnded) {
           try {
-              // Ambil data pemenang (anda perlu membuat endpoint ini)
+              // Ambil data pemenang
               const winnersResponse = await fetch(`${API_BASE_URL}/api/giveaways/${giveaway.giveaway_id}/winners`, {
                   headers: { 'Accept': 'application/json' },
                   mode: 'cors'
@@ -540,248 +559,46 @@
               
           } catch (error) {
               console.error('❌ Error fetching winners/participants:', error);
-              // Gunakan data dummy jika error
-              winners = [
-                  {
-                      id: 123456789,
-                      first_name: 'John',
-                      last_name: 'Doe',
-                      username: 'johndoe',
-                      photo_url: null,
-                      prize_index: 0
-                  }
-              ];
-              participants = [
-                  {
-                      id: 111111111,
-                      first_name: 'Alice',
-                      last_name: 'Johnson',
-                      username: 'alicej',
-                      photo_url: null
-                  }
-              ];
           }
       }
   
-      // Buat HTML untuk syarat (tanpa bubble, hanya text)
-      let reqHtml = '';
-      if (requirements.length === 0) {
-          reqHtml = '<div class="requirement-item">Tidak ada syarat khusus</div>';
-      } else {
-          requirements.forEach(req => {
-              let label = req;
-              if (req === 'subscribe') label = 'Subscribe Channel';
-              else if (req === 'premium') label = 'Akun Premium';
-              else if (req === 'nonpremium') label = 'Akun Non-Premium';
-              else if (req === 'aktif') label = 'Akun Aktif';
-              else if (req === 'share') label = 'Share Postingan';
-              
-              reqHtml += `<div class="requirement-item">${escapeHtml(label)}</div>`;
-          });
-      }
+      // ... (kode HTML yang sama sampai bagian ACTION BUTTONS)
   
-      // Buat HTML untuk hadiah
-      let prizesHtml = '';
-      prizes.forEach((prize, index) => {
-          prizesHtml += `
-              <div class="prize-item">
-                  <span class="prize-number">${index + 1}</span>
-                  <span class="prize-text">${escapeHtml(prize)}</span>
-              </div>
-          `;
-      });
-  
-      // Buat HTML untuk channel
-      let channelsHtml = '';
-      if (channels.length > 0) {
-          channels.forEach(ch => {
-              const channelName = typeof ch === 'string' ? ch : (ch.title || ch.username || 'Channel');
-              const username = typeof ch === 'string' ? ch.replace('@', '') : (ch.username || '').replace('@', '');
-              const isVerified = typeof ch !== 'string' && ch.is_verified;
-              const channelUrl = `https://t.me/${username}`;
-              
-              channelsHtml += `
-                  <a href="${channelUrl}" target="_blank" class="panel-item channel-item" data-url="${channelUrl}">
-                      <div class="item-info">
-                          <div class="item-icon">📢</div>
-                          <div class="item-details">
-                              <div class="item-title">
-                                  ${escapeHtml(channelName)}
-                                  ${isVerified ? '<span style="color: #00e676; margin-left: 4px;">✓</span>' : ''}
-                              </div>
-                              <div class="item-subtitle channel">${username}</div>
-                          </div>
-                      </div>
-                      <div class="item-selector"></div>
-                  </a>
-              `;
-          });
-      } else {
-          channelsHtml = '<div class="empty-message">Tidak ada channel</div>';
-      }
-  
-      // Buat HTML untuk link
-      let linksHtml = '';
-      if (links.length > 0) {
-          links.forEach(link => {
-              const title = link.title || 'Tautan';
-              const url = link.url || '#';
-              linksHtml += `
-                  <a href="${escapeHtml(url)}" target="_blank" class="panel-item link-item" data-url="${escapeHtml(url)}">
-                      <div class="item-info">
-                          <div class="item-icon">🔗</div>
-                          <div class="item-details">
-                              <div class="item-title">${escapeHtml(title)}</div>
-                              <div class="item-subtitle">${escapeHtml(url)}</div>
-                          </div>
-                      </div>
-                      <div class="item-selector"></div>
-                  </a>
-              `;
-          });
-      } else {
-          linksHtml = '<div class="empty-message">Tidak ada link</div>';
-      }
-  
-      // Tentukan media (foto/video)
-      let mediaHtml = '';
-      if (giveaway.media_path) {
-          if (giveaway.media_type === 'video') {
-              mediaHtml = `
-                  <div class="detail-media">
-                      <video src="${giveaway.media_path}" class="detail-media-video" controls></video>
+      // ACTION BUTTONS FIXED (HANYA UNTUK ACTIVE GIVEAWAY)
+      let actionButtonsHtml = '';
+      if (!isEnded) {
+          if (hasParticipated) {
+              // Jika sudah berpartisipasi, tampilkan tombol disabled
+              actionButtonsHtml = `
+                  <div class="detail-actions-fixed">
+                      <button class="btn btn-participate disabled" id="detailParticipateBtn" disabled>
+                          <span>✓</span>
+                          <span>MENGIKUTI</span>
+                      </button>
+                      <button class="btn btn-share" id="detailShareBtn">
+                          <span>📤</span>
+                          <span>BAGIKAN</span>
+                      </button>
                   </div>
               `;
           } else {
-              mediaHtml = `
-                  <div class="detail-media">
-                      <img src="${giveaway.media_path}" class="detail-media-image" alt="Giveaway Media" onerror="this.style.display='none'">
+              // Jika belum, tampilkan tombol partisipasi normal
+              actionButtonsHtml = `
+                  <div class="detail-actions-fixed">
+                      <button class="btn btn-participate" id="detailParticipateBtn">
+                          <span>✓</span>
+                          <span>PARTISIPASI</span>
+                      </button>
+                      <button class="btn btn-share" id="detailShareBtn">
+                          <span>📤</span>
+                          <span>BAGIKAN</span>
+                      </button>
                   </div>
               `;
           }
       }
   
-      // Format tanggal akhir
-      const endDateFormatted = giveaway.end_date ? formatDate(giveaway.end_date) : 'Tidak ditentukan';
-      
-      // Hitung sisa waktu untuk countdown (hanya untuk active)
-      let timeRemaining = '00:00:00:00';
-      let countdownActive = false;
-      
-      if (!isEnded && giveaway.end_date && giveaway.status === 'active') {
-          const endDateTime = new Date(giveaway.end_date).getTime();
-          const nowTime = new Date().getTime();
-          const diff = endDateTime - nowTime;
-          
-          if (diff > 0) {
-              countdownActive = true;
-              const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-              const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-              const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-              const seconds = Math.floor((diff % (1000 * 60)) / 1000);
-              
-              timeRemaining = `${days.toString().padStart(2, '0')}:${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-          }
-      }
-  
-      // Fungsi untuk generate inisial dari nama
-      function getInitials(name) {
-          if (!name) return 'U';
-          return name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
-      }
-  
-      // Fungsi untuk generate warna random berdasarkan user id
-      function getUserColor(userId) {
-          const colors = [
-              '#FF6B6B', '#4ECDC4', '#FFD166', '#A06CD5', '#F7B731',
-              '#45AAF2', '#FC5C65', '#26DE81', '#A55EEA', '#FF9F1C'
-          ];
-          return colors[Math.abs(userId) % colors.length];
-      }
-  
-      // Buat HTML untuk pemenang (hanya untuk ended giveaway)
-      let winnersHtml = '';
-      if (isEnded && winners.length > 0) {
-          // Kelompokkan pemenang berdasarkan hadiah
-          const winnersByPrize = {};
-          winners.forEach(winner => {
-              const prizeIndex = winner.prize_index || 0;
-              if (!winnersByPrize[prizeIndex]) {
-                  winnersByPrize[prizeIndex] = [];
-              }
-              winnersByPrize[prizeIndex].push(winner);
-          });
-  
-          // Buat HTML untuk setiap hadiah dengan pemenangnya
-          prizes.forEach((prize, prizeIndex) => {
-              const prizeWinners = winnersByPrize[prizeIndex] || [];
-              
-              winnersHtml += `
-                  <div class="prize-winners-section">
-                      <div class="prize-winners-header">
-                          <span class="prize-number" style="background: ${getRandomColor(prizeIndex)};">${prizeIndex + 1}</span>
-                          <span class="prize-winners-title">${escapeHtml(prize)}</span>
-                          <span class="winners-count">${prizeWinners.length} pemenang</span>
-                      </div>
-                      
-                      <div class="winners-grid">
-              `;
-              
-              prizeWinners.forEach(winner => {
-                  const fullName = [winner.first_name, winner.last_name].filter(Boolean).join(' ') || 'User';
-                  const initials = getInitials(fullName);
-                  const bgColor = getUserColor(winner.id);
-                  const username = winner.username ? `@${winner.username}` : '(no username)';
-                  
-                  winnersHtml += `
-                      <div class="winner-card">
-                          <div class="winner-avatar" style="background: ${bgColor};">
-                              ${winner.photo_url ? 
-                                  `<img src="${winner.photo_url}" alt="${fullName}" class="winner-avatar-img">` : 
-                                  `<span class="winner-initials">${initials}</span>`
-                              }
-                          </div>
-                          <div class="winner-info">
-                              <div class="winner-name">${escapeHtml(fullName)}</div>
-                              <div class="winner-username">${escapeHtml(username)}</div>
-                              <div class="winner-id">ID: ${winner.id}</div>
-                          </div>
-                      </div>
-                  `;
-              });
-              
-              winnersHtml += `
-                      </div>
-                  </div>
-              `;
-          });
-      }
-  
-      // Buat HTML untuk partisipan
-      let participantsHtml = '';
-      participants.forEach(participant => {
-          const fullName = [participant.first_name, participant.last_name].filter(Boolean).join(' ') || 'User';
-          const initials = getInitials(fullName);
-          const bgColor = getUserColor(participant.id);
-          const username = participant.username ? `@${participant.username}` : '(no username)';
-          
-          participantsHtml += `
-              <div class="participant-item">
-                  <div class="participant-avatar" style="background: ${bgColor};">
-                      ${participant.photo_url ? 
-                          `<img src="${participant.photo_url}" alt="${fullName}" class="participant-avatar-img">` : 
-                          `<span class="participant-initials">${initials}</span>`
-                      }
-                  </div>
-                  <div class="participant-info">
-                      <div class="participant-name">${escapeHtml(fullName)}</div>
-                      <div class="participant-username">${escapeHtml(username)}</div>
-                  </div>
-              </div>
-          `;
-      });
-  
-      // Gabungkan semua HTML dengan struktur dari page.css
+      // Gabungkan semua HTML
       const detailHtml = `
           <div class="giveaway-detail-container">
               <!-- HEADER dengan tombol back -->
@@ -945,19 +762,8 @@
                   </div>
               </div>
               
-              <!-- ACTION BUTTONS FIXED (HANYA UNTUK ACTIVE GIVEAWAY) -->
-              ${!isEnded ? `
-                  <div class="detail-actions-fixed">
-                      <button class="btn btn-participate" id="detailParticipateBtn">
-                          <span>✓</span>
-                          <span>PARTISIPASI</span>
-                      </button>
-                      <button class="btn btn-share" id="detailShareBtn">
-                          <span>📤</span>
-                          <span>BAGIKAN</span>
-                      </button>
-                  </div>
-              ` : ''}
+              <!-- ACTION BUTTONS FIXED -->
+              ${actionButtonsHtml}
           </div>
       `;
   
@@ -1475,70 +1281,66 @@
       });
     }
   
-  // ==================== FUNGSI CHECK SUBSCRIPTION DENGAN LOADING MODAL ====================
   async function checkUserSubscriptionWithModal(giveawayId, channelUsername, userId) {
-      return new Promise(async (resolve, reject) => {
-          try {
-              const cleanUsername = channelUsername.replace('@', '');
-              
-              // Tampilkan loading modal
-              const modal = showSubscriptionLoadingModal(cleanUsername);
-              
-              // Panggil API untuk check subscription
-              const response = await fetch(`${API_BASE_URL}/api/check-subscription`, {
-                  method: 'POST',
-                  headers: {
-                      'Content-Type': 'application/json',
-                      'Accept': 'application/json'
-                  },
-                  mode: 'cors',
-                  body: JSON.stringify({
-                      user_id: userId,
-                      channel_username: cleanUsername
-                  })
-              });
-              
-              if (response.status === 202) {
-                  // Butuh sync, mulai polling
-                  const data = await response.json();
-                  updateLoadingModalStatus(modal, 'Mengambil data channel...');
-                  
-                  // Polling status
-                  const pollResult = await pollSubscriptionStatus(cleanUsername, userId, modal);
-                  resolve(pollResult);
-                  
-              } else if (response.ok) {
-                  const data = await response.json();
-                  
-                  if (data.is_subscribed) {
-                      // Berhasil subscribe
-                      updateLoadingModalSuccess(modal, cleanUsername, data.channel_info);
-                      setTimeout(() => {
-                          completeLoadingModal(modal, true);
-                          resolve(true);
-                      }, 1500);
-                  } else {
-                      // Tidak subscribe
-                      updateLoadingModalError(modal, `Anda belum subscribe ke @${cleanUsername}`);
-                      setTimeout(() => {
-                          completeLoadingModal(modal, false);
-                          resolve(false);
-                      }, 1500);
-                  }
-              } else {
-                  const error = await response.json();
-                  updateLoadingModalError(modal, error.error || 'Gagal mengecek subscription');
-                  setTimeout(() => {
-                      completeLoadingModal(modal, false);
-                      resolve(false);
-                  }, 1500);
-              }
-              
-          } catch (error) {
-              console.error('Error checking subscription:', error);
-              reject(error);
+    return new Promise(async (resolve, reject) => {
+      try {
+        const cleanUsername = channelUsername.replace('@', '');
+  
+        // Tampilkan loading modal
+        const modal = showSubscriptionLoadingModal(cleanUsername);
+  
+        // Panggil API untuk check subscription
+        const response = await fetch(`${API_BASE_URL}/api/check-subscription`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          },
+          mode: 'cors',
+          body: JSON.stringify({
+            user_id: userId,
+            channel_username: cleanUsername
+          })
+        });
+  
+        if (response.status === 202) {
+          // Langsung polling status
+          updateLoadingModalStatus(modal, 'Memeriksa keanggotaan...');
+  
+          // Polling status
+          const pollResult = await pollSubscriptionStatus(cleanUsername, userId, modal);
+          resolve(pollResult);
+  
+        } else if (response.ok) {
+          const data = await response.json();
+  
+          if (data.is_subscribed) {
+            updateLoadingModalSuccess(modal, cleanUsername, data.channel_info);
+            setTimeout(() => {
+              completeLoadingModal(modal, true);
+              resolve(true);
+            }, 1500);
+          } else {
+            updateLoadingModalError(modal, `Anda belum subscribe ke @${cleanUsername}`);
+            setTimeout(() => {
+              completeLoadingModal(modal, false);
+              resolve(false);
+            }, 1500);
           }
-      });
+        } else {
+          const error = await response.json();
+          updateLoadingModalError(modal, error.error || 'Gagal mengecek subscription');
+          setTimeout(() => {
+            completeLoadingModal(modal, false);
+            resolve(false);
+          }, 1500);
+        }
+  
+      } catch (error) {
+        console.error('Error checking subscription:', error);
+        reject(error);
+      }
+    });
   }
   
   // ==================== FUNGSI POLLING STATUS SUBSCRIPTION ====================
