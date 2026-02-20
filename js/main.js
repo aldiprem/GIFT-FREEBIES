@@ -711,7 +711,7 @@
       // Buat HTML untuk pemenang (hanya untuk ended giveaway) - TAMPILAN BARU DI ATAS DESKRIPSI
       let winnersHtml = '';
       if (isEnded && winners.length > 0) {
-        winnersHtml = `
+          winnersHtml = `
               <div class="winners-section">
                   <div class="winners-header">
                       <span class="winners-icon">🏆</span>
@@ -721,16 +721,16 @@
                   <div class="winners-list-container">
           `;
       
-        winners.forEach((winner, index) => {
-          const fullName = [winner.first_name, winner.last_name].filter(Boolean).join(' ') || winner.fullname || 'User';
-          const initials = getInitials(fullName);
-          const bgColor = getUserColor(winner.id || winner.user_id);
-          const username = winner.username ? `@${winner.username}` : '(no username)';
-          const userId = winner.id || winner.user_id || '-';
-          const prizeIndex = winner.prize_index !== undefined ? winner.prize_index + 1 : index + 1;
-          const prizeName = winner.prize || (prizes[winner.prize_index] || `Hadiah ${prizeIndex}`);
+          winners.forEach((winner, index) => {
+              const fullName = [winner.first_name, winner.last_name].filter(Boolean).join(' ') || winner.fullname || 'User';
+              const initials = getInitials(fullName);
+              const bgColor = getUserColor(winner.id || winner.user_id);
+              const username = winner.username ? `@${winner.username}` : '(no username)';
+              const userId = winner.id || winner.user_id || '-';
+              const prizeIndex = winner.prize_index !== undefined ? winner.prize_index + 1 : index + 1;
+              const prizeName = winner.prize || (prizes[winner.prize_index] || `Hadiah ${prizeIndex}`);
       
-          winnersHtml += `
+              winnersHtml += `
                   <div class="winner-card-modern">
                       <div class="winner-left">
                           <div class="winner-avatar-modern" style="background: ${bgColor};">
@@ -754,9 +754,9 @@
                       </div>
                   </div>
               `;
-        });
+          });
       
-        winnersHtml += `
+          winnersHtml += `
                   </div>
               </div>
           `;
@@ -765,12 +765,12 @@
       // Buat HTML untuk partisipan (akan ditampilkan di modal popup)
       let participantsHtml = '';
       participants.forEach(participant => {
-        const fullName = participant.fullname || 'User';
-        const initials = getInitials(fullName);
-        const bgColor = getUserColor(participant.user_id);
-        const username = participant.username ? `@${participant.username}` : '(no username)';
+          const fullName = participant.fullname || 'User';
+          const initials = getInitials(fullName);
+          const bgColor = getUserColor(participant.user_id);
+          const username = participant.username ? `@${participant.username}` : '(no username)';
       
-        participantsHtml += `
+          participantsHtml += `
               <div class="participant-modal-item">
                   <div class="participant-modal-avatar" style="background: ${bgColor};">
                       <span class="participant-modal-initials">${initials}</span>
@@ -787,7 +787,7 @@
       // Modal untuk participants
       let participantsModalHtml = '';
       if (isEnded && participants.length > 0) {
-        participantsModalHtml = `
+          participantsModalHtml = `
               <div class="participants-modal-overlay hidden" id="participantsModalOverlay">
                   <div class="participants-modal-container">
                       <div class="participants-modal-header">
@@ -806,33 +806,7 @@
           `;
       }
       
-      // Di bagian detail-header-right, ubah posisi tombol mata
-      // Hapus dari header dan pindahkan ke dalam border status
-      // ...
-      
-      // Di bagian detail-card-content, setelah status badge, tambahkan:
-      let statusRowHtml = `
-          <div class="status-row">
-              <div class="status-badge-wrapper">
-                  <div class="${statusClass}">${statusText}</div>
-              </div>
-              ${isEnded && participants.length > 0 ? `
-              <button class="eye-btn-inside" id="toggleParticipantsModalBtn" title="Lihat Partisipan">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5z" fill="white"/>
-                      <circle cx="12" cy="12" r="3" fill="white"/>
-                  </svg>
-              </button>
-              ` : ''}
-          </div>
-      `;
-      
-      // Gabungkan semua HTML dengan urutan yang benar:
-      // 1. Winners section (di atas deskripsi)
-      // 2. Status row dengan mata di dalam border
-      // 3. Deskripsi section
-      // 4. dan seterusnya
-      
+      // Gabungkan semua HTML
       const detailHtml = `
           <div class="giveaway-detail-container">
               <!-- HEADER dengan tombol back -->
@@ -1087,128 +1061,6 @@
         }
       });
     }
-
-    // Tombol mata untuk Partisipan (hanya untuk ended)
-    const toggleParticipantsBtn = document.getElementById('toggleParticipantsBtn');
-    const participantsPanelContainer = document.getElementById('participantsPanelContainer');
-    const closeParticipantsPanelBtn = document.getElementById('closeParticipantsPanelBtn');
-  
-    if (toggleParticipantsBtn && participantsPanelContainer) {
-      toggleParticipantsBtn.addEventListener('click', (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-  
-        // Toggle panel participants
-        participantsPanelContainer.classList.toggle('hidden');
-  
-        // Toggle active state tombol
-        toggleParticipantsBtn.classList.toggle('active');
-  
-        vibrate(15);
-      });
-    }
-  
-    if (closeParticipantsPanelBtn && participantsPanelContainer) {
-      closeParticipantsPanelBtn.addEventListener('click', (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        participantsPanelContainer.classList.add('hidden');
-        if (toggleParticipantsBtn) {
-          toggleParticipantsBtn.classList.remove('active');
-        }
-      });
-    }
-
-  // Tombol mata untuk Channel
-  const toggleChannelBtn = document.getElementById('toggleChannelBtn');
-  const channelPanelContainer = document.getElementById('channelPanelContainer');
-  const closeChannelPanelBtn = document.getElementById('closeChannelPanelBtn');
-
-  if (toggleChannelBtn && channelPanelContainer) {
-    toggleChannelBtn.addEventListener('click', (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-
-      // Tutup panel link jika terbuka
-      const toggleLinkBtn = document.getElementById('toggleLinkBtn');
-      const linkPanelContainer = document.getElementById('linkPanelContainer');
-
-      if (linkPanelContainer && !linkPanelContainer.classList.contains('hidden')) {
-        linkPanelContainer.classList.add('hidden');
-        if (toggleLinkBtn) toggleLinkBtn.classList.remove('active');
-      }
-
-      // Tutup panel participants jika terbuka
-      if (participantsPanelContainer && !participantsPanelContainer.classList.contains('hidden')) {
-        participantsPanelContainer.classList.add('hidden');
-        if (toggleParticipantsBtn) toggleParticipantsBtn.classList.remove('active');
-      }
-
-      // Toggle panel channel
-      channelPanelContainer.classList.toggle('hidden');
-
-      // Toggle active state tombol
-      toggleChannelBtn.classList.toggle('active');
-
-      vibrate(15);
-    });
-  }
-
-  if (closeChannelPanelBtn && channelPanelContainer) {
-    closeChannelPanelBtn.addEventListener('click', (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      channelPanelContainer.classList.add('hidden');
-      if (toggleChannelBtn) {
-        toggleChannelBtn.classList.remove('active');
-      }
-    });
-  }
-
-  // Tombol mata untuk Link
-  const toggleLinkBtn = document.getElementById('toggleLinkBtn');
-  const linkPanelContainer = document.getElementById('linkPanelContainer');
-  const closeLinkPanelBtn = document.getElementById('closeLinkPanelBtn');
-
-  if (toggleLinkBtn && linkPanelContainer) {
-    toggleLinkBtn.addEventListener('click', (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-
-      // Tutup panel channel jika terbuka
-      if (channelPanelContainer && !channelPanelContainer.classList.contains('hidden')) {
-        channelPanelContainer.classList.add('hidden');
-        if (toggleChannelBtn) {
-          toggleChannelBtn.classList.remove('active');
-        }
-      }
-
-      // Tutup panel participants jika terbuka
-      if (participantsPanelContainer && !participantsPanelContainer.classList.contains('hidden')) {
-        participantsPanelContainer.classList.add('hidden');
-        if (toggleParticipantsBtn) toggleParticipantsBtn.classList.remove('active');
-      }
-
-      // Toggle panel link
-      linkPanelContainer.classList.toggle('hidden');
-
-      // Toggle active state tombol
-      toggleLinkBtn.classList.toggle('active');
-
-      vibrate(15);
-    });
-  }
-
-  if (closeLinkPanelBtn && linkPanelContainer) {
-    closeLinkPanelBtn.addEventListener('click', (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      linkPanelContainer.classList.add('hidden');
-      if (toggleLinkBtn) {
-        toggleLinkBtn.classList.remove('active');
-      }
-    });
-  }
 
   // Expand deskripsi
   const expandDescBtn = document.getElementById('expandDescriptionBtn');
