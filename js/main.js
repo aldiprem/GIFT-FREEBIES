@@ -1215,113 +1215,109 @@
         shareGiveaway(giveaway.giveaway_id || giveaway.id, prizes[0] || 'Giveaway');
       });
     }
+    }
+  
+    // Mulai countdown jika aktif
+    if (countdownActive && giveaway.end_date) {
+      startDetailCountdown(giveaway.end_date);
+    }
   }
-
-  // Mulai countdown jika aktif
-  if (countdownActive && giveaway.end_date) {
-    startDetailCountdown(giveaway.end_date);
-  }
-}
-  
-  // ==================== FUNGSI: KEMBALI KE INDEX (DIPERBAIKI) ====================
-  function goBackToIndex() {
-    console.log('🔙 Kembali ke index...');
-  
-    // Reset state aplikasi
-    currentGiveawayType = 'active';
-  
-    // Tampilkan kembali elemen yang disembunyikan
-    if (elements.profileContent) {
-      elements.profileContent.style.display = 'block';
-    }
-  
-    if (elements.giveawayButtons) {
-      elements.giveawayButtons.style.display = 'flex';
-    }
-  
-    if (elements.settingsBtn) {
-      elements.settingsBtn.style.display = 'flex';
-    }
-  
-    // Tampilkan kembali top container
-    const topContainer = document.querySelector('.top-container');
-    if (topContainer) {
-      topContainer.style.display = 'flex';
-    }
-  
-    // Hapus konten detail
-    const container = elements.giveawayContent;
-    if (container) {
-      container.innerHTML = '';
-      container.style.display = 'block';
-    }
-  
-    // Hentikan countdown
-    if (window.detailCountdownInterval) {
-      clearInterval(window.detailCountdownInterval);
-      window.detailCountdownInterval = null;
-    }
-  
-    // Hapus parameter search dari URL
-    const url = new URL(window.location.href);
-    url.searchParams.delete('search');
-  
-    // CARA PALING MUDAH: Refresh halaman setelah menghapus parameter
-    window.location.href = url.toString();
-  
-    // Kode di bawah ini TIDAK AKAN dieksekusi karena redirect
-  }
-
-  // ==================== FUNGSI: COUNTDOWN UNTUK DETAIL ====================
-  function startDetailCountdown(endDate) {
-      const countdownEl = document.getElementById('detailCountdown');
-      if (!countdownEl) return;
-  
-      function updateCountdown() {
-          const now = new Date().getTime();
-          const end = new Date(endDate).getTime();
-          const diff = end - now;
-  
-          if (diff <= 0) {
-              countdownEl.textContent = '00:00:00:00';
-              return;
-          }
-  
-          const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-          const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-          const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-          const seconds = Math.floor((diff % (1000 * 60)) / 1000);
-  
-          countdownEl.textContent = `${days.toString().padStart(2, '0')}:${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    
+    // ==================== FUNGSI: KEMBALI KE INDEX (DIPERBAIKI) ====================
+    function goBackToIndex() {
+      console.log('🔙 Kembali ke index...');
+    
+      // Reset state aplikasi
+      currentGiveawayType = 'active';
+    
+      // Tampilkan kembali elemen yang disembunyikan
+      if (elements.profileContent) {
+        elements.profileContent.style.display = 'block';
       }
+    
+      if (elements.giveawayButtons) {
+        elements.giveawayButtons.style.display = 'flex';
+      }
+    
+      if (elements.settingsBtn) {
+        elements.settingsBtn.style.display = 'flex';
+      }
+    
+      // Tampilkan kembali top container
+      const topContainer = document.querySelector('.top-container');
+      if (topContainer) {
+        topContainer.style.display = 'flex';
+      }
+    
+      // Hapus konten detail
+      const container = elements.giveawayContent;
+      if (container) {
+        container.innerHTML = '';
+        container.style.display = 'block';
+      }
+    
+      // Hentikan countdown
+      if (window.detailCountdownInterval) {
+        clearInterval(window.detailCountdownInterval);
+        window.detailCountdownInterval = null;
+      }
+    
+      // Hapus parameter search dari URL
+      const url = new URL(window.location.href);
+      url.searchParams.delete('search');
+    
+      // CARA PALING MUDAH: Refresh halaman setelah menghapus parameter
+      window.location.href = url.toString();
+    
+      // Kode di bawah ini TIDAK AKAN dieksekusi karena redirect
+    }
   
-      updateCountdown();
-      const interval = setInterval(updateCountdown, 1000);
-      window.detailCountdownInterval = interval;
-  }
-
+    // ==================== FUNGSI: COUNTDOWN UNTUK DETAIL ====================
+    function startDetailCountdown(endDate) {
+        const countdownEl = document.getElementById('detailCountdown');
+        if (!countdownEl) return;
+    
+        function updateCountdown() {
+            const now = new Date().getTime();
+            const end = new Date(endDate).getTime();
+            const diff = end - now;
+    
+            if (diff <= 0) {
+                countdownEl.textContent = '00:00:00:00';
+                return;
+            }
+    
+            const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+    
+            countdownEl.textContent = `${days.toString().padStart(2, '0')}:${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        }
+    
+        updateCountdown();
+        const interval = setInterval(updateCountdown, 1000);
+        window.detailCountdownInterval = interval;
+    }
+  
   // ==================== FUNGSI: SHARE GIVEAWAY ====================
   function shareGiveaway(giveawayId, prize) {
     vibrate(10);
-
+  
     const botUsername = 'freebiestbot';
     const miniAppUrl = `https://t.me/${botUsername}/giveaway?startapp=${giveawayId}`;
   
-    const text = `🎁 Ikuti giveaway ini dan menangkan hadiah menarik!\n\n${prize || 'Giveaway'}`;
+    // Format pesan yang akan dibagikan
+    const shareText = `🎁 **IKUTI GIVEAWAY MENARIK!**\n\n${prize || 'Giveaway'}\n\n__Klik link di bawah ini untuk mengikuti:__\n${miniAppUrl}`;
+    const telegramShareUrl = `https://t.me/share/url?url=${encodeURIComponent(miniAppUrl)}&text=${encodeURIComponent(shareText)}`;
   
-    const telegramShareUrl = `https://t.me/share/url?url=${encodeURIComponent(miniAppUrl)}&text=${encodeURIComponent(text)}`;
-  
-    console.log('Sharing giveaway with Mini App link:', miniAppUrl);
+    console.log('Sharing giveaway dengan pesan:', shareText);
   
     if (window.Telegram?.WebApp) {
       const tg = window.Telegram.WebApp;
   
       try {
-        if (tg.switchInlineQuery) {
-          tg.switchInlineQuery(`${giveawayId}`, ['users', 'groups', 'channels']);
-          showToast('Pilih chat untuk membagikan giveaway...', 'success', 1500);
-        }
-        else if (tg.openTelegramLink) {
+        if (tg.openTelegramLink) {
           tg.openTelegramLink(telegramShareUrl);
           showToast('Membuka Telegram untuk berbagi...', 'success', 1500);
         }
@@ -1341,7 +1337,7 @@
       if (navigator.share) {
         navigator.share({
           title: 'GiftFreebies Giveaway',
-          text: text,
+          text: shareText,
           url: miniAppUrl
         }).catch((error) => {
           console.log('Share cancelled or failed:', error);
