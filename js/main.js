@@ -792,29 +792,37 @@
           return colors[index % colors.length];
       }
   
-      // ===== BUAT HTML UNTUK PEMENANG (TAMPILAN BARU - TANPA JUDUL) =====
+      // ===== BUAT HTML UNTUK PEMENANG (TAMPILAN BARU - DENGAN WARNA MEDAL PADA TEKS HADIAH) =====
       let winnersHtml = '';
       if (isEnded && winners.length > 0) {
-          // Tampilkan hanya 2 pemenang pertama
-          const displayWinners = winners.slice(0, 2);
-          const hasMoreWinners = winners.length > 2;
-          
-          winnersHtml = `
+        // Tampilkan hanya 2 pemenang pertama
+        const displayWinners = winners.slice(0, 2);
+        const hasMoreWinners = winners.length > 2;
+      
+        // Fungsi untuk mendapatkan warna medal berdasarkan prize index
+        const getPrizeColorClass = (prizeIndex) => {
+          if (prizeIndex === 0) return 'prize-gold'; // #1 Emas
+          if (prizeIndex === 1) return 'prize-silver'; // #2 Perak
+          if (prizeIndex === 2) return 'prize-bronze'; // #3 Perunggu
+          return 'prize-default';
+        };
+      
+        winnersHtml = `
               <div class="winners-border-container">
                   <div class="winners-list-compact">
           `;
-          
-          displayWinners.forEach((winner, index) => {
-              const fullName = [winner.first_name, winner.last_name].filter(Boolean).join(' ') || winner.fullname || 'User';
-              const username = winner.username ? `@${winner.username}` : '(no username)';
-              const prizeIndex = winner.prize_index !== undefined ? winner.prize_index + 1 : index + 1;
-              const prizeName = winner.prize || (prizes[winner.prize_index] || `Hadiah ${prizeIndex}`);
-              const bgColor = getUserColor(winner.id || winner.user_id);
-              
-              winnersHtml += `
+      
+        displayWinners.forEach((winner, index) => {
+          const fullName = [winner.first_name, winner.last_name].filter(Boolean).join(' ') || winner.fullname || 'User';
+          const username = winner.username ? `@${winner.username}` : '(no username)';
+          const prizeIndex = winner.prize_index !== undefined ? winner.prize_index : index;
+          const prizeName = winner.prize || (prizes[prizeIndex] || `Hadiah ${prizeIndex + 1}`);
+          const bgColor = getUserColor(winner.id || winner.user_id);
+          const prizeColorClass = getPrizeColorClass(prizeIndex);
+      
+          winnersHtml += `
                   <div class="winner-compact-item">
                       <div class="winner-compact-left">
-                          <span class="winner-prize-number">#${prizeIndex}</span>
                           <div class="winner-compact-avatar" style="background: ${bgColor};">
                               ${winner.photo_url ? 
                                   `<img src="${winner.photo_url}" alt="${fullName}" class="winner-compact-avatar-img">` : 
@@ -824,41 +832,43 @@
                           <div class="winner-compact-info">
                               <div class="winner-compact-name">${escapeHtml(fullName)}</div>
                               <div class="winner-compact-username">${escapeHtml(username)}</div>
+                              <!-- Nama hadiah dipindahkan ke bawah username dengan warna medal -->
+                              <div class="winner-prize-name ${prizeColorClass}">${escapeHtml(prizeName)}</div>
                           </div>
                       </div>
-                      <div class="winner-compact-prize">${escapeHtml(prizeName)}</div>
+                      <!-- Hapus winner-compact-prize (hadiah di samping) -->
                   </div>
               `;
-          });
-          
-          winnersHtml += `</div>`;
-          
-          // Tambahkan tombol "Tampilkan Semua" jika lebih dari 2 pemenang
-          if (hasMoreWinners) {
-              winnersHtml += `
+        });
+      
+        winnersHtml += `</div>`;
+      
+        // Tambahkan tombol "Tampilkan Semua" jika lebih dari 2 pemenang
+        if (hasMoreWinners) {
+          winnersHtml += `
                   <button class="winners-expand-btn" id="expandWinnersBtn">
                       <span>Tampilkan Semua (${winners.length})</span>
                       <span class="expand-icon">▼</span>
                   </button>
               `;
-          }
-          
-          winnersHtml += `</div>`;
-          
-          // Tambahkan modal untuk menampilkan semua pemenang (hidden by default)
-          if (hasMoreWinners) {
-              let allWinnersHtml = '';
-              winners.forEach((winner, index) => {
-                  const fullName = [winner.first_name, winner.last_name].filter(Boolean).join(' ') || winner.fullname || 'User';
-                  const username = winner.username ? `@${winner.username}` : '(no username)';
-                  const prizeIndex = winner.prize_index !== undefined ? winner.prize_index + 1 : index + 1;
-                  const prizeName = winner.prize || (prizes[winner.prize_index] || `Hadiah ${prizeIndex}`);
-                  const bgColor = getUserColor(winner.id || winner.user_id);
-                  
-                  allWinnersHtml += `
+        }
+      
+        winnersHtml += `</div>`;
+      
+        // Tambahkan modal untuk menampilkan semua pemenang (hidden by default)
+        if (hasMoreWinners) {
+          let allWinnersHtml = '';
+          winners.forEach((winner, index) => {
+            const fullName = [winner.first_name, winner.last_name].filter(Boolean).join(' ') || winner.fullname || 'User';
+            const username = winner.username ? `@${winner.username}` : '(no username)';
+            const prizeIndex = winner.prize_index !== undefined ? winner.prize_index : index;
+            const prizeName = winner.prize || (prizes[prizeIndex] || `Hadiah ${prizeIndex + 1}`);
+            const bgColor = getUserColor(winner.id || winner.user_id);
+            const prizeColorClass = getPrizeColorClass(prizeIndex);
+      
+            allWinnersHtml += `
                       <div class="winner-modal-item">
                           <div class="winner-modal-left">
-                              <span class="winner-modal-prize-number">#${prizeIndex}</span>
                               <div class="winner-modal-avatar" style="background: ${bgColor};">
                                   ${winner.photo_url ? 
                                       `<img src="${winner.photo_url}" alt="${fullName}" class="winner-modal-avatar-img">` : 
@@ -868,14 +878,14 @@
                               <div class="winner-modal-info">
                                   <div class="winner-modal-name">${escapeHtml(fullName)}</div>
                                   <div class="winner-modal-username">${escapeHtml(username)}</div>
+                                  <div class="winner-modal-prize-name ${prizeColorClass}">${escapeHtml(prizeName)}</div>
                               </div>
                           </div>
-                          <div class="winner-modal-prize">${escapeHtml(prizeName)}</div>
                       </div>
                   `;
-              });
-              
-              winnersHtml += `
+          });
+      
+          winnersHtml += `
                   <div class="winners-modal" id="winnersModal">
                       <div class="winners-modal-content">
                           <div class="winners-modal-header">
@@ -888,7 +898,7 @@
                       </div>
                   </div>
               `;
-          }
+        }
       }
   
       // ===== BUAT HTML UNTUK MODAL PARTICIPANTS (BUKAN PANEL BAWAH) =====
@@ -965,13 +975,14 @@
       // Gabungkan semua HTML
       const detailHtml = `
           <div class="giveaway-detail-container">
-              <!-- HEADER dengan tombol back -->
+              <!-- HEADER dengan tombol back dan badge ENDED (untuk ended giveaway) -->
               <div class="detail-header">
                   <div class="logo-box" style="background: transparent; border: none; box-shadow: none; padding: 8px 0;">
                       <img src="img/logo.png" class="logo-img" alt="logo" onerror="this.style.display='none'">
                       <span class="logo-text">GIFT FREEBIES</span>
                   </div>
                   <div class="detail-header-right">
+                      ${isEnded ? `<span class="detail-ended-badge">ENDED</span>` : ''}
                       ${isEnded && participants.length > 0 ? `
                           <button class="eye-custom-btn" id="toggleParticipantsBtn" title="Lihat Partisipan">
                               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -992,17 +1003,6 @@
                       <!-- STATUS BADGE -->
                       <div class="${statusClass}">${statusText}</div>
                       
-                      <!-- DESKRIPSI SECTION -->
-                      <div class="detail-description">
-                          <div class="description-header">
-                              <div class="description-title">Deskripsi</div>
-                              ${giveaway.giveaway_text && giveaway.giveaway_text.length > 100 ? '<button class="description-expand-btn" id="expandDescriptionBtn">Lihat Lengkap</button>' : ''}
-                          </div>
-                          <div class="description-content ${giveaway.giveaway_text && giveaway.giveaway_text.length > 100 ? 'collapsed' : ''}" id="descriptionContent">
-                              ${giveaway.giveaway_text || '<em>Tidak ada deskripsi</em>'}
-                          </div>
-                      </div>
-                      
                       <!-- SYARAT SECTION -->
                       <div class="detail-requirements">
                           <div class="requirements-title">Syarat</div>
@@ -1010,17 +1010,6 @@
                               <div class="requirements-list">
                                   ${reqHtml}
                               </div>
-                          </div>
-                      </div>
-                      
-                      <!-- HADIAH SECTION -->
-                      <div class="detail-prizes">
-                          <div class="prizes-header">
-                              <div class="prizes-title">Hadiah</div>
-                              ${prizes.length > 2 ? '<button class="prizes-expand-btn" id="expandPrizesBtn">Lihat Semua</button>' : ''}
-                          </div>
-                          <div class="prizes-list ${prizes.length > 2 ? 'collapsed' : ''}" id="prizesList">
-                              ${prizesHtml}
                           </div>
                       </div>
                       
