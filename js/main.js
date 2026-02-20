@@ -390,8 +390,10 @@
       // PERBAIKAN: participants_count adalah jumlah peserta giveaway
       const participants = giveaway.participants_count || 0;
   
-      // Ambil deskripsi giveaway (ambil 100 karakter pertama)
+      // Ambil deskripsi giveaway - untuk ended, tampilkan 2 baris dengan background gelap
       const description = giveaway.giveaway_text || 'Tidak ada deskripsi';
+  
+      // Fungsi untuk memotong deskripsi menjadi 2 baris (~100 karakter)
       const shortDescription = description.length > 100 ?
         description.substring(0, 100) + '...' :
         description;
@@ -429,16 +431,38 @@
         // Hanya tampilkan yang sudah expired atau status ended
         if (isExpired || giveaway.status === 'ended') {
           const winners = giveaway.winners_count || 0;
+  
+          // Untuk ended giveaway: tambahkan class ended dan garis bawah L
           html += `
             <div class="giveaway-item ended" data-id="${giveawayId}">
               <h3>${escapeHtml(prizeText)}</h3>
-              <p class="giveaway-description">${escapeHtml(shortDescription)}</p>
-              <div class="giveaway-stats">
-                <span class="stat-badge">🏆 ${totalPrizes} hadiah</span>
-                <span class="stat-badge">👥 ${participants} peserta</span>
-                <span class="stat-badge winner-badge">🏆 ${winners} pemenang</span>
+              <!-- Deskripsi dengan background gelap dan 2 baris -->
+              <div class="ended-description-container">
+                <p class="ended-description">${escapeHtml(description)}</p>
               </div>
-              <div class="ended-badge">SELESAI</div>
+              <div class="ended-stats-wrapper">
+                <div class="ended-stats-left">
+                  <div class="ended-stat-item">
+                    <span class="ended-stat-icon">🎁</span>
+                    <span class="ended-stat-value">${totalPrizes}</span>
+                  </div>
+                  <div class="ended-stat-divider"></div>
+                  <div class="ended-stat-item">
+                    <span class="ended-stat-icon">👥</span>
+                    <span class="ended-stat-value">${participants}</span>
+                  </div>
+                  <div class="ended-stat-divider"></div>
+                  <div class="ended-stat-item">
+                    <span class="ended-stat-icon">🏆</span>
+                    <span class="ended-stat-value">${winners}</span>
+                  </div>
+                </div>
+                <div class="ended-badge-container">
+                  <span class="ended-badge">SELESAI</span>
+                </div>
+              </div>
+              <!-- Garis bawah L -->
+              <div class="ended-border-line"></div>
             </div>
           `;
         }
