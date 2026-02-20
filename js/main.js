@@ -1805,206 +1805,346 @@
       }, success ? 1500 : 2000);
   }
   
-  // ==================== UPDATE FUNGSI CHECKALLREQUIREMENTS ====================
-  async function checkAllRequirements(giveaway, user) {
-      const requirements = giveaway.requirements || [];
-      const failedRequirements = [];
-      
-      if (requirements.length === 0) {
-          return { passed: true, failed: [] };
-      }
-      
-      for (const req of requirements) {
-          switch (req) {
-              case 'subscribe':
-                  const channels = giveaway.channels || [];
-                  for (const channel of channels) {
-                      const channelUsername = typeof channel === 'string' ? channel : channel.username;
-                      if (channelUsername) {
-                          // Gunakan modal loading untuk check subscription
-                          const isSubscribed = await checkUserSubscriptionWithModal(
-                              giveaway.giveaway_id,
-                              channelUsername,
-                              user.id
-                          );
-                          
-                          if (!isSubscribed) {
-                              failedRequirements.push(`subscribe:${channelUsername}`);
-                          }
-                      }
-                  }
-                  break;
-                  
-              case 'premium':
-              case 'nonpremium':
-                  const premiumPassed = checkPremiumRequirement(user.is_premium || false, req);
-                  if (!premiumPassed) {
-                      failedRequirements.push(req);
-                  }
-                  break;
-                  
-              case 'aktif':
-                  const isActive = await checkActiveUserRequirement(user.id);
-                  if (!isActive) {
-                      failedRequirements.push('aktif');
-                  }
-                  break;
-                  
-              case 'share':
-                  const hasShared = sessionStorage.getItem(`shared_${giveaway.giveaway_id}`) === 'true';
-                  if (!hasShared) {
-                      failedRequirements.push('share');
-                  }
-                  break;
-          }
-      }
-      
-      return {
-          passed: failedRequirements.length === 0,
-          failed: failedRequirements
-      };
-  }
-    
-    // ==================== FUNGSI TAMPILKAN MODAL SYARAT ====================
-    function showRequirementsModal(giveaway, failedRequirements) {
-      // Cek apakah sudah ada modal
-      let modal = document.querySelector('.requirements-modal');
-      if (modal) {
-        modal.remove();
-      }
-      
-      // Buat modal element
-      modal = document.createElement('div');
-      modal.className = 'requirements-modal';
-      modal.innerHTML = `
-        <div class="modal-overlay"></div>
-        <div class="modal-content">
-          <div class="modal-header">
-            <h3>❌ Syarat Belum Terpenuhi</h3>
-            <button class="modal-close">&times;</button>
-          </div>
-          <div class="modal-body">
-            <p>Anda belum memenuhi syarat berikut:</p>
-            <ul class="failed-requirements-list">
-              ${failedRequirements.map(req => {
-                if (req.startsWith('subscribe:')) {
-                  const channel = req.split(':')[1];
-                  return `<li>📢 Subscribe ke <b>@${channel}</b></li>`;
-                } else if (req === 'premium') {
-                  return `<li>⭐ Hanya untuk pengguna <b>Telegram Premium</b></li>`;
-                } else if (req === 'nonpremium') {
-                  return `<li>🆓 Hanya untuk pengguna <b>Non-Premium</b></li>`;
-                } else if (req === 'aktif') {
-                  return `<li>👤 Harus <b>pernah berpartisipasi</b> di giveaway sebelumnya</li>`;
-                } else if (req === 'share') {
-                  return `<li>📤 Harus menekan tombol <b>BAGIKAN</b> terlebih dahulu</li>`;
+    // ==================== UPDATE FUNGSI CHECKALLREQUIREMENTS (VERSI BARU) ====================
+    async function checkAllRequirements(giveaway, user) {
+        const requirements = giveaway.requirements || [];
+        const channels = giveaway.channels || [];
+        
+        // Jika tidak ada syarat subscribe, langsung return passed
+        if (!requirements.includes('subscribe') || channels.length === 0) {
+            return { passed: true, failed: [], channelStatuses: {} };
+        }
+        
+        // Tampilkan loading modal SATU KALI untuk semua channel
+        const modal = showGlobalSubscriptionModal(channels.length);
+        
+        // Array untuk menyimpan hasil pengecekan setiap channel
+        const channelResults = [];
+        const channelStatuses = {};
+        
+        // Proses pengecekan channel satu per satu
+        for (let i = 0; i < channels.length; i++) {
+            const channel = channels[i];
+            const channelUsername = typeof channel === 'string' ? channel : channel.username;
+            
+            // Update status di modal
+            updateGlobalModalStatus(modal, i + 1, channels.length, channelUsername);
+            
+            try {
+                // Panggil API untuk check subscription
+                const response = await fetch(`${API_BASE_URL}/api/check-subscription`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    mode: 'cors',
+                    body: JSON.stringify({
+                        user_id: user.id,
+                        channel_username: channelUsername.replace('@', '')
+                    })
+                });
+                
+                if (response.status === 202) {
+                    // Polling status
+                    const pollResult = await pollGlobalSubscriptionStatus(channelUsername, user.id, modal, i + 1, channels.length);
+                    channelResults.push({
+                        channel: channelUsername,
+                        isSubscribed: pollResult
+                    });
+                    channelStatuses[channelUsername] = pollResult;
+                } else if (response.ok) {
+                    const data = await response.json();
+                    channelResults.push({
+                        channel: channelUsername,
+                        isSubscribed: data.is_subscribed || false
+                    });
+                    channelStatuses[channelUsername] = data.is_subscribed || false;
+                } else {
+                    channelResults.push({
+                        channel: channelUsername,
+                        isSubscribed: false
+                    });
+                    channelStatuses[channelUsername] = false;
                 }
-                return `<li>${req}</li>`;
-              }).join('')}
-            </ul>
-          </div>
-          <div class="modal-footer">
-            <button class="modal-btn modal-btn-close">Tutup</button>
-          </div>
-        </div>
-      `;
-      
-      document.body.appendChild(modal);
-      
-      // Event listeners
-      const closeBtn = modal.querySelector('.modal-close');
-      const overlay = modal.querySelector('.modal-overlay');
-      const closeModalBtn = modal.querySelector('.modal-btn-close');
-      
-      const closeModal = () => {
-        modal.remove();
-      };
-      
-      closeBtn.addEventListener('click', closeModal);
-      overlay.addEventListener('click', closeModal);
-      closeModalBtn.addEventListener('click', closeModal);
-    }
-
-    // ==================== FUNGSI CEK SYARAT AKTIF ====================
-    async function checkActiveUserRequirement(userId) {
-      try {
-        console.log(`🔍 Checking if user ${userId} is active (has participated before)`);
-    
-        const response = await fetch(`${API_BASE_URL}/api/users/${userId}/participation-history`, {
-          headers: { 'Accept': 'application/json' },
-          mode: 'cors'
-        });
-    
-        if (!response.ok) {
-          console.warn('Failed to fetch user participation history');
-          return false;
-        }
-    
-        const data = await response.json();
-        return data.total_participations > 0;
-    
-      } catch (error) {
-        console.error('Error checking active user:', error);
-        return false;
-      }
-    }
-
-    // ==================== FUNGSI HANDLE PARTICIPATE ====================
-    async function handleParticipate(giveaway) {
-      try {
-        vibrate(15);
-        
-        if (!currentUser) {
-          showToast('Silakan login terlebih dahulu', 'warning', 2000);
-          return;
-        }
-        
-        console.log('🎯 Processing participation for giveaway:', giveaway.giveaway_id);
-        console.log('👤 Current user:', currentUser);
-        
-        showToast('Memeriksa syarat...', 'info', 1000);
-        
-        const requirementCheck = await checkAllRequirements(giveaway, currentUser);
-        
-        if (!requirementCheck.passed) {
-          showRequirementsModal(giveaway, requirementCheck.failed);
-          return;
-        }
-        
-        showToast('Menyimpan partisipasi...', 'info', 1000);
-        
-        const result = await saveParticipation(giveaway.giveaway_id, currentUser);
-        
-        if (result.success) {
-          showToast('✅ Berhasil berpartisipasi!', 'success', 2000);
-          
-          // Update UI partisipasi
-          if (elements.participations) {
-            const currentCount = parseInt(elements.participations.textContent) || 0;
-            elements.participations.textContent = currentCount + 1;
-          }
-          
-          // Reset flag share
-          sessionStorage.removeItem(`shared_${giveaway.giveaway_id}`);
-          
-          // Refresh data giveaway
-          setTimeout(() => {
-            if (giveaway.giveaway_id) {
-              fetchGiveawayDetail(giveaway.giveaway_id).then(updated => {
-                if (updated) {
-                  console.log('Giveaway data updated:', updated);
-                }
-              });
+                
+            } catch (error) {
+                console.error(`Error checking channel ${channelUsername}:`, error);
+                channelResults.push({
+                    channel: channelUsername,
+                    isSubscribed: false
+                });
+                channelStatuses[channelUsername] = false;
             }
-          }, 1000);
-        } else {
-          showToast(result.message || 'Gagal berpartisipasi', 'error', 2000);
         }
         
-      } catch (error) {
-        console.error('Error in handleParticipate:', error);
-        showToast(error.message || 'Terjadi kesalahan', 'error', 2000);
-      }
+        // Tutup modal setelah semua pengecekan selesai
+        completeGlobalModal(modal);
+        
+        // Tentukan channel mana yang tidak disubscribe
+        const failedChannels = channelResults
+            .filter(result => !result.isSubscribed)
+            .map(result => result.channel);
+        
+        // Jika ada channel yang tidak disubscribe, buka panel channel
+        if (failedChannels.length > 0) {
+            // Buka panel channel secara otomatis
+            setTimeout(() => {
+                const channelPanel = document.getElementById('channelPanelContainer');
+                const toggleChannelBtn = document.getElementById('toggleChannelBtn');
+                
+                if (channelPanel && channelPanel.classList.contains('hidden')) {
+                    channelPanel.classList.remove('hidden');
+                    if (toggleChannelBtn) {
+                        toggleChannelBtn.classList.add('active');
+                    }
+                }
+                
+                // Scroll ke panel channel
+                if (channelPanel) {
+                    channelPanel.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+            }, 500);
+        }
+        
+        // Update tampilan selector di panel channel
+        updateChannelSelectors(channelStatuses);
+        
+        return {
+            passed: failedChannels.length === 0,
+            failed: failedChannels.map(ch => `subscribe:${ch}`),
+            channelStatuses: channelStatuses
+        };
+    }
+    
+    // ==================== FUNGSI GLOBAL LOADING MODAL ====================
+    let globalModal = null;
+    
+    function showGlobalSubscriptionModal(totalChannels) {
+        const existingModal = document.querySelector('.global-subscription-modal');
+        if (existingModal) {
+            existingModal.remove();
+        }
+        
+        globalModal = document.createElement('div');
+        globalModal.className = 'global-subscription-modal';
+        globalModal.innerHTML = `
+            <div class="sync-loading-content">
+                <div class="sync-loading-header">
+                    <div class="sync-loading-title">🔍 Memeriksa Keanggotaan</div>
+                    <div class="sync-loading-spinner"></div>
+                </div>
+                <div class="sync-loading-body">
+                    <div class="progress-info">
+                        <span class="progress-current" id="globalProgressCurrent">0</span>
+                        <span class="progress-separator">/</span>
+                        <span class="progress-total" id="globalProgressTotal">${totalChannels}</span>
+                    </div>
+                    <div class="sync-progress-bar">
+                        <div class="sync-progress-fill" id="globalProgressFill" style="width: 0%"></div>
+                    </div>
+                    <div class="current-channel" id="globalCurrentChannel">
+                        Memulai pengecekan...
+                    </div>
+                    <div class="sync-status" id="globalStatus">Memeriksa channel 1 dari ${totalChannels}</div>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(globalModal);
+        
+        setTimeout(() => {
+            globalModal.classList.add('active');
+        }, 10);
+        
+        return globalModal;
+    }
+    
+    function updateGlobalModalStatus(modal, current, total, channelUsername) {
+        if (!modal) return;
+        
+        const progressFill = document.getElementById('globalProgressFill');
+        const progressCurrent = document.getElementById('globalProgressCurrent');
+        const currentChannel = document.getElementById('globalCurrentChannel');
+        const statusEl = document.getElementById('globalStatus');
+        
+        if (progressFill) {
+            const percent = (current / total) * 100;
+            progressFill.style.width = `${percent}%`;
+        }
+        
+        if (progressCurrent) {
+            progressCurrent.textContent = current;
+        }
+        
+        if (currentChannel) {
+            currentChannel.innerHTML = `<span class="channel-name">@${channelUsername.replace('@', '')}</span>`;
+        }
+        
+        if (statusEl) {
+            statusEl.textContent = `Memeriksa channel ${current} dari ${total}`;
+        }
+    }
+    
+    function completeGlobalModal(modal) {
+        if (!modal) return;
+        
+        const progressFill = document.getElementById('globalProgressFill');
+        const statusEl = document.getElementById('globalStatus');
+        const currentChannel = document.getElementById('globalCurrentChannel');
+        
+        if (progressFill) {
+            progressFill.style.width = '100%';
+        }
+        
+        if (statusEl) {
+            statusEl.textContent = 'Pengecekan selesai!';
+        }
+        
+        if (currentChannel) {
+            currentChannel.innerHTML = '✅ Semua channel telah diperiksa';
+        }
+        
+        setTimeout(() => {
+            modal.classList.remove('active');
+            setTimeout(() => {
+                if (modal && modal.parentNode) {
+                    modal.remove();
+                }
+                if (globalModal === modal) {
+                    globalModal = null;
+                }
+            }, 300);
+        }, 1000);
+    }
+    
+    // ==================== FUNGSI POLLING GLOBAL ====================
+    async function pollGlobalSubscriptionStatus(channelUsername, userId, modal, current, total) {
+        const maxAttempts = 20;
+        let attempts = 0;
+        
+        return new Promise((resolve) => {
+            const pollInterval = setInterval(async () => {
+                attempts++;
+                
+                try {
+                    const response = await fetch(`${API_BASE_URL}/api/check-subscription-status/${channelUsername}/${userId}`);
+                    
+                    if (response.ok) {
+                        const data = await response.json();
+                        
+                        if (data.completed) {
+                            clearInterval(pollInterval);
+                            
+                            // Update status di modal
+                            updateGlobalModalStatus(modal, current, total, channelUsername);
+                            
+                            resolve(data.result.is_subscribed || false);
+                            return;
+                        }
+                    }
+                    
+                    if (attempts >= maxAttempts) {
+                        clearInterval(pollInterval);
+                        resolve(false);
+                    }
+                    
+                } catch (error) {
+                    console.error('Polling error:', error);
+                    if (attempts >= maxAttempts) {
+                        clearInterval(pollInterval);
+                        resolve(false);
+                    }
+                }
+            }, 1500);
+        });
+    }
+    
+    // ==================== FUNGSI UPDATE CHANNEL SELECTORS ====================
+    function updateChannelSelectors(channelStatuses) {
+        // Update selector di panel channel
+        document.querySelectorAll('.channel-item').forEach(item => {
+            const channelUrl = item.dataset.url;
+            if (channelUrl) {
+                const username = channelUrl.replace('https://t.me/', '');
+                
+                if (channelStatuses[username] === true) {
+                    const selector = item.querySelector('.item-selector');
+                    if (selector) {
+                        selector.classList.add('selected');
+                    }
+                }
+            }
+        });
+    }
+    
+    // ==================== FUNGSI HANDLE PARTICIPATE (MODIFIED) ====================
+    async function handleParticipate(giveaway) {
+        try {
+            vibrate(15);
+            
+            if (!currentUser) {
+                showToast('Silakan login terlebih dahulu', 'warning', 2000);
+                return;
+            }
+            
+            console.log('🎯 Processing participation for giveaway:', giveaway.giveaway_id);
+            console.log('👤 Current user:', currentUser);
+            
+            // Cek syarat (dengan modal global)
+            const requirementCheck = await checkAllRequirements(giveaway, currentUser);
+            
+            if (!requirementCheck.passed) {
+                // Tampilkan toast notifikasi
+                showToast('❌ Anda belum subscribe ke semua channel yang diperlukan', 'error', 3000);
+                
+                // Refresh halaman setelah 1 detik
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1000);
+                
+                return;
+            }
+            
+            showToast('Menyimpan partisipasi...', 'info', 1000);
+            
+            const result = await saveParticipation(giveaway.giveaway_id, currentUser);
+            
+            if (result.success) {
+                showToast('✅ Berhasil berpartisipasi!', 'success', 2000);
+                
+                // Update UI partisipasi
+                if (elements.participations) {
+                    const currentCount = parseInt(elements.participations.textContent) || 0;
+                    elements.participations.textContent = currentCount + 1;
+                }
+                
+                // Reset flag share
+                sessionStorage.removeItem(`shared_${giveaway.giveaway_id}`);
+                
+                // Refresh halaman setelah 1 detik
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1000);
+                
+            } else {
+                showToast(result.message || 'Gagal berpartisipasi', 'error', 2000);
+                
+                // Refresh halaman setelah 1.5 detik
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1500);
+            }
+            
+        } catch (error) {
+            console.error('Error in handleParticipate:', error);
+            showToast(error.message || 'Terjadi kesalahan', 'error', 2000);
+            
+            // Refresh halaman setelah 1.5 detik
+            setTimeout(() => {
+                window.location.reload();
+            }, 1500);
+        }
     }
 
     // ==================== FUNGSI SIMPAN PARTISIPASI ====================
