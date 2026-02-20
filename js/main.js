@@ -426,32 +426,53 @@
           `;
         }
       } else if (type === 'ended') {
-        // Hanya tampilkan yang sudah expired atau status ended
         if (isExpired || giveaway.status === 'ended') {
-          // HAPUS BARIS INI: const winners = giveaway.winners_count || 0;
+          // Ambil 3 hadiah pertama jika ada
+          const prizesList = Array.isArray(giveaway.prizes) ? giveaway.prizes : [];
+          const topPrizes = prizesList.slice(0, 3);
+      
+          // Buat HTML untuk daftar hadiah (vertikal)
+          let prizesHtml = '';
+          if (topPrizes.length > 0) {
+            topPrizes.forEach((prize, idx) => {
+              prizesHtml += `
+                <div class="ended-prize-item">
+                  <span class="ended-prize-number">#${idx + 1}</span>
+                  <span class="ended-prize-text">${escapeHtml(prize)}</span>
+                </div>
+              `;
+            });
+          } else {
+            prizesHtml = `<div class="ended-prize-item">${escapeHtml(prizeText)}</div>`;
+          }
       
           html += `
             <div class="giveaway-item ended" data-id="${giveawayId}">
+              <!-- Header dengan ID dan badge SELESAI -->
+              <div class="ended-header">
+                <span class="ended-id">#${giveawayId.substring(0, 8)}</span>
+                <span class="ended-badge-ended">SELESAI</span>
+              </div>
+              
               <h3>${escapeHtml(prizeText)}</h3>
-              <!-- TANPA DESKRIPSI - hanya hadiah dan partisipasi -->
-              <div class="ended-stats-wrapper">
-                <div class="ended-stats-left">
-                  <div class="ended-stat-item">
-                    <span class="ended-stat-icon">🎁</span>
-                    <span class="ended-stat-value">${totalPrizes}</span>
-                  </div>
-                  <div class="ended-stat-divider"></div>
-                  <div class="ended-stat-item">
-                    <span class="ended-stat-icon">👥</span>
-                    <span class="ended-stat-value">${participants}</span>
-                  </div>
-                  <!-- HAPUS DIVIDER DAN STAT PEMENANG -->
+              
+              <!-- Daftar Hadiah (vertikal) -->
+              <div class="ended-prizes-list">
+                ${prizesHtml}
+              </div>
+              
+              <!-- Stats (total hadiah dan partisipasi) di tengah -->
+              <div class="ended-stats-center">
+                <div class="ended-stat-item-center">
+                  <span class="ended-stat-icon">🎁</span>
+                  <span class="ended-stat-value">${totalPrizes}</span>
                 </div>
-                <div class="ended-badge-container">
-                  <span class="ended-badge">SELESAI</span>
+                <div class="ended-stat-divider-vertical"></div>
+                <div class="ended-stat-item-center">
+                  <span class="ended-stat-icon">👥</span>
+                  <span class="ended-stat-value">${participants}</span>
                 </div>
               </div>
-              <!-- HAPUS GARIS L (ended-border-line) -->
             </div>
           `;
         }
