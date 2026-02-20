@@ -993,7 +993,45 @@
       // Setup event listeners untuk halaman detail
       setupDetailEventListeners(giveaway, prizes, countdownActive, isEnded);
   }
-  
+
+      // ACTION BUTTONS FIXED (HANYA UNTUK ACTIVE GIVEAWAY)
+      let actionButtonsHtml = '';
+      if (!isEnded) {
+        if (hasParticipated) {
+          // Jika sudah berpartisipasi, tampilkan tombol disabled
+          actionButtonsHtml = `
+                  <div class="detail-actions-fixed">
+                      <button class="btn btn-participate disabled" id="detailParticipateBtn" disabled>
+                          <span>✓</span>
+                          <span>MENGIKUTI</span>
+                      </button>
+                      <button class="btn btn-share" id="detailShareBtn">
+                          <span>📤</span>
+                          <span>BAGIKAN</span>
+                      </button>
+                  </div>
+              `;
+        } else {
+          // Jika belum, tampilkan tombol partisipasi normal
+          actionButtonsHtml = `
+                  <div class="detail-actions-fixed">
+                      <button class="btn btn-participate" id="detailParticipateBtn">
+                          <span>✓</span>
+                          <span>PARTISIPASI</span>
+                      </button>
+                      <button class="btn btn-share" id="detailShareBtn">
+                          <span>📤</span>
+                          <span>BAGIKAN</span>
+                      </button>
+                  </div>
+              `;
+        }
+      }
+      
+      if (typeof actionButtonsHtml === 'undefined') {
+        actionButtonsHtml = '';
+      }
+
   // ==================== FUNGSI: SETUP EVENT LISTENERS UNTUK DETAIL ====================
   function setupDetailEventListeners(giveaway, prizes, countdownActive, isEnded) {
     // Tombol back
@@ -1009,7 +1047,47 @@
         });
       }
     }
-  
+
+    // Tombol mata untuk membuka modal participants (YANG BARU)
+    const toggleParticipantsModalBtn = document.getElementById('toggleParticipantsModalBtn');
+    const participantsModalOverlay = document.getElementById('participantsModalOverlay');
+    const closeParticipantsModalBtn = document.getElementById('closeParticipantsModalBtn');
+    
+    if (toggleParticipantsModalBtn && participantsModalOverlay) {
+      // Hapus event listener lama jika ada
+      const newToggleBtn = toggleParticipantsModalBtn.cloneNode(true);
+      toggleParticipantsModalBtn.parentNode.replaceChild(newToggleBtn, toggleParticipantsModalBtn);
+    
+      newToggleBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+    
+        participantsModalOverlay.classList.toggle('active');
+        vibrate(15);
+      });
+    }
+    
+    if (closeParticipantsModalBtn && participantsModalOverlay) {
+      // Hapus event listener lama jika ada
+      const newCloseBtn = closeParticipantsModalBtn.cloneNode(true);
+      closeParticipantsModalBtn.parentNode.replaceChild(newCloseBtn, closeParticipantsModalBtn);
+    
+      newCloseBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        participantsModalOverlay.classList.remove('active');
+      });
+    }
+    
+    // Klik di luar modal untuk menutup
+    if (participantsModalOverlay) {
+      participantsModalOverlay.addEventListener('click', (e) => {
+        if (e.target === participantsModalOverlay) {
+          participantsModalOverlay.classList.remove('active');
+        }
+      });
+    }
+
     // Tombol mata untuk Partisipan (hanya untuk ended)
     const toggleParticipantsBtn = document.getElementById('toggleParticipantsBtn');
     const participantsPanelContainer = document.getElementById('participantsPanelContainer');
