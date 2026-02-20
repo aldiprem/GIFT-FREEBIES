@@ -159,7 +159,7 @@ def calculate_end_time(duration_value, duration_unit):
     return end_time.strftime('%Y-%m-%d %H:%M:%S')
 
 def update_expired_giveaways():
-    """Background task untuk mengupdate giveaway yang sudah expired"""
+    """Background task untuk mengupdate giveaway yang sudah expired dan memilih pemenang"""
     while True:
         try:
             # Cek setiap 60 detik
@@ -190,9 +190,10 @@ def update_expired_giveaways():
             if expired_giveaways:
                 log_info(f"📦 Found {len(expired_giveaways)} expired giveaways")
                 
-                # Update status menjadi 'ended'
                 for giveaway in expired_giveaways:
                     giveaway_id = giveaway['giveaway_id']
+                    
+                    # Update status menjadi 'ended'
                     cursor.execute("""
                         UPDATE giveaways 
                         SET status = 'ended', updated_at = ? 
@@ -200,6 +201,20 @@ def update_expired_giveaways():
                     """, (now, giveaway_id))
                     
                     log_info(f"✅ Updated giveaway {giveaway_id} to ended")
+                    
+                    # Pilih pemenang secara otomatis
+                    try:
+                        # Panggil fungsi draw_winners
+                        from flask import current_app
+                        with current_app.app_context():
+                            # Ambil data giveaway
+                            g_data = current_db.get_giveaway(giveaway_id)
+                            if g_data and g_data.get('participants_count', 0) > 0:
+                                # Pilih pemenang
+                                draw_result = draw_winners(giveaway_id)
+                                log_info(f"🏆 Winners drawn for {giveaway_id}")
+                    except Exception as e:
+                        log_error(f"Error drawing winners for {giveaway_id}: {e}")
                 
                 current_db.conn.commit()
             
@@ -1668,6 +1683,187 @@ def participate_giveaway(giveaway_id):
         
     except Exception as e:
         log_error(f"Error in participate_giveaway: {e}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+@giveaways_bp.route('/<giveaway_id>/draw-winners', methods=['POST'])
+def draw_winners(giveaway_id):
+    """Memilih pemenang secara acak untuk giveaway yang sudah berakhir"""
+    try:
+        current_db = get_db()
+        
+        # Ambil data giveaway
+        giveaway = current_db.get_giveaway(giveaway_id)
+        if not giveaway:
+            return jsonify({
+                'success': False,
+                'error': 'Giveaway not found'
+            }), 404
+        
+        # Cek apakah giveaway sudah ended
+        if giveaway['status'] != 'ended':
+            return jsonify({
+                'success': False,
+                'error': 'Giveaway masih aktif'
+            }), 400
+        
+        # Ambil daftar partisipan
+        cursor = current_db.get_cursor()
+        cursor.execute("""
+            SELECT user_id FROM participants 
+            WHERE giveaway_id = ? AND is_winner = 0
+            ORDER BY RANDOM()
+        """, (giveaway_id,))
+        
+        participants = cursor.fetchall()
+        
+        if not participants:
+            cursor.close()
+            return jsonify({
+                'success': False,
+                'error': 'Tidak ada peserta'
+            }), 400
+        
+        # Hitung jumlah pemenang berdasarkan jumlah hadiah
+        prizes = giveaway.get('prizes', [])
+        if isinstance(prizes, str):
+            try:
+                prizes = json.loads(prizes)
+            except:
+                prizes = [prizes]
+        
+        num_winners = len(prizes)
+        
+        # Pilih pemenang secara acak
+        selected_winners = []
+        now = get_jakarta_time()
+        
+        for i in range(min(num_winners, len(participants))):
+            winner = participants[i]
+            prize_index = i
+            
+            # Simpan ke tabel winners
+            cursor.execute("""
+                INSERT INTO winners (giveaway_id, user_id, win_position, announced_at)
+                VALUES (?, ?, ?, ?)
+            """, (giveaway_id, winner['user_id'], prize_index + 1, now))
+            
+            # Update participants
+            cursor.execute("""
+                UPDATE participants 
+                SET is_winner = 1, win_position = ?
+                WHERE giveaway_id = ? AND user_id = ?
+            """, (prize_index + 1, giveaway_id, winner['user_id']))
+            
+            # Update user stats
+            cursor.execute("""
+                UPDATE users 
+                SET total_wins = total_wins + 1,
+                    updated_at = ?
+                WHERE user_id = ?
+            """, (now, winner['user_id']))
+            
+            # Ambil data user untuk response
+            cursor.execute("""
+                SELECT user_id, fullname, username, photo_url
+                FROM users WHERE user_id = ?
+            """, (winner['user_id'],))
+            
+            user_data = cursor.fetchone()
+            
+            selected_winners.append({
+                'user_id': winner['user_id'],
+                'fullname': user_data['fullname'] if user_data else 'User',
+                'username': user_data['username'] if user_data else None,
+                'photo_url': user_data['photo_url'] if user_data else None,
+                'prize_index': prize_index,
+                'prize': prizes[prize_index] if prize_index < len(prizes) else 'Hadiah'
+            })
+        
+        # Update winners_count di giveaways
+        cursor.execute("""
+            UPDATE giveaways 
+            SET winners_count = ?, updated_at = ?
+            WHERE giveaway_id = ?
+        """, (len(selected_winners), now, giveaway_id))
+        
+        current_db.conn.commit()
+        cursor.close()
+        
+        log_info(f"✅ Winners drawn for giveaway {giveaway_id}: {len(selected_winners)} winners")
+        
+        return jsonify({
+            'success': True,
+            'message': f'Berhasil memilih {len(selected_winners)} pemenang',
+            'winners': selected_winners
+        }), 200
+        
+    except Exception as e:
+        log_error(f"Error drawing winners: {e}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+# Update endpoint get_giveaway_winners untuk mengambil dari database
+@giveaways_bp.route('/<giveaway_id>/winners', methods=['GET'])
+def get_giveaway_winners(giveaway_id):
+    """Get winners for a specific giveaway"""
+    try:
+        current_db = get_db()
+        giveaway = current_db.get_giveaway(giveaway_id)
+        
+        if not giveaway:
+            return jsonify({
+                'success': False,
+                'error': 'Giveaway not found'
+            }), 404
+        
+        # Ambil data pemenang dari database
+        cursor = current_db.get_cursor()
+        cursor.execute("""
+            SELECT w.user_id, w.win_position, 
+                   u.fullname, u.username, u.photo_url
+            FROM winners w
+            JOIN users u ON w.user_id = u.user_id
+            WHERE w.giveaway_id = ?
+            ORDER BY w.win_position ASC
+        """, (giveaway_id,))
+        
+        winners_data = cursor.fetchall()
+        cursor.close()
+        
+        # Parse prizes
+        prizes = giveaway.get('prizes', [])
+        if isinstance(prizes, str):
+            try:
+                prizes = json.loads(prizes)
+            except:
+                prizes = [prizes]
+        
+        winners = []
+        for w in winners_data:
+            prize_index = w['win_position'] - 1 if w['win_position'] else 0
+            winners.append({
+                'id': w['user_id'],
+                'first_name': w['fullname'].split(' ')[0] if ' ' in w['fullname'] else w['fullname'],
+                'last_name': w['fullname'].split(' ')[1] if ' ' in w['fullname'] and len(w['fullname'].split(' ')) > 1 else '',
+                'username': w['username'],
+                'photo_url': w['photo_url'],
+                'prize_index': prize_index,
+                'prize': prizes[prize_index] if prize_index < len(prizes) else 'Hadiah',
+                'win_position': w['win_position']
+            })
+        
+        return jsonify({
+            'success': True,
+            'winners': winners
+        })
+        
+    except Exception as e:
+        log_error(f"Error getting winners: {e}")
         return jsonify({
             'success': False,
             'error': str(e)
