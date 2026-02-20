@@ -1293,6 +1293,442 @@ def search_chats():
         log_error(f"Error searching chats: {e}")
         return jsonify({'error': str(e)}), 500
 
+@giveaways_bp.route('/<giveaway_id>/winners', methods=['GET'])
+def get_giveaway_winners(giveaway_id):
+    """Get winners for a specific giveaway"""
+    try:
+        current_db = get_db()
+        giveaway = current_db.get_giveaway(giveaway_id)
+        
+        if not giveaway:
+            return jsonify({
+                'success': False,
+                'error': 'Giveaway not found'
+            }), 404
+        
+        # Ambil data pemenang dari database
+        # Ini contoh data dummy, sesuaikan dengan struktur database Anda
+        cursor = current_db.get_cursor()
+        cursor.execute("""
+            SELECT u.user_id, u.fullname, u.username, u.photo_url, w.prize_index
+            FROM winners w
+            JOIN users u ON w.user_id = u.user_id
+            WHERE w.giveaway_id = ?
+        """, (giveaway_id,))
+        
+        winners_data = cursor.fetchall()
+        cursor.close()
+        
+        winners = []
+        for w in winners_data:
+            winners.append({
+                'id': w['user_id'],
+                'first_name': w['fullname'].split(' ')[0] if ' ' in w['fullname'] else w['fullname'],
+                'last_name': w['fullname'].split(' ')[1] if ' ' in w['fullname'] and len(w['fullname'].split(' ')) > 1 else '',
+                'username': w['username'],
+                'photo_url': w['photo_url'],
+                'prize_index': w['prize_index']
+            })
+        
+        return jsonify({
+            'success': True,
+            'winners': winners
+        })
+        
+    except Exception as e:
+        log_error(f"Error getting winners: {e}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+@giveaways_bp.route('/<giveaway_id>/participate', methods=['POST'])
+def participate_giveaway(giveaway_id):
+    """Menyimpan partisipasi user ke giveaway"""
+    try:
+        current_db = get_db()
+        data = request.json
+        log_info(f"📝 Participation request for giveaway {giveaway_id}: {data}")
+        
+        # Validasi data
+        required_fields = ['user_id', 'fullname']
+        for field in required_fields:
+            if field not in data:
+                return jsonify({
+                    'success': False,
+                    'error': f'Field {field} is required'
+                }), 400
+        
+        # Cek apakah giveaway ada
+        giveaway = current_db.get_giveaway(giveaway_id)
+        if not giveaway:
+            return jsonify({
+                'success': False,
+                'error': 'Giveaway not found'
+            }), 404
+        
+        # Cek apakah giveaway masih active
+        if giveaway['status'] != 'active':
+            return jsonify({
+                'success': False,
+                'error': 'Giveaway sudah berakhir'
+            }), 400
+        
+        # Cek apakah user sudah pernah berpartisipasi
+        cursor = current_db.get_cursor()
+        cursor.execute("""
+            SELECT COUNT(*) as count FROM participants 
+            WHERE giveaway_id = ? AND user_id = ?
+        """, (giveaway_id, data['user_id']))
+        
+        result = cursor.fetchone()
+        if result and result['count'] > 0:
+            cursor.close()
+            return jsonify({
+                'success': False,
+                'error': 'Anda sudah pernah berpartisipasi'
+            }), 400
+        
+        # Simpan user jika belum ada
+        current_db.add_user(
+            user_id=data['user_id'],
+            fullname=data['fullname'],
+            username=data.get('username'),
+            is_premium=data.get('is_premium', 0)
+        )
+        
+        # Simpan partisipasi
+        now = get_jakarta_time()
+        cursor.execute("""
+            INSERT INTO participants (giveaway_id, user_id, fullname, username, created_at)
+            VALUES (?, ?, ?, ?, ?)
+        """, (
+            giveaway_id,
+            data['user_id'],
+            data['fullname'],
+            data.get('username'),
+            now
+        ))
+        
+        # Update total_participations di tabel users
+        cursor.execute("""
+            UPDATE users 
+            SET total_participations = total_participations + 1,
+                updated_at = ?
+            WHERE user_id = ?
+        """, (now, data['user_id']))
+        
+        # Update participants_count di tabel giveaways
+        cursor.execute("""
+            UPDATE giveaways 
+            SET participants_count = participants_count + 1,
+                updated_at = ?
+            WHERE giveaway_id = ?
+        """, (now, giveaway_id))
+        
+        current_db.conn.commit()
+        cursor.close()
+        
+        log_info(f"✅ Participation saved for user {data['user_id']} in giveaway {giveaway_id}")
+        
+        return jsonify({
+            'success': True,
+            'message': 'Berhasil berpartisipasi',
+            'participant': {
+                'user_id': data['user_id'],
+                'fullname': data['fullname'],
+                'username': data.get('username'),
+                'participated_at': now
+            }
+        }), 201
+        
+    except Exception as e:
+        log_error(f"Error in participate_giveaway: {e}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+@giveaways_bp.route('/<giveaway_id>/participants', methods=['GET'])
+def get_giveaway_participants(giveaway_id):
+    """Mendapatkan daftar partisipan giveaway"""
+    try:
+        current_db = get_db()
+        
+        # Cek apakah giveaway ada
+        giveaway = current_db.get_giveaway(giveaway_id)
+        if not giveaway:
+            return jsonify({
+                'success': False,
+                'error': 'Giveaway not found'
+            }), 404
+        
+        # Ambil daftar partisipan
+        cursor = current_db.get_cursor()
+        cursor.execute("""
+            SELECT user_id, fullname, username, created_at as participated_at
+            FROM participants
+            WHERE giveaway_id = ?
+            ORDER BY created_at DESC
+        """, (giveaway_id,))
+        
+        participants_data = cursor.fetchall()
+        cursor.close()
+        
+        participants = []
+        for p in participants_data:
+            participants.append({
+                'user_id': p['user_id'],
+                'fullname': p['fullname'],
+                'username': p['username'],
+                'participated_at': p['participated_at']
+            })
+        
+        return jsonify({
+            'success': True,
+            'giveaway_id': giveaway_id,
+            'count': len(participants),
+            'participants': participants
+        })
+        
+    except Exception as e:
+        log_error(f"Error getting participants: {e}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+@users_bp.route('/<int:user_id>/participation-history', methods=['GET'])
+def get_user_participation_history(user_id):
+    """Mendapatkan history partisipasi user"""
+    try:
+        current_db = get_db()
+        
+        cursor = current_db.get_cursor()
+        cursor.execute("""
+            SELECT COUNT(*) as total_participations
+            FROM participants
+            WHERE user_id = ?
+        """, (user_id,))
+        
+        result = cursor.fetchone()
+        total_participations = result['total_participations'] if result else 0
+        
+        cursor.execute("""
+            SELECT giveaway_id, created_at as participated_at
+            FROM participants
+            WHERE user_id = ?
+            ORDER BY created_at DESC
+            LIMIT 10
+        """, (user_id,))
+        
+        recent = cursor.fetchall()
+        cursor.close()
+        
+        recent_participations = []
+        for r in recent:
+            recent_participations.append({
+                'giveaway_id': r['giveaway_id'],
+                'participated_at': r['participated_at']
+            })
+        
+        return jsonify({
+            'success': True,
+            'user_id': user_id,
+            'total_participations': total_participations,
+            'recent_participations': recent_participations
+        })
+        
+    except Exception as e:
+        log_error(f"Error getting participation history: {e}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+@app.route('/api/check-subscription', methods=['POST'])
+def check_subscription():
+    """Memeriksa apakah user subscribe ke channel/group menggunakan mekanisme yang sama seperti fetch channel"""
+    try:
+        data = request.json
+        user_id = data.get('user_id')
+        channel_username = data.get('channel_username')
+        
+        if not user_id or not channel_username:
+            return jsonify({
+                'success': False,
+                'error': 'user_id and channel_username are required'
+            }), 400
+        
+        clean_username = channel_username.replace('@', '').strip().lower()
+        log_info(f"🔍 Checking subscription for user {user_id} to @{clean_username}")
+        
+        # Cek dulu di database apakah ada data chat
+        current_db = get_db()
+        cursor = current_db.get_cursor()
+        cursor.execute("SELECT * FROM chatid_data WHERE LOWER(chat_username) = ?", (clean_username,))
+        chat_data = cursor.fetchone()
+        
+        # Jika tidak ada data chat, trigger sync dulu
+        if not chat_data:
+            log_info(f"📡 Chat data for @{clean_username} not found, triggering sync...")
+            
+            # Buat file request untuk bot
+            request_file = f"/tmp/check_sub_sync_{clean_username}.request"
+            with open(request_file, 'w') as f:
+                f.write(clean_username)
+            
+            # Tunggu sebentar untuk sync (async)
+            return jsonify({
+                'success': False,
+                'requires_sync': True,
+                'message': f'Data untuk @{clean_username} belum tersedia. Memulai sinkronisasi...',
+                'channel_username': clean_username
+            }), 202
+        
+        # Jika ada data chat, langsung cek keanggotaan
+        # Buat file request untuk cek subscription
+        import json
+        import time
+        import os
+        
+        request_data = {
+            'user_id': user_id,
+            'channel_username': clean_username,
+            'timestamp': get_jakarta_time()
+        }
+        
+        request_file = f"/tmp/check_sub_{user_id}_{clean_username}.request"
+        with open(request_file, 'w') as f:
+            f.write(json.dumps(request_data))
+        
+        # Tunggu response (timeout 10 detik)
+        max_wait = 10
+        waited = 0
+        
+        while waited < max_wait:
+            result_file = f"/tmp/check_sub_{user_id}_{clean_username}.result"
+            if os.path.exists(result_file):
+                with open(result_file, 'r') as f:
+                    result = json.loads(f.read())
+                
+                # Hapus file result
+                try:
+                    os.remove(result_file)
+                except:
+                    pass
+                
+                # Hapus file request
+                try:
+                    os.remove(request_file)
+                except:
+                    pass
+                
+                # Dapatkan informasi tambahan dari database
+                if result.get('is_subscribed'):
+                    # Ambil data channel untuk ditampilkan
+                    channel_info = {
+                        'chat_id': chat_data['chat_id'] if chat_data else None,
+                        'title': chat_data['chat_title'] if chat_data else clean_username,
+                        'username': clean_username,
+                        'type': chat_data['chat_type'] if chat_data else 'channel',
+                        'is_verified': chat_data['is_verified'] if chat_data else False
+                    }
+                    result['channel_info'] = channel_info
+                
+                return jsonify(result)
+            
+            time.sleep(0.5)
+            waited += 0.5
+        
+        # Timeout
+        return jsonify({
+            'success': False,
+            'is_subscribed': False,
+            'error': 'Timeout checking subscription'
+        }), 408
+        
+    except Exception as e:
+        log_error(f"Error checking subscription: {e}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+@app.route('/api/check-subscription-status/<path:channel_username>/<int:user_id>', methods=['GET'])
+def check_subscription_status(channel_username, user_id):
+    """Endpoint untuk polling status pengecekan subscription"""
+    try:
+        clean_username = channel_username.replace('@', '').strip().lower()
+        
+        # Cek apakah sudah ada result
+        result_file = f"/tmp/check_sub_{user_id}_{clean_username}.result"
+        if os.path.exists(result_file):
+            with open(result_file, 'r') as f:
+                result = json.loads(f.read())
+            
+            # Hapus file result
+            try:
+                os.remove(result_file)
+            except:
+                pass
+            
+            # Ambil data channel dari database
+            current_db = get_db()
+            cursor = current_db.get_cursor()
+            cursor.execute("SELECT * FROM chatid_data WHERE LOWER(chat_username) = ?", (clean_username,))
+            chat_data = cursor.fetchone()
+            cursor.close()
+            
+            if chat_data and result.get('is_subscribed'):
+                result['channel_info'] = {
+                    'chat_id': chat_data['chat_id'],
+                    'title': chat_data['chat_title'],
+                    'username': chat_data['chat_username'],
+                    'type': chat_data['chat_type'],
+                    'is_verified': chat_data['is_verified'],
+                    'invite_link': chat_data['invite_link'],
+                    'participants_count': chat_data['participants_count']
+                }
+            
+            return jsonify({
+                'success': True,
+                'completed': True,
+                'result': result
+            })
+        
+        # Cek apakah masih ada request
+        request_file = f"/tmp/check_sub_{user_id}_{clean_username}.request"
+        if os.path.exists(request_file):
+            return jsonify({
+                'success': True,
+                'completed': False,
+                'message': 'Pengecekan sedang berlangsung...'
+            })
+        
+        # Cek apakah perlu sync dulu
+        sync_file = f"/tmp/check_sub_sync_{clean_username}.request"
+        if os.path.exists(sync_file):
+            return jsonify({
+                'success': True,
+                'completed': False,
+                'requires_sync': True,
+                'message': 'Mengambil data channel...'
+            })
+        
+        return jsonify({
+            'success': True,
+            'completed': False,
+            'message': 'Memulai pengecekan...'
+        })
+        
+    except Exception as e:
+        log_error(f"Error checking subscription status: {e}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
 # Register all blueprints
 app.register_blueprint(users_bp)
 app.register_blueprint(giveaways_bp)
