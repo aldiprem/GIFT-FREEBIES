@@ -975,21 +975,25 @@
       // Gabungkan semua HTML
       const detailHtml = `
           <div class="giveaway-detail-container">
-              <!-- HEADER dengan tombol back dan badge ENDED (untuk ended giveaway) -->
-              <div class="detail-header">
-                  <div class="detail-header-right">
-                      ${isEnded ? `<span class="detail-ended-badge">ENDED</span>` : ''}
-                      ${isEnded && participants.length > 0 ? `
-                          <button class="eye-custom-btn" id="toggleParticipantsBtn" title="Lihat Partisipan">
-                              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                  <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5z" fill="white"/>
-                                  <circle cx="12" cy="12" r="3" fill="white"/>
-                              </svg>
-                          </button>
-                      ` : ''}
-                      <button class="detail-back-btn" id="backToIndexBtn">←</button>
-                  </div>
-              </div>
+            <!-- HEADER dengan tombol back dan badge ENDED (untuk ended giveaway) -->
+            <div class="detail-header">
+                <div class="logo-box" style="background: transparent; border: none; box-shadow: none; padding: 8px 0;">
+                    <img src="img/logo.png" class="logo-img" alt="logo" onerror="this.style.display='none'">
+                    <span class="logo-text">GIFT FREEBIES</span>
+                </div>
+                <div class="detail-header-right">
+                    ${isEnded ? `<span class="detail-ended-badge">ENDED</span>` : ''}
+                    ${isEnded && participants.length > 0 ? `
+                        <button class="eye-custom-btn" id="toggleParticipantsBtn" title="Lihat Partisipan">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5z" fill="white"/>
+                                <circle cx="12" cy="12" r="3" fill="white"/>
+                            </svg>
+                        </button>
+                    ` : ''}
+                    <button class="detail-back-btn" id="backToIndexBtn">←</button>
+                </div>
+            </div>
               
               <!-- MAIN CARD -->
               <div class="detail-card">
@@ -1312,37 +1316,125 @@
           });
       }
   
-      // Klik pada item channel
+      // Klik pada item channel - UNTUK VERIFIKASI (BUKAN SELECT)
       document.querySelectorAll('.channel-item').forEach(item => {
-          // Hapus event listener lama dengan clone
-          const newItem = item.cloneNode(true);
-          item.parentNode.replaceChild(newItem, item);
-  
-          newItem.addEventListener('click', function(e) {
-              // Biarkan link berfungsi normal
-              const selector = this.querySelector('.item-selector');
-              if (selector) {
-                  selector.classList.toggle('selected');
-              }
-              vibrate(10);
-          });
+        // Hapus event listener lama dengan clone
+        const newItem = item.cloneNode(true);
+        item.parentNode.replaceChild(newItem, item);
+      
+        newItem.addEventListener('click', function(e) {
+          e.preventDefault();
+      
+          // Ambil URL channel
+          const channelUrl = this.dataset.url;
+          if (channelUrl) {
+            // Buka link di browser eksternal
+            window.open(channelUrl, '_blank');
+      
+            // Tampilkan toast
+            showToast('🔍 Memeriksa keanggotaan...', 'info', 2000);
+      
+            // JANGAN toggle selector di sini - selector akan berubah otomatis setelah verifikasi
+          }
+      
+          vibrate(10);
+        });
       });
-  
-      // Klik pada item link
+      
+      // Klik pada item link - DENGAN TIMER VERIFIKASI
       document.querySelectorAll('.link-item').forEach(item => {
-          // Hapus event listener lama dengan clone
-          const newItem = item.cloneNode(true);
-          item.parentNode.replaceChild(newItem, item);
-  
-          newItem.addEventListener('click', function(e) {
-              // Biarkan link berfungsi normal
-              const selector = this.querySelector('.item-selector');
-              if (selector) {
-                  selector.classList.toggle('selected');
-              }
-              vibrate(10);
-          });
+        // Hapus event listener lama dengan clone
+        const newItem = item.cloneNode(true);
+        item.parentNode.replaceChild(newItem, item);
+      
+        newItem.addEventListener('click', function(e) {
+          e.preventDefault();
+      
+          // Ambil URL link
+          const linkUrl = this.dataset.url;
+      
+          // Cek apakah sudah pernah di-click sebelumnya
+          const selector = this.querySelector('.item-selector');
+          if (selector && selector.classList.contains('selected')) {
+            // Jika sudah pernah, langsung buka link
+            window.open(linkUrl, '_blank');
+            return;
+          }
+      
+          // Mulai timer verifikasi
+          startLinkPress(this);
+        });
       });
+      
+      // Fungsi untuk menangani press pada link (timer)
+      function startLinkPress(item) {
+        if (isLinkTimerActive) return;
+      
+        // Cek apakah sudah pernah di-select sebelumnya
+        const selector = item.querySelector('.item-selector');
+        if (selector && selector.classList.contains('selected')) {
+          return; // Sudah pernah di-select
+        }
+      
+        isLinkTimerActive = true;
+        currentLinkItem = item;
+        linkTimerStart = Date.now();
+        linkTimerRemaining = 5;
+      
+        // Tampilkan timer indicator
+        showLinkTimer(item, 5);
+      
+        // Mulai interval untuk update timer
+        linkTimerInterval = setInterval(() => {
+          const elapsed = (Date.now() - linkTimerStart) / 1000;
+          linkTimerRemaining = Math.max(0, 5 - elapsed);
+      
+          updateLinkTimer(item, linkTimerRemaining);
+      
+          if (linkTimerRemaining <= 0) {
+            // Timer selesai, beri centang dan buka link
+            completeLinkPress(item);
+          }
+        }, 100);
+      
+        // Timeout untuk keamanan (5 detik)
+        linkTimer = setTimeout(() => {
+          completeLinkPress(item);
+        }, 5000);
+      }
+      
+      function completeLinkPress(item) {
+        if (!isLinkTimerActive || currentLinkItem !== item) return;
+      
+        // Hapus timer
+        clearTimeout(linkTimer);
+        clearInterval(linkTimerInterval);
+      
+        // Beri centang
+        const selector = item.querySelector('.item-selector');
+        if (selector) {
+          selector.classList.add('selected');
+      
+          // Simpan ke sessionStorage bahwa link ini sudah di-click
+          const linkId = item.dataset.url || '';
+          sessionStorage.setItem(`link_clicked_${linkId}`, 'true');
+        }
+      
+        // Hapus indicator timer
+        hideLinkTimer(item);
+      
+        // Buka link
+        const linkUrl = item.dataset.url;
+        if (linkUrl) {
+          window.open(linkUrl, '_blank');
+        }
+      
+        // Tampilkan toast sukses
+        showToast('✅ Link berhasil diverifikasi!', 'success', 2000);
+      
+        isLinkTimerActive = false;
+        currentLinkItem = null;
+      }
   
       // Tombol partisipasi (hanya untuk active)
       if (!isEnded) {
@@ -2103,115 +2195,221 @@
             timer.remove();
         }
     }
+
+    // ==================== FUNGSI CEK STATUS AKTIF (PERNAH BERPARTISIPASI) ====================
+    async function checkUserActiveStatus(userId) {
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/users/${userId}/participation-history`, {
+          headers: { 'Accept': 'application/json' },
+          mode: 'cors'
+        });
     
-    // ==================== UPDATE FUNGSI CHECKALLREQUIREMENTS (TAMBAH CEK LINK) ====================
+        if (!response.ok) return false;
+    
+        const data = await response.json();
+        // Jika total_participations > 0, berarti pernah berpartisipasi
+        return data.total_participations > 0;
+    
+      } catch (error) {
+        console.error('Error checking active status:', error);
+        return false;
+      }
+    }
+
+    // ==================== UPDATE FUNGSI CHECKALLREQUIREMENTS (SESUAI SYARAT) ====================
     async function checkAllRequirements(giveaway, user) {
-        const requirements = giveaway.requirements || [];
-        const channels = giveaway.channels || [];
-        const links = giveaway.links || [];
-        
-        const failedRequirements = [];
-        const channelStatuses = {};
-        const linkStatuses = {};
-        
-        // Cek subscribe channel
-        if (requirements.includes('subscribe') && channels.length > 0) {
-            // Tampilkan loading modal SATU KALI untuk semua channel
-            const modal = showGlobalSubscriptionModal(channels.length);
-            
-            // Proses pengecekan channel satu per satu
-            for (let i = 0; i < channels.length; i++) {
-                const channel = channels[i];
-                const channelUsername = typeof channel === 'string' ? channel : channel.username;
-                
-                // Update status di modal
-                updateGlobalModalStatus(modal, i + 1, channels.length, channelUsername);
-                
-                try {
-                    // Panggil API untuk check subscription
-                    const response = await fetch(`${API_BASE_URL}/api/check-subscription`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Accept': 'application/json'
-                        },
-                        mode: 'cors',
-                        body: JSON.stringify({
-                            user_id: user.id,
-                            channel_username: channelUsername.replace('@', '')
-                        })
-                    });
-                    
-                    if (response.status === 202) {
-                        const pollResult = await pollGlobalSubscriptionStatus(channelUsername, user.id, modal, i + 1, channels.length);
-                        channelStatuses[channelUsername] = pollResult;
-                        if (!pollResult) {
-                            failedRequirements.push(`subscribe:${channelUsername}`);
-                        }
-                    } else if (response.ok) {
-                        const data = await response.json();
-                        channelStatuses[channelUsername] = data.is_subscribed || false;
-                        if (!data.is_subscribed) {
-                            failedRequirements.push(`subscribe:${channelUsername}`);
-                        }
-                    } else {
-                        channelStatuses[channelUsername] = false;
-                        failedRequirements.push(`subscribe:${channelUsername}`);
-                    }
-                    
-                } catch (error) {
-                    console.error(`Error checking channel ${channelUsername}:`, error);
-                    channelStatuses[channelUsername] = false;
-                    failedRequirements.push(`subscribe:${channelUsername}`);
-                }
-            }
-            
-            // Tutup modal setelah semua pengecekan selesai
-            completeGlobalModal(modal);
-        }
-        
-        // Cek link clicks (dari sessionStorage)
-        if (requirements.includes('share') && links.length > 0) {
-            links.forEach(link => {
-                const linkId = link.url || link;
-                const hasClicked = sessionStorage.getItem(`link_clicked_${linkId}`) === 'true';
-                linkStatuses[linkId] = hasClicked;
-                if (!hasClicked) {
-                    failedRequirements.push('share');
-                }
-            });
-        }
-        
-        // Update tampilan selector
-        updateChannelSelectors(channelStatuses);
-        updateLinkSelectors(linkStatuses);
-        
-        // Jika ada channel yang tidak disubscribe, buka panel channel
-        const hasChannelFailures = failedRequirements.some(req => req.startsWith('subscribe:'));
-        if (hasChannelFailures) {
-            setTimeout(() => {
-                const channelPanel = document.getElementById('channelPanelContainer');
-                const toggleChannelBtn = document.getElementById('toggleChannelBtn');
-                
-                if (channelPanel && channelPanel.classList.contains('hidden')) {
-                    channelPanel.classList.remove('hidden');
-                    if (toggleChannelBtn) {
-                        toggleChannelBtn.classList.add('active');
-                    }
-                }
-                
-                if (channelPanel) {
-                    channelPanel.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                }
-            }, 500);
-        }
-        
+      const requirements = giveaway.requirements || [];
+      const channels = giveaway.channels || [];
+      const links = giveaway.links || [];
+    
+      const failedRequirements = [];
+      const channelStatuses = {};
+      const linkStatuses = {};
+    
+      // ===== CEK PREMIUM / NON-PREMIUM =====
+      if (requirements.includes('premium') && !user.is_premium) {
+        failedRequirements.push('premium');
+        showToast('❌ Giveaway ini khusus untuk pengguna Premium', 'error', 3000);
         return {
-            passed: failedRequirements.length === 0,
-            failed: failedRequirements,
-            channelStatuses: channelStatuses,
-            linkStatuses: linkStatuses
+          passed: false,
+          failed: ['premium'],
+          channelStatuses: {},
+          linkStatuses: {}
         };
+      }
+    
+      if (requirements.includes('nonpremium') && user.is_premium) {
+        failedRequirements.push('nonpremium');
+        showToast('❌ Giveaway ini khusus untuk pengguna Non-Premium', 'error', 3000);
+        return {
+          passed: false,
+          failed: ['nonpremium'],
+          channelStatuses: {},
+          linkStatuses: {}
+        };
+      }
+    
+      // ===== CEK STATUS AKTIF (PERNAH BERPARTISIPASI) =====
+      if (requirements.includes('aktif')) {
+        const isActive = await checkUserActiveStatus(user.id);
+        if (!isActive) {
+          failedRequirements.push('aktif');
+          showToast('❌ Anda harus pernah berpartisipasi di giveaway lain', 'error', 3000);
+          return {
+            passed: false,
+            failed: ['aktif'],
+            channelStatuses: {},
+            linkStatuses: {}
+          };
+        }
+      }
+    
+      // ===== CEK SHARE (TOMBOL BAGIKAN) =====
+      if (requirements.includes('share')) {
+        const hasShared = sessionStorage.getItem(`shared_${giveaway.giveaway_id}`) === 'true';
+        if (!hasShared) {
+          failedRequirements.push('share');
+          // Tampilkan toast dan buka panel share
+          showToast('❌ Anda harus membagikan giveaway ini terlebih dahulu', 'warning', 3000);
+    
+          // Buka panel share (bisa ditambahkan logic untuk membuka modal share)
+          setTimeout(() => {
+            const shareBtn = document.getElementById('detailShareBtn');
+            if (shareBtn) {
+              shareBtn.scrollIntoView({ behavior: 'smooth', block: 'center' });
+              shareBtn.classList.add('pulse-animation');
+              setTimeout(() => shareBtn.classList.remove('pulse-animation'), 2000);
+            }
+          }, 500);
+    
+          return {
+            passed: false,
+            failed: ['share'],
+            channelStatuses: {},
+            linkStatuses: {}
+          };
+        }
+      }
+    
+      // ===== CEK SUBSCRIBE CHANNEL =====
+      if (requirements.includes('subscribe') && channels.length > 0) {
+        // Tampilkan loading modal SATU KALI untuk semua channel
+        const modal = showGlobalSubscriptionModal(channels.length);
+    
+        // Proses pengecekan channel satu per satu
+        for (let i = 0; i < channels.length; i++) {
+          const channel = channels[i];
+          const channelUsername = typeof channel === 'string' ? channel : channel.username;
+    
+          // Update status di modal
+          updateGlobalModalStatus(modal, i + 1, channels.length, channelUsername);
+    
+          try {
+            // Panggil API untuk check subscription
+            const response = await fetch(`${API_BASE_URL}/api/check-subscription`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+              },
+              mode: 'cors',
+              body: JSON.stringify({
+                user_id: user.id,
+                channel_username: channelUsername.replace('@', '')
+              })
+            });
+    
+            if (response.status === 202) {
+              const pollResult = await pollGlobalSubscriptionStatus(channelUsername, user.id, modal, i + 1, channels.length);
+              channelStatuses[channelUsername] = pollResult;
+              if (!pollResult) {
+                failedRequirements.push(`subscribe:${channelUsername}`);
+              }
+            } else if (response.ok) {
+              const data = await response.json();
+              channelStatuses[channelUsername] = data.is_subscribed || false;
+              if (!data.is_subscribed) {
+                failedRequirements.push(`subscribe:${channelUsername}`);
+              }
+            } else {
+              channelStatuses[channelUsername] = false;
+              failedRequirements.push(`subscribe:${channelUsername}`);
+            }
+    
+          } catch (error) {
+            console.error(`Error checking channel ${channelUsername}:`, error);
+            channelStatuses[channelUsername] = false;
+            failedRequirements.push(`subscribe:${channelUsername}`);
+          }
+        }
+    
+        // Tutup modal setelah semua pengecekan selesai
+        completeGlobalModal(modal);
+      }
+    
+      // ===== CEK LINK CLICKS =====
+      if (links.length > 0) {
+        // Cek setiap link apakah sudah di-click (dari sessionStorage)
+        links.forEach(link => {
+          const linkId = link.url || link;
+          const hasClicked = sessionStorage.getItem(`link_clicked_${linkId}`) === 'true';
+          linkStatuses[linkId] = hasClicked;
+          if (!hasClicked) {
+            failedRequirements.push(`link:${linkId}`);
+          }
+        });
+      }
+    
+      // Update tampilan selector berdasarkan status
+      updateChannelSelectors(channelStatuses);
+      updateLinkSelectors(linkStatuses);
+    
+      // Jika ada channel yang tidak disubscribe, buka panel channel
+      const hasChannelFailures = failedRequirements.some(req => req.startsWith('subscribe:'));
+      if (hasChannelFailures) {
+        setTimeout(() => {
+          const channelPanel = document.getElementById('channelPanelContainer');
+          const toggleChannelBtn = document.getElementById('toggleChannelBtn');
+    
+          if (channelPanel && channelPanel.classList.contains('hidden')) {
+            channelPanel.classList.remove('hidden');
+            if (toggleChannelBtn) {
+              toggleChannelBtn.classList.add('active');
+            }
+          }
+    
+          if (channelPanel) {
+            channelPanel.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }
+        }, 500);
+      }
+    
+      // Jika ada link yang belum di-click, buka panel link
+      const hasLinkFailures = failedRequirements.some(req => req.startsWith('link:'));
+      if (hasLinkFailures) {
+        setTimeout(() => {
+          const linkPanel = document.getElementById('linkPanelContainer');
+          const toggleLinkBtn = document.getElementById('toggleLinkBtn');
+    
+          if (linkPanel && linkPanel.classList.contains('hidden')) {
+            linkPanel.classList.remove('hidden');
+            if (toggleLinkBtn) {
+              toggleLinkBtn.classList.add('active');
+            }
+          }
+    
+          if (linkPanel) {
+            linkPanel.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }
+        }, 500);
+      }
+    
+      return {
+        passed: failedRequirements.length === 0,
+        failed: failedRequirements,
+        channelStatuses: channelStatuses,
+        linkStatuses: linkStatuses
+      };
     }
     
     // ==================== FUNGSI UPDATE LINK SELECTORS ====================
