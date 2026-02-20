@@ -794,39 +794,6 @@ class Database:
         finally:
             cursor.close()
 
-    # Di dalam kelas Database, tambahkan method untuk create tabel participants
-    def create_participants_table(self):
-        """Membuat tabel participants jika belum ada"""
-        try:
-            self.cursor.execute("""
-            CREATE TABLE IF NOT EXISTS participants (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                giveaway_id TEXT NOT NULL,
-                user_id INTEGER NOT NULL,
-                fullname TEXT NOT NULL,
-                username TEXT,
-                created_at TEXT NOT NULL,
-                FOREIGN KEY (giveaway_id) REFERENCES giveaways(giveaway_id) ON DELETE CASCADE,
-                FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE,
-                UNIQUE(giveaway_id, user_id)
-            )
-            """)
-            
-            # Create index untuk performance
-            self.cursor.execute("""
-            CREATE INDEX IF NOT EXISTS idx_participants_giveaway ON participants(giveaway_id)
-            """)
-            
-            self.cursor.execute("""
-            CREATE INDEX IF NOT EXISTS idx_participants_user ON participants(user_id)
-            """)
-            
-            self.conn.commit()
-            log_info("✅ Participants table created/verified")
-            
-        except Exception as e:
-            log_error(f"Error creating participants table: {e}")
-
     def close(self):
         """Menutup koneksi database"""
         if self.conn:
