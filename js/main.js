@@ -708,62 +708,60 @@
           return colors[index % colors.length];
       }
   
-      // Buat HTML untuk pemenang (hanya untuk ended giveaway)
+      // Buat HTML untuk pemenang (hanya untuk ended giveaway) - TAMPILAN BARU
       let winnersHtml = '';
       if (isEnded && winners.length > 0) {
-        // Kelompokkan pemenang berdasarkan hadiah
-        const winnersByPrize = {};
-        winners.forEach(winner => {
-          const prizeIndex = winner.prize_index || 0;
-          if (!winnersByPrize[prizeIndex]) {
-            winnersByPrize[prizeIndex] = [];
-          }
-          winnersByPrize[prizeIndex].push(winner);
-        });
+        winnersHtml = `
+              <div class="winners-container">
+                  <div class="winners-title-section">
+                      <span class="winners-icon">🏆</span>
+                      <span class="winners-title-text">Pemenang Giveaway</span>
+                      <span class="winners-count-badge">${winners.length} pemenang</span>
+                  </div>
+                  <div class="winners-scroll-container">
+                      <div class="winners-list">
+          `;
       
-        // Buat HTML untuk setiap hadiah dengan pemenangnya
-        prizes.forEach((prize, prizeIndex) => {
-          const prizeWinners = winnersByPrize[prizeIndex] || [];
+        winners.forEach((winner, index) => {
+          const fullName = [winner.first_name, winner.last_name].filter(Boolean).join(' ') || winner.fullname || 'User';
+          const initials = getInitials(fullName);
+          const bgColor = getUserColor(winner.id || winner.user_id);
+          const username = winner.username ? `@${winner.username}` : '(no username)';
+          const prizeIndex = winner.prize_index !== undefined ? winner.prize_index + 1 : index + 1;
+          const prizeName = winner.prize || (prizes[winner.prize_index] || `Hadiah ${prizeIndex}`);
       
           winnersHtml += `
-                  <div class="prize-winners-section">
-                      <div class="prize-winners-header">
-                          <span class="prize-number" style="background: ${getRandomColor(prizeIndex)};">${prizeIndex + 1}</span>
-                          <span class="prize-winners-title">${escapeHtml(prize)}</span>
-                          <span class="winners-count">${prizeWinners.length} pemenang</span>
-                      </div>
-                      
-                      <div class="winners-grid">
-              `;
-      
-          prizeWinners.forEach(winner => {
-            const fullName = [winner.first_name, winner.last_name].filter(Boolean).join(' ') || winner.fullname || 'User';
-            const initials = getInitials(fullName);
-            const bgColor = getUserColor(winner.id || winner.user_id);
-            const username = winner.username ? `@${winner.username}` : '(no username)';
-      
-            winnersHtml += `
-                      <div class="winner-card">
-                          <div class="winner-avatar" style="background: ${bgColor};">
+                  <div class="winner-item">
+                      <div class="winner-item-left">
+                          <div class="winner-avatar-wrapper" style="background: ${bgColor};">
                               ${winner.photo_url ? 
                                   `<img src="${winner.photo_url}" alt="${fullName}" class="winner-avatar-img">` : 
-                                  `<span class="winner-initials">${initials}</span>`
+                                  `<span class="winner-avatar-initials">${initials}</span>`
                               }
                           </div>
-                          <div class="winner-info">
-                              <div class="winner-name">${escapeHtml(fullName)}</div>
-                              <div class="winner-username">${escapeHtml(username)}</div>
-                              <div class="winner-id">ID: ${winner.id || winner.user_id}</div>
+                          <div class="winner-info-wrapper">
+                              <div class="winner-fullname">${escapeHtml(fullName)}</div>
+                              <div class="winner-username-display">${escapeHtml(username)}</div>
                           </div>
                       </div>
-                  `;
-          });
-      
-          winnersHtml += `
+                      <div class="winner-item-right">
+                          <div class="prize-badge" style="background: ${getRandomColor(prizeIndex)};">
+                              <span class="prize-badge-number">#${prizeIndex}</span>
+                          </div>
+                          <div class="prize-name-wrapper">
+                              <div class="prize-name-text">${escapeHtml(prizeName)}</div>
+                          </div>
                       </div>
                   </div>
               `;
         });
+      
+        winnersHtml += `
+                      </div>
+                  </div>
+                  ${winners.length > 2 ? '<button class="winners-view-all-btn" id="viewAllWinnersBtn">Lihat Semua Pemenang</button>' : ''}
+              </div>
+          `;
       }
   
       // Buat HTML untuk partisipan
