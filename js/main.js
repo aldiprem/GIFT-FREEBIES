@@ -390,10 +390,8 @@
       // PERBAIKAN: participants_count adalah jumlah peserta giveaway
       const participants = giveaway.participants_count || 0;
   
-      // Ambil deskripsi giveaway - untuk ended, tampilkan 2 baris dengan background gelap
+      // Ambil deskripsi giveaway (ambil 100 karakter pertama)
       const description = giveaway.giveaway_text || 'Tidak ada deskripsi';
-  
-      // Fungsi untuk memotong deskripsi menjadi 2 baris (~100 karakter)
       const shortDescription = description.length > 100 ?
         description.substring(0, 100) + '...' :
         description;
@@ -431,7 +429,7 @@
         // Hanya tampilkan yang sudah expired atau status ended
         if (isExpired || giveaway.status === 'ended') {
           const winners = giveaway.winners_count || 0;
-  
+      
           // Untuk ended giveaway: tambahkan class ended dan garis bawah L
           html += `
             <div class="giveaway-item ended" data-id="${giveawayId}">
