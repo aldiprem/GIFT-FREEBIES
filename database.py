@@ -439,17 +439,26 @@ class Database:
         """Mendapatkan data giveaway berdasarkan ID"""
         cursor = self.get_cursor()
         try:
-            cursor.execute("SELECT * FROM giveaways WHERE giveaway_id = ?", (giveaway_id,))
+            cursor.execute("""
+            SELECT g.*, 
+                   (SELECT COUNT(*) FROM participants WHERE giveaway_id = g.giveaway_id) as participants_count
+            FROM giveaways g 
+            WHERE g.giveaway_id = ?
+            """, (giveaway_id,))
+            
             giveaway = cursor.fetchone()
             
             if giveaway:
                 result = dict(giveaway)
+                # Parse JSON fields
                 for field in ['prizes', 'channels', 'links', 'requirements']:
                     if result.get(field):
                         try:
                             result[field] = json.loads(result[field])
                         except:
                             result[field] = []
+                    else:
+                        result[field] = []
                 return result
             return None
         finally:
@@ -491,12 +500,18 @@ class Database:
         try:
             if status == 'all':
                 cursor.execute("""
-                SELECT * FROM giveaways ORDER BY created_at DESC LIMIT ? OFFSET ?
+                SELECT g.*, 
+                       (SELECT COUNT(*) FROM participants WHERE giveaway_id = g.giveaway_id) as participants_count
+                FROM giveaways g 
+                ORDER BY g.created_at DESC LIMIT ? OFFSET ?
                 """, (limit, offset))
             else:
                 cursor.execute("""
-                SELECT * FROM giveaways WHERE status = ?
-                ORDER BY created_at DESC LIMIT ? OFFSET ?
+                SELECT g.*, 
+                       (SELECT COUNT(*) FROM participants WHERE giveaway_id = g.giveaway_id) as participants_count
+                FROM giveaways g 
+                WHERE g.status = ?
+                ORDER BY g.created_at DESC LIMIT ? OFFSET ?
                 """, (status, limit, offset))
             
             giveaways = cursor.fetchall()
@@ -509,6 +524,8 @@ class Database:
                             g_dict[field] = json.loads(g_dict[field])
                         except:
                             g_dict[field] = []
+                    else:
+                        g_dict[field] = []
                 result.append(g_dict)
             return result
         finally:
