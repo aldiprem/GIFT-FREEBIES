@@ -11,7 +11,7 @@ class Database:
         self.db_path = Config.DB_PATH
         self.conn = None
         self.init_db()
-        self.create_participants_table()
+        
     
     def get_connection(self):
         """Mendapatkan koneksi database"""
