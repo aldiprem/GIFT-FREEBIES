@@ -202,17 +202,70 @@ def update_expired_giveaways():
                     
                     log_info(f"✅ Updated giveaway {giveaway_id} to ended")
                     
-                    # Pilih pemenang secara otomatis
+                    # Pilih pemenang secara otomatis - LANGSUNG tanpa memanggil endpoint
                     try:
-                        # Panggil fungsi draw_winners
-                        from flask import current_app
-                        with current_app.app_context():
-                            # Ambil data giveaway
-                            g_data = current_db.get_giveaway(giveaway_id)
-                            if g_data and g_data.get('participants_count', 0) > 0:
-                                # Pilih pemenang
-                                draw_result = draw_winners(giveaway_id)
+                        # Ambil data giveaway
+                        g_data = current_db.get_giveaway(giveaway_id)
+                        if g_data and g_data.get('participants_count', 0) > 0:
+                            # Ambil daftar partisipan
+                            part_cursor = current_db.get_cursor()
+                            part_cursor.execute("""
+                                SELECT user_id FROM participants 
+                                WHERE giveaway_id = ? AND is_winner = 0
+                                ORDER BY RANDOM()
+                            """, (giveaway_id,))
+                            
+                            participants = part_cursor.fetchall()
+                            
+                            if participants:
+                                # Parse prizes
+                                prizes = g_data.get('prizes', [])
+                                if isinstance(prizes, str):
+                                    try:
+                                        prizes = json.loads(prizes)
+                                    except:
+                                        prizes = [prizes]
+                                
+                                num_winners = len(prizes)
+                                draw_now = get_jakarta_time()
+                                
+                                for i in range(min(num_winners, len(participants))):
+                                    winner = participants[i]
+                                    prize_index = i
+                                    
+                                    # Simpan ke tabel winners
+                                    part_cursor.execute("""
+                                        INSERT INTO winners (giveaway_id, user_id, win_position, announced_at)
+                                        VALUES (?, ?, ?, ?)
+                                    """, (giveaway_id, winner['user_id'], prize_index + 1, draw_now))
+                                    
+                                    # Update participants
+                                    part_cursor.execute("""
+                                        UPDATE participants 
+                                        SET is_winner = 1, win_position = ?
+                                        WHERE giveaway_id = ? AND user_id = ?
+                                    """, (prize_index + 1, giveaway_id, winner['user_id']))
+                                    
+                                    # Update user stats
+                                    part_cursor.execute("""
+                                        UPDATE users 
+                                        SET total_wins = total_wins + 1,
+                                            updated_at = ?
+                                        WHERE user_id = ?
+                                    """, (draw_now, winner['user_id']))
+                                
+                                # Update winners_count di giveaways
+                                part_cursor.execute("""
+                                    UPDATE giveaways 
+                                    SET winners_count = ?, updated_at = ?
+                                    WHERE giveaway_id = ?
+                                """, (min(num_winners, len(participants)), draw_now, giveaway_id))
+                                
+                                current_db.conn.commit()
                                 log_info(f"🏆 Winners drawn for {giveaway_id}")
+                            
+                            part_cursor.close()
+                            
                     except Exception as e:
                         log_error(f"Error drawing winners for {giveaway_id}: {e}")
                 
@@ -1316,55 +1369,7 @@ def search_chats():
         log_error(f"Error searching chats: {e}")
         return jsonify({'error': str(e)}), 500
 
-@giveaways_bp.route('/<giveaway_id>/winners', methods=['GET'])
-def get_giveaway_winners(giveaway_id):
-    """Get winners for a specific giveaway"""
-    try:
-        current_db = get_db()
-        giveaway = current_db.get_giveaway(giveaway_id)
-        
-        if not giveaway:
-            return jsonify({
-                'success': False,
-                'error': 'Giveaway not found'
-            }), 404
-        
-        # Ambil data pemenang dari database
-        # Ini contoh data dummy, sesuaikan dengan struktur database Anda
-        cursor = current_db.get_cursor()
-        cursor.execute("""
-            SELECT u.user_id, u.fullname, u.username, u.photo_url, w.prize_index
-            FROM winners w
-            JOIN users u ON w.user_id = u.user_id
-            WHERE w.giveaway_id = ?
-        """, (giveaway_id,))
-        
-        winners_data = cursor.fetchall()
-        cursor.close()
-        
-        winners = []
-        for w in winners_data:
-            winners.append({
-                'id': w['user_id'],
-                'first_name': w['fullname'].split(' ')[0] if ' ' in w['fullname'] else w['fullname'],
-                'last_name': w['fullname'].split(' ')[1] if ' ' in w['fullname'] and len(w['fullname'].split(' ')) > 1 else '',
-                'username': w['username'],
-                'photo_url': w['photo_url'],
-                'prize_index': w['prize_index']
-            })
-        
-        return jsonify({
-            'success': True,
-            'winners': winners
-        })
-        
-    except Exception as e:
-        log_error(f"Error getting winners: {e}")
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        }), 500
-
+# ==================== GIVEAWAY PARTICIPANTS ENDPOINTS ====================
 @giveaways_bp.route('/<giveaway_id>/participants', methods=['GET'])
 def get_giveaway_participants(giveaway_id):
     """Mendapatkan daftar partisipan giveaway"""
@@ -1379,7 +1384,7 @@ def get_giveaway_participants(giveaway_id):
                 'error': 'Giveaway not found'
             }), 404
         
-        # Ambil daftar partisipan - PERBAIKAN: JOIN dengan tabel users untuk dapat fullname
+        # Ambil daftar partisipan - JOIN dengan tabel users untuk dapat fullname
         cursor = current_db.get_cursor()
         cursor.execute("""
             SELECT p.user_id, u.fullname, u.username, p.joined_at as participated_at
@@ -1463,6 +1468,7 @@ def get_user_participation_history(user_id):
             'error': str(e)
         }), 500
 
+# ==================== SUBSCRIPTION CHECK ENDPOINTS ====================
 @app.route('/api/check-subscription', methods=['POST'])
 def check_subscription():
     """Memeriksa apakah user subscribe ke channel/group secara LANGSUNG ke Telegram"""
@@ -1583,6 +1589,7 @@ def check_subscription_status(channel_username, user_id):
             'error': str(e)
         }), 500
 
+# ==================== GIVEAWAY PARTICIPATE ENDPOINT ====================
 @giveaways_bp.route('/<giveaway_id>/participate', methods=['POST'])
 def participate_giveaway(giveaway_id):
     """Menyimpan partisipasi user ke giveaway"""
@@ -1688,6 +1695,7 @@ def participate_giveaway(giveaway_id):
             'error': str(e)
         }), 500
 
+# ==================== WINNERS ENDPOINTS ====================
 @giveaways_bp.route('/<giveaway_id>/draw-winners', methods=['POST'])
 def draw_winners(giveaway_id):
     """Memilih pemenang secara acak untuk giveaway yang sudah berakhir"""
@@ -1807,7 +1815,7 @@ def draw_winners(giveaway_id):
             'error': str(e)
         }), 500
 
-# Update endpoint get_giveaway_winners untuk mengambil dari database
+# ==================== GET WINNERS ENDPOINT (SATU-SATUNYA) ====================
 @giveaways_bp.route('/<giveaway_id>/winners', methods=['GET'])
 def get_giveaway_winners(giveaway_id):
     """Get winners for a specific giveaway"""
