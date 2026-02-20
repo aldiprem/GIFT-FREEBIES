@@ -374,26 +374,15 @@
     giveaways.forEach(giveaway => {
       // PERBAIKAN: Pastikan giveaway_id ada
       const giveawayId = giveaway.giveaway_id || giveaway.id;
-  
-      // Hitung total hadiah
-      const totalPrizes = Array.isArray(giveaway.prizes) ? giveaway.prizes.length : 1;
       const prizeText = Array.isArray(giveaway.prizes) ?
         (giveaway.prizes[0] || 'Giveaway') :
         (giveaway.prizes || 'Giveaway');
   
-      // Hitung total hadiah dengan format yang lebih baik
+      // Hitung total hadiah
+      const totalPrizes = Array.isArray(giveaway.prizes) ? giveaway.prizes.length : 1;
       const prizeCountText = totalPrizes > 1 ? `${totalPrizes} hadiah` : '1 hadiah';
   
-      // PERBAIKAN: participants_count adalah jumlah peserta giveaway
       const participants = giveaway.participants_count || 0;
-  
-      // Hitung total anggota channel (optional)
-      let totalChannelMembers = 0;
-      if (giveaway.channels && Array.isArray(giveaway.channels)) {
-        giveaway.channels.forEach(ch => {
-          totalChannelMembers += ch.participants_count || 0;
-        });
-      }
   
       // Ambil deskripsi giveaway (ambil 100 karakter pertama)
       const description = giveaway.giveaway_text || 'Tidak ada deskripsi';
@@ -432,34 +421,34 @@
         // Hanya tampilkan yang benar-benar active (belum expired)
         if (!isExpired) {
           html += `
-                      <div class="giveaway-item active" data-id="${giveawayId}">
-                          <div class="active-badge">AKTIF</div>
-                          <h3>${escapeHtml(prizeText)}</h3>
-                          <p class="giveaway-description">${escapeHtml(shortDescription)}</p>
-                          <div class="giveaway-stats">
-                              <span class="stat-badge">🎁 ${prizeCountText}</span>
-                              <span class="stat-badge">👥 ${participants} peserta</span>
-                              ${timeRemainingText ? `<span class="stat-badge timer-badge">⏱️ ${timeRemainingText}</span>` : ''}
-                          </div>
-                      </div>
-                  `;
+            <div class="giveaway-item" data-id="${giveawayId}">
+              <div class="active-badge">AKTIF</div>
+              <h3>${escapeHtml(prizeText)}</h3>
+              <p class="giveaway-description">${escapeHtml(shortDescription)}</p>
+              <div class="giveaway-stats">
+                <span class="stat-badge">🎁 ${prizeCountText}</span>
+                <span class="stat-badge">👥 ${participants} peserta</span>
+                ${timeRemainingText ? `<span class="stat-badge timer-badge">⏱️ ${timeRemainingText}</span>` : ''}
+              </div>
+            </div>
+          `;
         }
       } else if (type === 'ended') {
         // Hanya tampilkan yang sudah expired atau status ended
         if (isExpired || giveaway.status === 'ended') {
           const winners = giveaway.winners_count || 0;
           html += `
-                      <div class="giveaway-item ended" data-id="${giveawayId}">
-                          <h3>${escapeHtml(prizeText)}</h3>
-                          <p class="giveaway-description">${escapeHtml(shortDescription)}</p>
-                          <div class="giveaway-stats">
-                              <span class="stat-badge">🎁 ${prizeCountText}</span>
-                              <span class="stat-badge">👥 ${participants} peserta</span>
-                              <span class="stat-badge winner-badge">🏆 ${winners} pemenang</span>
-                          </div>
-                          <div class="ended-badge">SELESAI</div>
-                      </div>
-                  `;
+            <div class="giveaway-item ended" data-id="${giveawayId}">
+              <h3>${escapeHtml(prizeText)}</h3>
+              <p class="giveaway-description">${escapeHtml(shortDescription)}</p>
+              <div class="giveaway-stats">
+                <span class="stat-badge">🎁 ${prizeCountText}</span>
+                <span class="stat-badge">👥 ${participants} peserta</span>
+                <span class="stat-badge winner-badge">🏆 ${winners} pemenang</span>
+              </div>
+              <div class="ended-badge">SELESAI</div>
+            </div>
+          `;
         }
       }
     });
