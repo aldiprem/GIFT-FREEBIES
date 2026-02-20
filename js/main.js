@@ -968,44 +968,6 @@
       setupDetailEventListeners(giveaway, prizes, countdownActive, isEnded);
   }
 
-      // ACTION BUTTONS FIXED (HANYA UNTUK ACTIVE GIVEAWAY)
-      let actionButtonsHtml = '';
-      if (!isEnded) {
-        if (hasParticipated) {
-          // Jika sudah berpartisipasi, tampilkan tombol disabled
-          actionButtonsHtml = `
-                  <div class="detail-actions-fixed">
-                      <button class="btn btn-participate disabled" id="detailParticipateBtn" disabled>
-                          <span>✓</span>
-                          <span>MENGIKUTI</span>
-                      </button>
-                      <button class="btn btn-share" id="detailShareBtn">
-                          <span>📤</span>
-                          <span>BAGIKAN</span>
-                      </button>
-                  </div>
-              `;
-        } else {
-          // Jika belum, tampilkan tombol partisipasi normal
-          actionButtonsHtml = `
-                  <div class="detail-actions-fixed">
-                      <button class="btn btn-participate" id="detailParticipateBtn">
-                          <span>✓</span>
-                          <span>PARTISIPASI</span>
-                      </button>
-                      <button class="btn btn-share" id="detailShareBtn">
-                          <span>📤</span>
-                          <span>BAGIKAN</span>
-                      </button>
-                  </div>
-              `;
-        }
-      }
-      
-      if (typeof actionButtonsHtml === 'undefined') {
-        actionButtonsHtml = '';
-      }
-
   // ==================== FUNGSI: SETUP EVENT LISTENERS UNTUK DETAIL ====================
   function setupDetailEventListeners(giveaway, prizes, countdownActive, isEnded) {
     // Tombol back
