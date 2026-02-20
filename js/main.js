@@ -35,6 +35,7 @@
   };
 
   // ==================== STATE ====================
+  let globalNodal = null;
   let currentUser = null;
   let currentGiveawayType = 'active';
     let allGiveaways = { active: [], ended: [] };
@@ -2233,6 +2234,177 @@
         throw error;
       }
     }
+
+  function showGlobalSubscriptionModal(totalChannels) {
+    const existingModal = document.querySelector('.global-subscription-modal');
+    if (existingModal) {
+      existingModal.remove();
+    }
+  
+    globalModal = document.createElement('div');
+    globalModal.className = 'global-subscription-modal';
+    globalModal.innerHTML = `
+          <div class="sync-loading-content">
+              <div class="sync-loading-header">
+                  <div class="sync-loading-title">🔍 Memeriksa Keanggotaan</div>
+                  <div class="sync-loading-spinner"></div>
+              </div>
+              <div class="sync-loading-body">
+                  <div class="progress-info">
+                      <span class="progress-current" id="globalProgressCurrent">0</span>
+                      <span class="progress-separator">/</span>
+                      <span class="progress-total" id="globalProgressTotal">${totalChannels}</span>
+                  </div>
+                  <div class="sync-progress-bar">
+                      <div class="sync-progress-fill" id="globalProgressFill" style="width: 0%"></div>
+                  </div>
+                  <div class="current-channel" id="globalCurrentChannel">
+                      Memulai pengecekan...
+                  </div>
+                  <div class="sync-status" id="globalStatus">Memeriksa channel 1 dari ${totalChannels}</div>
+              </div>
+          </div>
+      `;
+  
+    document.body.appendChild(globalModal);
+  
+    setTimeout(() => {
+      globalModal.classList.add('active');
+    }, 10);
+  
+    return globalModal;
+  }
+  
+  function updateGlobalModalStatus(modal, current, total, channelUsername) {
+    if (!modal) return;
+  
+    const progressFill = document.getElementById('globalProgressFill');
+    const progressCurrent = document.getElementById('globalProgressCurrent');
+    const currentChannel = document.getElementById('globalCurrentChannel');
+    const statusEl = document.getElementById('globalStatus');
+  
+    if (progressFill) {
+      const percent = (current / total) * 100;
+      progressFill.style.width = `${percent}%`;
+    }
+  
+    if (progressCurrent) {
+      progressCurrent.textContent = current;
+    }
+  
+    if (currentChannel) {
+      currentChannel.innerHTML = `<span class="channel-name">@${channelUsername.replace('@', '')}</span>`;
+    }
+  
+    if (statusEl) {
+      statusEl.textContent = `Memeriksa channel ${current} dari ${total}`;
+    }
+  }
+  
+  function completeGlobalModal(modal) {
+    if (!modal) return;
+  
+    const progressFill = document.getElementById('globalProgressFill');
+    const statusEl = document.getElementById('globalStatus');
+    const currentChannel = document.getElementById('globalCurrentChannel');
+  
+    if (progressFill) {
+      progressFill.style.width = '100%';
+    }
+  
+    if (statusEl) {
+      statusEl.textContent = 'Pengecekan selesai!';
+    }
+  
+    if (currentChannel) {
+      currentChannel.innerHTML = '✅ Semua channel telah diperiksa';
+    }
+  
+    setTimeout(() => {
+      modal.classList.remove('active');
+      setTimeout(() => {
+        if (modal && modal.parentNode) {
+          modal.remove();
+        }
+        if (globalModal === modal) {
+          globalModal = null;
+        }
+      }, 300);
+    }, 1000);
+  }
+  
+  // ==================== FUNGSI POLLING GLOBAL ====================
+  async function pollGlobalSubscriptionStatus(channelUsername, userId, modal, current, total) {
+    const maxAttempts = 20;
+    let attempts = 0;
+  
+    return new Promise((resolve) => {
+      const pollInterval = setInterval(async () => {
+        attempts++;
+  
+        try {
+          const response = await fetch(`${API_BASE_URL}/api/check-subscription-status/${channelUsername}/${userId}`);
+  
+          if (response.ok) {
+            const data = await response.json();
+  
+            if (data.completed) {
+              clearInterval(pollInterval);
+  
+              // Update status di modal
+              updateGlobalModalStatus(modal, current, total, channelUsername);
+  
+              resolve(data.result.is_subscribed || false);
+              return;
+            }
+          }
+  
+          if (attempts >= maxAttempts) {
+            clearInterval(pollInterval);
+            resolve(false);
+          }
+  
+        } catch (error) {
+          console.error('Polling error:', error);
+          if (attempts >= maxAttempts) {
+            clearInterval(pollInterval);
+            resolve(false);
+          }
+        }
+      }, 1500);
+    });
+  }
+  
+  // ==================== FUNGSI UPDATE CHANNEL SELECTORS ====================
+  function updateChannelSelectors(channelStatuses) {
+    // Update selector di panel channel
+    document.querySelectorAll('.channel-item').forEach(item => {
+      const channelUrl = item.dataset.url;
+      if (channelUrl) {
+        const username = channelUrl.replace('https://t.me/', '');
+  
+        if (channelStatuses[username] === true) {
+          const selector = item.querySelector('.item-selector');
+          if (selector) {
+            selector.classList.add('selected');
+          }
+        }
+      }
+    });
+  }
+  
+  // ==================== FUNGSI UPDATE LINK SELECTORS ====================
+  function updateLinkSelectors(linkStatuses) {
+    document.querySelectorAll('.link-item').forEach(item => {
+      const linkUrl = item.dataset.url;
+      if (linkUrl && linkStatuses[linkUrl] === true) {
+        const selector = item.querySelector('.item-selector');
+        if (selector) {
+          selector.classList.add('selected');
+        }
+      }
+    });
+  }
 
   // ==================== INIT UTAMA ====================
   async function init() {
