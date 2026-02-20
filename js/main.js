@@ -977,10 +977,6 @@
           <div class="giveaway-detail-container">
               <!-- HEADER dengan tombol back dan badge ENDED (untuk ended giveaway) -->
               <div class="detail-header">
-                  <div class="logo-box" style="background: transparent; border: none; box-shadow: none; padding: 8px 0;">
-                      <img src="img/logo.png" class="logo-img" alt="logo" onerror="this.style.display='none'">
-                      <span class="logo-text">GIFT FREEBIES</span>
-                  </div>
                   <div class="detail-header-right">
                       ${isEnded ? `<span class="detail-ended-badge">ENDED</span>` : ''}
                       ${isEnded && participants.length > 0 ? `
