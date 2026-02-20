@@ -1450,7 +1450,7 @@ def get_user_participation_history(user_id):
 
 @app.route('/api/check-subscription', methods=['POST'])
 def check_subscription():
-    """Memeriksa apakah user subscribe ke channel/group menggunakan mekanisme yang sama seperti fetch channel"""
+    """Memeriksa apakah user subscribe ke channel/group secara LANGSUNG ke Telegram"""
     try:
         data = request.json
         user_id = data.get('user_id')
@@ -1465,33 +1465,8 @@ def check_subscription():
         clean_username = channel_username.replace('@', '').strip().lower()
         log_info(f"🔍 Checking subscription for user {user_id} to @{clean_username}")
         
-        # Cek dulu di database apakah ada data chat
-        current_db = get_db()
-        cursor = current_db.get_cursor()
-        cursor.execute("SELECT * FROM chatid_data WHERE LOWER(chat_username) = ?", (clean_username,))
-        chat_data = cursor.fetchone()
-        
-        # Jika tidak ada data chat, trigger sync dulu
-        if not chat_data:
-            log_info(f"📡 Chat data for @{clean_username} not found, triggering sync...")
-            
-            # Buat file request untuk bot
-            request_file = f"/tmp/check_sub_sync_{clean_username}.request"
-            with open(request_file, 'w') as f:
-                f.write(clean_username)
-            
-            # Tunggu sebentar untuk sync (async)
-            return jsonify({
-                'success': False,
-                'requires_sync': True,
-                'message': f'Data untuk @{clean_username} belum tersedia. Memulai sinkronisasi...',
-                'channel_username': clean_username
-            }), 202
-        
-        # Jika ada data chat, langsung cek keanggotaan
-        # Buat file request untuk cek subscription
+        # LANGSUNG buat request ke bot, tanpa cek database dulu
         import json
-        import time
         import os
         
         request_data = {
@@ -1504,51 +1479,13 @@ def check_subscription():
         with open(request_file, 'w') as f:
             f.write(json.dumps(request_data))
         
-        # Tunggu response (timeout 10 detik)
-        max_wait = 10
-        waited = 0
-        
-        while waited < max_wait:
-            result_file = f"/tmp/check_sub_{user_id}_{clean_username}.result"
-            if os.path.exists(result_file):
-                with open(result_file, 'r') as f:
-                    result = json.loads(f.read())
-                
-                # Hapus file result
-                try:
-                    os.remove(result_file)
-                except:
-                    pass
-                
-                # Hapus file request
-                try:
-                    os.remove(request_file)
-                except:
-                    pass
-                
-                # Dapatkan informasi tambahan dari database
-                if result.get('is_subscribed'):
-                    # Ambil data channel untuk ditampilkan
-                    channel_info = {
-                        'chat_id': chat_data['chat_id'] if chat_data else None,
-                        'title': chat_data['chat_title'] if chat_data else clean_username,
-                        'username': clean_username,
-                        'type': chat_data['chat_type'] if chat_data else 'channel',
-                        'is_verified': chat_data['is_verified'] if chat_data else False
-                    }
-                    result['channel_info'] = channel_info
-                
-                return jsonify(result)
-            
-            time.sleep(0.5)
-            waited += 0.5
-        
-        # Timeout
+        # Langsung return 202, client akan polling
         return jsonify({
             'success': False,
-            'is_subscribed': False,
-            'error': 'Timeout checking subscription'
-        }), 408
+            'requires_check': True,
+            'message': f'Memeriksa keanggotaan di @{clean_username}...',
+            'channel_username': clean_username
+        }), 202
         
     except Exception as e:
         log_error(f"Error checking subscription: {e}")
