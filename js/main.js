@@ -428,16 +428,12 @@
       } else if (type === 'ended') {
         // Hanya tampilkan yang sudah expired atau status ended
         if (isExpired || giveaway.status === 'ended') {
-          const winners = giveaway.winners_count || 0;
+          // HAPUS BARIS INI: const winners = giveaway.winners_count || 0;
       
-          // Untuk ended giveaway: tambahkan class ended dan garis bawah L
           html += `
             <div class="giveaway-item ended" data-id="${giveawayId}">
               <h3>${escapeHtml(prizeText)}</h3>
-              <!-- Deskripsi dengan background gelap dan 2 baris -->
-              <div class="ended-description-container">
-                <p class="ended-description">${escapeHtml(description)}</p>
-              </div>
+              <!-- TANPA DESKRIPSI - hanya hadiah dan partisipasi -->
               <div class="ended-stats-wrapper">
                 <div class="ended-stats-left">
                   <div class="ended-stat-item">
@@ -449,18 +445,13 @@
                     <span class="ended-stat-icon">👥</span>
                     <span class="ended-stat-value">${participants}</span>
                   </div>
-                  <div class="ended-stat-divider"></div>
-                  <div class="ended-stat-item">
-                    <span class="ended-stat-icon">🏆</span>
-                    <span class="ended-stat-value">${winners}</span>
-                  </div>
+                  <!-- HAPUS DIVIDER DAN STAT PEMENANG -->
                 </div>
                 <div class="ended-badge-container">
                   <span class="ended-badge">SELESAI</span>
                 </div>
               </div>
-              <!-- Garis bawah L -->
-              <div class="ended-border-line"></div>
+              <!-- HAPUS GARIS L (ended-border-line) -->
             </div>
           `;
         }
