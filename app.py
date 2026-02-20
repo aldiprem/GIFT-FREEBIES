@@ -827,6 +827,7 @@ def get_giveaway(giveaway_id):
     """Get giveaway by ID"""
     try:
         current_db = get_db()
+        log_info(f"🔍 Fetching giveaway: {giveaway_id}")
         giveaway = current_db.get_giveaway(giveaway_id)
         
         if giveaway:
@@ -842,11 +843,14 @@ def get_giveaway(giveaway_id):
             if 'participants_count' not in giveaway:
                 giveaway['participants_count'] = 0
             
+            log_info(f"✅ Giveaway found: {giveaway_id}, participants: {giveaway['participants_count']}")
+            
             return jsonify({
                 'success': True,
                 'giveaway': giveaway
             })
         else:
+            log_info(f"❌ Giveaway not found: {giveaway_id}")
             return jsonify({
                 'success': False,
                 'error': 'Giveaway not found'
@@ -1622,6 +1626,111 @@ def check_subscription_status(channel_username, user_id):
         
     except Exception as e:
         log_error(f"Error checking subscription status: {e}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+@giveaways_bp.route('/<giveaway_id>/participate', methods=['POST'])
+def participate_giveaway(giveaway_id):
+    """Menyimpan partisipasi user ke giveaway"""
+    try:
+        current_db = get_db()
+        data = request.json
+        log_info(f"📝 Participation request for giveaway {giveaway_id}: {data}")
+        
+        # Validasi data
+        required_fields = ['user_id', 'fullname']
+        for field in required_fields:
+            if field not in data:
+                return jsonify({
+                    'success': False,
+                    'error': f'Field {field} is required'
+                }), 400
+        
+        # Cek apakah giveaway ada
+        giveaway = current_db.get_giveaway(giveaway_id)
+        if not giveaway:
+            return jsonify({
+                'success': False,
+                'error': 'Giveaway not found'
+            }), 404
+        
+        # Cek apakah giveaway masih active
+        if giveaway['status'] != 'active':
+            return jsonify({
+                'success': False,
+                'error': 'Giveaway sudah berakhir'
+            }), 400
+        
+        # Cek apakah user sudah pernah berpartisipasi
+        cursor = current_db.get_cursor()
+        cursor.execute("""
+            SELECT COUNT(*) as count FROM participants 
+            WHERE giveaway_id = ? AND user_id = ?
+        """, (giveaway_id, data['user_id']))
+        
+        result = cursor.fetchone()
+        if result and result['count'] > 0:
+            cursor.close()
+            return jsonify({
+                'success': False,
+                'error': 'Anda sudah pernah berpartisipasi'
+            }), 400
+        
+        # Simpan user jika belum ada
+        current_db.add_user(
+            user_id=data['user_id'],
+            fullname=data['fullname'],
+            username=data.get('username'),
+            is_premium=data.get('is_premium', 0)
+        )
+        
+        # Simpan partisipasi
+        now = get_jakarta_time()
+        cursor.execute("""
+            INSERT INTO participants (giveaway_id, user_id, joined_at)
+            VALUES (?, ?, ?)
+        """, (
+            giveaway_id,
+            data['user_id'],
+            now
+        ))
+        
+        # Update total_participations di tabel users
+        cursor.execute("""
+            UPDATE users 
+            SET total_participations = total_participations + 1,
+                updated_at = ?
+            WHERE user_id = ?
+        """, (now, data['user_id']))
+        
+        # Update participants_count di tabel giveaways
+        cursor.execute("""
+            UPDATE giveaways 
+            SET participants_count = participants_count + 1,
+                updated_at = ?
+            WHERE giveaway_id = ?
+        """, (now, giveaway_id))
+        
+        current_db.conn.commit()
+        cursor.close()
+        
+        log_info(f"✅ Participation saved for user {data['user_id']} in giveaway {giveaway_id}")
+        
+        return jsonify({
+            'success': True,
+            'message': 'Berhasil berpartisipasi',
+            'participant': {
+                'user_id': data['user_id'],
+                'fullname': data['fullname'],
+                'username': data.get('username'),
+                'participated_at': now
+            }
+        }), 201
+        
+    except Exception as e:
+        log_error(f"Error in participate_giveaway: {e}")
         return jsonify({
             'success': False,
             'error': str(e)
