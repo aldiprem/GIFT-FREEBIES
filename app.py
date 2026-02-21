@@ -2218,6 +2218,128 @@ def notify_winners(giveaway_id):
             'error': str(e)
         }), 500
 
+# ==================== ENDPOINT UNTUK GET ACTIVE PARTICIPATIONS ====================
+@users_bp.route('/<int:user_id>/active-participations', methods=['GET'])
+def get_user_active_participations(user_id):
+    """Mendapatkan jumlah giveaway aktif yang sedang diikuti user"""
+    try:
+        current_db = get_db()
+        
+        cursor = current_db.get_cursor()
+        cursor.execute("""
+            SELECT COUNT(*) as count
+            FROM participants p
+            JOIN giveaways g ON p.giveaway_id = g.giveaway_id
+            WHERE p.user_id = ? AND g.status = 'active'
+        """, (user_id,))
+        
+        result = cursor.fetchone()
+        cursor.close()
+        
+        return jsonify({
+            'success': True,
+            'user_id': user_id,
+            'count': result['count'] if result else 0
+        })
+        
+    except Exception as e:
+        log_error(f"Error getting active participations: {e}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+# ==================== ENDPOINT UNTUK GET GIVEAWAY LIST BY TYPE ====================
+@giveaways_bp.route('/list', methods=['GET'])
+def get_giveaways_by_type():
+    """Mendapatkan list giveaway berdasarkan tipe"""
+    try:
+        current_db = get_db()
+        giveaway_type = request.args.get('type', 'all')
+        user_id = request.args.get('user_id', type=int)
+        
+        if not user_id:
+            return jsonify({
+                'success': False,
+                'error': 'user_id is required'
+            }), 400
+        
+        cursor = current_db.get_cursor()
+        
+        if giveaway_type == 'created':
+            # Giveaway yang dibuat user
+            cursor.execute("""
+                SELECT * FROM giveaways
+                WHERE creator_user_id = ?
+                ORDER BY created_at DESC
+                LIMIT 50
+            """, (user_id,))
+            
+        elif giveaway_type == 'active-participated':
+            # Giveaway aktif yang diikuti
+            cursor.execute("""
+                SELECT g.* FROM giveaways g
+                JOIN participants p ON g.giveaway_id = p.giveaway_id
+                WHERE p.user_id = ? AND g.status = 'active'
+                ORDER BY p.joined_at DESC
+                LIMIT 50
+            """, (user_id,))
+            
+        elif giveaway_type == 'all-participated':
+            # Semua partisipasi (termasuk yang sudah selesai)
+            cursor.execute("""
+                SELECT g.* FROM giveaways g
+                JOIN participants p ON g.giveaway_id = p.giveaway_id
+                WHERE p.user_id = ?
+                ORDER BY p.joined_at DESC
+                LIMIT 50
+            """, (user_id,))
+            
+        elif giveaway_type == 'won':
+            # Giveaway yang dimenangkan
+            cursor.execute("""
+                SELECT g.* FROM giveaways g
+                JOIN winners w ON g.giveaway_id = w.giveaway_id
+                WHERE w.user_id = ?
+                ORDER BY w.announced_at DESC
+                LIMIT 50
+            """, (user_id,))
+            
+        else:
+            return jsonify({
+                'success': False,
+                'error': 'Invalid type'
+            }), 400
+        
+        giveaways = cursor.fetchall()
+        cursor.close()
+        
+        # Format hasil
+        result = []
+        for g in giveaways:
+            result.append({
+                'giveaway_id': g['giveaway_id'],
+                'prizes': json.loads(g['prizes']) if g['prizes'] else [],
+                'status': g['status'],
+                'end_date': g['end_date'],
+                'created_at': g['created_at']
+            })
+        
+        return jsonify({
+            'success': True,
+            'type': giveaway_type,
+            'user_id': user_id,
+            'count': len(result),
+            'giveaways': result
+        })
+        
+    except Exception as e:
+        log_error(f"Error getting giveaways by type: {e}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
 # Register all blueprints
 app.register_blueprint(users_bp)
 app.register_blueprint(giveaways_bp)
