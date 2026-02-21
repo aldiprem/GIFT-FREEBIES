@@ -287,9 +287,9 @@ def update_expired_giveaways():
                                 import os
                                 
                                 # Ambil semua pesan giveaway yang sudah dikirim
-                               
                                 messages = current_db.get_giveaway_messages(giveaway_id)
-                                 notify_request = {
+                                
+                                notify_request = {
                                     'giveaway_id': giveaway_id,
                                     'messages': messages,
                                     'winners': selected_winners,
