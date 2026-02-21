@@ -2545,6 +2545,10 @@
             is_premium: currentUser.is_premium || false
           }));
   
+          // Simpan return URL
+          sessionStorage.setItem('captcha_return_url', window.location.href);
+          sessionStorage.setItem('captcha_giveaway_id', giveaway.giveaway_id);
+  
           // Buka halaman captcha
           window.location.href = 'captcha.html';
           return; // Hentikan eksekusi, akan lanjut setelah captcha selesai
