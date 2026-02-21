@@ -13,6 +13,7 @@
   const API_BASE_URL = 'https://individually-threaded-jokes-letting.trycloudflare.com';
 
   // ==================== DOM ELEMENTS ====================
+  // ==================== DOM ELEMENTS ====================
   const elements = {
     loading: document.getElementById('loading'),
     error: document.getElementById('error'),
@@ -23,7 +24,7 @@
     profileUsernameDisplay: document.getElementById('profileUsernameDisplay'),
     profileIdDisplay: document.getElementById('profileIdDisplay'),
     totalCreate: document.getElementById('totalCreate'),
-    languageCode: document.getElementById('languageCode'),
+    activeParticipations: document.getElementById('activeParticipations'), // TAMBAHKAN INI
     participations: document.getElementById('participations'),
     wins: document.getElementById('wins'),
     settingsBtn: document.getElementById('settingsBtn'),
@@ -1848,6 +1849,7 @@
     }
   }
 
+      // ==================== FUNGSI UPDATE UI (SUDAH BENAR) ====================
     async function updateUI(user) {
       // Simpan user ke currentUser
       currentUser = user;
@@ -1861,17 +1863,24 @@
       if (elements.profileUsernameDisplay) elements.profileUsernameDisplay.textContent = username;
       if (elements.profileIdDisplay) elements.profileIdDisplay.textContent = `ID: ${userId}`;
     
-      const totalCreate = await fetchUserGiveawayCount(userId);
+      // FETCH SEMUA DATA STATISTIK
+      const [totalCreate, activeParticipations, totalParticipations, totalWins] = await Promise.all([
+              fetchUserGiveawayCount(userId),
+              fetchUserActiveParticipations(userId),
+              Promise.resolve(user.total_participations || 0),
+              Promise.resolve(user.total_wins || 0)
+          ]);
     
+      // Simpan ke variabel global
+      currentActiveParticipations = activeParticipations;
+    
+      // Update UI
       if (elements.totalCreate) elements.totalCreate.textContent = totalCreate;
-      if (elements.languageCode) elements.languageCode.textContent = (user.language_code || 'id').toUpperCase();
-    
-      // Pastikan total_participations terbaca
-      const participations = user.total_participations || 0;
-      if (elements.participations) elements.participations.textContent = participations;
-    
-      const wins = user.total_wins || 0;
-      if (elements.wins) elements.wins.textContent = wins;
+      if (elements.activeParticipations) {
+        elements.activeParticipations.textContent = activeParticipations;
+      }
+      if (elements.participations) elements.participations.textContent = totalParticipations;
+      if (elements.wins) elements.wins.textContent = totalWins;
     
       if (elements.profilePhoto) {
         elements.profilePhoto.src = user.photo_url || generateAvatarUrl(fullName);
@@ -1880,7 +1889,7 @@
       addPremiumIndicator(isPremium);
       showProfile();
     }
-  
+    
     /**
      * Menerapkan tema Telegram ke CSS variables
      */
@@ -2806,30 +2815,10 @@
       existingModal.remove();
     }
   
-    globalModal = document.createElement('div');
+    // TAMBAHKAN deklarasi let
+    let globalModal = document.createElement('div'); // <-- PASTIKAN ADA 'let'
     globalModal.className = 'global-subscription-modal';
-    globalModal.innerHTML = `
-          <div class="sync-loading-content">
-              <div class="sync-loading-header">
-                  <div class="sync-loading-title">🔍 Memeriksa Keanggotaan</div>
-                  <div class="sync-loading-spinner"></div>
-              </div>
-              <div class="sync-loading-body">
-                  <div class="progress-info">
-                      <span class="progress-current" id="globalProgressCurrent">0</span>
-                      <span class="progress-separator">/</span>
-                      <span class="progress-total" id="globalProgressTotal">${totalChannels}</span>
-                  </div>
-                  <div class="sync-progress-bar">
-                      <div class="sync-progress-fill" id="globalProgressFill" style="width: 0%"></div>
-                  </div>
-                  <div class="current-channel" id="globalCurrentChannel">
-                      Memulai pengecekan...
-                  </div>
-                  <div class="sync-status" id="globalStatus">Memeriksa channel 1 dari ${totalChannels}</div>
-              </div>
-          </div>
-      `;
+    globalModal.innerHTML = `...`;
   
     document.body.appendChild(globalModal);
   
@@ -3132,52 +3121,6 @@
       });
     });
   }
-  
-  // ==================== FUNGSI UPDATE UI (MODIFIED) ====================
-  async function updateUI(user) {
-    // Simpan user ke currentUser
-    currentUser = user;
-  
-    const fullName = user.fullname || [user.first_name, user.last_name].filter(Boolean).join(' ') || 'No Name';
-    const username = user.username ? (user.username.startsWith('@') ? user.username : `@${user.username}`) : '(no username)';
-    const isPremium = user.is_premium || false;
-    const userId = user.user_id || user.id || '-';
-  
-    if (elements.profileNameDisplay) elements.profileNameDisplay.textContent = fullName;
-    if (elements.profileUsernameDisplay) elements.profileUsernameDisplay.textContent = username;
-    if (elements.profileIdDisplay) elements.profileIdDisplay.textContent = `ID: ${userId}`;
-  
-    // FETCH SEMUA DATA STATISTIK
-    const [totalCreate, activeParticipations, totalParticipations, totalWins] = await Promise.all([
-          fetchUserGiveawayCount(userId),
-          fetchUserActiveParticipations(userId),
-          Promise.resolve(user.total_participations || 0),
-          Promise.resolve(user.total_wins || 0)
-      ]);
-  
-    // Simpan ke variabel global
-    currentActiveParticipations = activeParticipations;
-  
-    // Update UI
-    if (elements.totalCreate) elements.totalCreate.textContent = totalCreate;
-    if (elements.languageCode) {
-      // Ubah BAHASA menjadi AKTIF
-      const aktifElement = document.getElementById('activeParticipations');
-      if (aktifElement) {
-        aktifElement.textContent = activeParticipations;
-      }
-    }
-  
-    if (elements.participations) elements.participations.textContent = totalParticipations;
-    if (elements.wins) elements.wins.textContent = totalWins;
-  
-    if (elements.profilePhoto) {
-      elements.profilePhoto.src = user.photo_url || generateAvatarUrl(fullName);
-    }
-  
-    addPremiumIndicator(isPremium);
-    showProfile();
-  }
 
   // ==================== INIT UTAMA ====================
   async function init() {
@@ -3343,11 +3286,15 @@
   
       // ==================== MODE PROFIL (TANPA PARAMETER) ====================
       console.log('👤 Mode profil - menampilkan halaman utama');
-  
+      
       // ==================== UPDATE UI PROFIL ====================
       try {
         await updateUI(user);
         console.log('✅ UI profil berhasil diupdate');
+      
+        // TAMBAHKAN INI - Setup stats setelah UI diupdate
+        setupStatsEventListeners();
+      
       } catch (uiError) {
         console.error('❌ Error updating UI:', uiError);
         showError('Gagal menampilkan profil. Silakan refresh halaman.', false);
