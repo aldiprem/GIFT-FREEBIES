@@ -162,8 +162,7 @@ def update_expired_giveaways():
     """Background task untuk mengupdate giveaway yang sudah expired dan memilih pemenang"""
     while True:
         try:
-            # Cek setiap 60 detik
-            time.sleep(60)
+            time.sleep(5)
             
             # Dapatkan koneksi database
             current_db = get_db()
@@ -1827,9 +1826,12 @@ def draw_winners(giveaway_id):
         import json
         import os
         
+        # Ambil semua pesan giveaway yang sudah dikirim
+        messages = current_db.get_giveaway_messages(giveaway_id)
+        
         notify_request = {
             'giveaway_id': giveaway_id,
-            'messages': current_db.get_giveaway_messages(giveaway_id),
+            'messages': messages,
             'winners': selected_winners,
             'participants_count': giveaway.get('participants_count', 0)
         }
