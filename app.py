@@ -162,7 +162,7 @@ def update_expired_giveaways():
     """Background task untuk mengupdate giveaway yang sudah expired dan memilih pemenang"""
     while True:
         try:
-            time.sleep(5)
+            time.sleep(5)  # Cek setiap 5 detik
             
             # Dapatkan koneksi database
             current_db = get_db()
@@ -201,7 +201,7 @@ def update_expired_giveaways():
                     
                     log_info(f"✅ Updated giveaway {giveaway_id} to ended")
                     
-                    # Pilih pemenang secara otomatis - LANGSUNG tanpa memanggil endpoint
+                    # ===== PILIH PEMENANG DAN KIRIM NOTIFIKASI =====
                     try:
                         # Ambil data giveaway
                         g_data = current_db.get_giveaway(giveaway_id)
@@ -227,6 +227,7 @@ def update_expired_giveaways():
                                 
                                 num_winners = len(prizes)
                                 draw_now = get_jakarta_time()
+                                selected_winners = []
                                 
                                 for i in range(min(num_winners, len(participants))):
                                     winner = participants[i]
@@ -252,18 +253,59 @@ def update_expired_giveaways():
                                             updated_at = ?
                                         WHERE user_id = ?
                                     """, (draw_now, winner['user_id']))
+                                    
+                                    # Ambil data user untuk notifikasi
+                                    user_cursor = current_db.get_cursor()
+                                    user_cursor.execute("""
+                                        SELECT user_id, fullname, username
+                                        FROM users WHERE user_id = ?
+                                    """, (winner['user_id'],))
+                                    user_data = user_cursor.fetchone()
+                                    user_cursor.close()
+                                    
+                                    selected_winners.append({
+                                        'user_id': winner['user_id'],
+                                        'fullname': user_data['fullname'] if user_data else 'User',
+                                        'username': user_data['username'] if user_data else None,
+                                        'prize_index': prize_index,
+                                        'prize': prizes[prize_index] if prize_index < len(prizes) else 'Hadiah',
+                                        'win_position': prize_index + 1
+                                    })
                                 
                                 # Update winners_count di giveaways
                                 part_cursor.execute("""
                                     UPDATE giveaways 
                                     SET winners_count = ?, updated_at = ?
                                     WHERE giveaway_id = ?
-                                """, (min(num_winners, len(participants)), draw_now, giveaway_id))
+                                """, (len(selected_winners), draw_now, giveaway_id))
                                 
                                 current_db.conn.commit()
-                                log_info(f"🏆 Winners drawn for {giveaway_id}")
+                                log_info(f"🏆 Winners drawn for {giveaway_id}: {len(selected_winners)} winners")
+                                
+                                # ===== KIRIM NOTIFIKASI KE BOT =====
+                                import json
+                                import os
+                                
+                                # Ambil semua pesan giveaway yang sudah dikirim
+                               
+                                messages = current_db.get_giveaway_messages(giveaway_id)
+                                 notify_request = {
+                                    'giveaway_id': giveaway_id,
+                                    'messages': messages,
+                                    'winners': selected_winners,
+                                    'participants_count': g_data.get('participants_count', 0)
+                                }
+                                
+                                notify_file = f"/tmp/notify_winners_{giveaway_id}.request"
+                                with open(notify_file, 'w') as f:
+                                    f.write(json.dumps(notify_request))
+                                
+                                log_info(f"📤 Winners notification request sent to bot for {giveaway_id}")
+                                # ===== END =====
                             
                             part_cursor.close()
+                        else:
+                            log_info(f"ℹ️ No participants for giveaway {giveaway_id}")
                             
                     except Exception as e:
                         log_error(f"Error drawing winners for {giveaway_id}: {e}")
