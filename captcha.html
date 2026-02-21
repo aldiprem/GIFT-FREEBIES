@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>3D Glossy · Putar Gambar CAPTCHA</title>
+    <link rel="stylesheet" href="css/captcha.css">
+</head>
+<body>
+    <div class="captcha-card">
+        <!-- Tugas acak -->
+        <div class="task-container">
+            <div class="task-text" id="taskDescription">
+                <span>Putar gambar ke </span>
+                <span class="task-highlight" id="targetDegree">0°</span>
+            </div>
+        </div>
+
+        <!-- Area gambar yang bisa diputar dengan slider -->
+        <div class="image-rotation-area">
+            <div class="rotatable-image-container">
+                <div class="rotatable-image" id="rotatableImage" unselectable="on" onselectstart="return false;" onmousedown="return false;">
+                    🏝️
+                </div>
+            </div>
+            
+            <div class="rotation-control">
+                <input type="range" id="rotationSlider" class="rotation-slider" min="0" max="360" value="0" step="1">
+                <div class="degree-indicator" id="degreeDisplay">0°</div>
+            </div>
+            <div class="hint-small">geser slider atau seret gambar untuk memutar</div>
+        </div>
+
+        <!-- Tombol verifikasi & reset -->
+        <div class="action-buttons">
+            <button class="verify-btn" id="verifyBtn">✓ VERIFIKASI</button>
+            <button class="reset-btn" id="resetBtn">↻ RESET</button>
+        </div>
+
+        <div class="glass-corner">image rotation · 3d glossy</div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast">🌀 putar ke sudut yang benar</div>
+
+    <script src="js/captcha.js"></script>
+</body>
+</html>
