@@ -127,7 +127,44 @@
     div.textContent = text;
     return div.innerHTML;
   }
+
+  // ==================== FUNGSI CEK CAPTCHA ====================
+  function checkCaptchaRequirement(giveaway) {
+    // Cek apakah giveaway memiliki syarat captcha
+    // Anda perlu menambahkan field captcha_enabled di database
+    return giveaway.captcha_enabled === true || giveaway.captcha_enabled === 1;
+  }
   
+  function openCaptcha(giveawayId) {
+    return new Promise((resolve, reject) => {
+      // Simpan current URL untuk kembali nanti
+      sessionStorage.setItem('captcha_return_url', window.location.href);
+      sessionStorage.setItem('captcha_giveaway_id', giveawayId);
+  
+      // Buka halaman captcha
+      window.location.href = 'captcha.html';
+  
+      // Resolve akan dipanggil saat kembali dari captcha
+      // Kita akan handle di halaman captcha
+    });
+  }
+  
+  // Fungsi untuk mengecek status captcha dari sessionStorage
+  function isCaptchaPassed(giveawayId) {
+    const passed = sessionStorage.getItem(`captcha_passed_${giveawayId}`);
+    return passed === 'true';
+  }
+  
+  // Fungsi untuk menandai captcha sudah selesai
+  function markCaptchaPassed(giveawayId) {
+    sessionStorage.setItem(`captcha_passed_${giveawayId}`, 'true');
+  }
+  
+  // Fungsi untuk membersihkan status captcha
+  function clearCaptchaStatus(giveawayId) {
+    sessionStorage.removeItem(`captcha_passed_${giveawayId}`);
+  }
+
   /**
    * Show toast notification
    */
@@ -2478,61 +2515,90 @@
     });
   }
   
-  // ==================== FUNGSI HANDLE PARTICIPATE ====================
+  // ==================== FUNGSI HANDLE PARTICIPATE (DENGAN CAPTCHA) ====================
   async function handleParticipate(giveaway) {
     try {
       vibrate(15);
-      
+  
       if (!currentUser) {
         showToast('Silakan login terlebih dahulu', 'warning', 2000);
         return;
       }
-      
+  
       console.log('🎯 Processing participation for giveaway:', giveaway.giveaway_id);
       console.log('👤 Current user:', currentUser);
-      
+  
+      // ===== CEK CAPTCHA =====
+      if (checkCaptchaRequirement(giveaway)) {
+        console.log('🔒 Captcha required for this giveaway');
+  
+        // Cek apakah sudah pernah menyelesaikan captcha untuk giveaway ini
+        if (!isCaptchaPassed(giveaway.giveaway_id)) {
+          showToast('🔒 Menyelesaikan captcha terlebih dahulu...', 'info', 2000);
+  
+          // Simpan data giveaway untuk digunakan setelah captcha selesai
+          sessionStorage.setItem('pending_participation', JSON.stringify({
+            giveaway_id: giveaway.giveaway_id,
+            user_id: currentUser.id,
+            fullname: currentUser.fullname || [currentUser.first_name, currentUser.last_name].filter(Boolean).join(' '),
+            username: currentUser.username,
+            is_premium: currentUser.is_premium || false
+          }));
+  
+          // Buka halaman captcha
+          window.location.href = 'captcha.html';
+          return; // Hentikan eksekusi, akan lanjut setelah captcha selesai
+        } else {
+          console.log('✅ Captcha already passed for this giveaway');
+        }
+      }
+  
+      // Lanjutkan pengecekan syarat lainnya
       const requirementCheck = await checkAllRequirements(giveaway, currentUser);
-      
+  
       if (!requirementCheck.passed) {
         showToast('❌ Gagal, Dipastikan anda sudah menekan link syarat!', 'error', 3000);
-        
+  
         setTimeout(() => {
           window.location.reload();
         }, 1000);
-        
+  
         return;
       }
-      
+  
       showToast('Menyimpan partisipasi...', 'info', 1000);
-      
+  
       const result = await saveParticipation(giveaway.giveaway_id, currentUser);
-      
+  
       if (result.success) {
         showToast('✅ Berhasil berpartisipasi!', 'success', 2000);
-        
+  
+        // Bersihkan status captcha setelah berhasil (opsional)
+        clearCaptchaStatus(giveaway.giveaway_id);
+  
         if (elements.participations) {
           const currentCount = parseInt(elements.participations.textContent) || 0;
           elements.participations.textContent = currentCount + 1;
         }
-        
+  
         sessionStorage.removeItem(`shared_${giveaway.giveaway_id}`);
-        
+  
         setTimeout(() => {
           window.location.reload();
         }, 1000);
-        
+  
       } else {
         showToast(result.message || 'Gagal berpartisipasi', 'error', 2000);
-        
+  
         setTimeout(() => {
           window.location.reload();
         }, 1500);
       }
-      
+  
     } catch (error) {
       console.error('Error in handleParticipate:', error);
       showToast(error.message || 'Terjadi kesalahan', 'error', 2000);
-      
+  
       setTimeout(() => {
         window.location.reload();
       }, 1500);
