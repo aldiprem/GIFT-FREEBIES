@@ -282,3 +282,36 @@ body {
     background: rgba(180, 40, 40, 0.95);
     border-color: rgba(255, 100, 100, 0.8);
 }
+
+/* Tombol Kembali */
+.back-button-container {
+  margin-bottom: 20px;
+  text-align: left;
+}
+
+.back-btn {
+  background: rgba(30, 40, 60, 0.6);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 40px;
+  padding: 10px 24px;
+  color: white;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.back-btn:hover {
+  background: rgba(50, 70, 100, 0.8);
+  transform: translateX(-5px);
+  border-color: rgba(255, 255, 255, 0.6);
+}
+
+.back-btn:active {
+  transform: translateX(0);
+}
