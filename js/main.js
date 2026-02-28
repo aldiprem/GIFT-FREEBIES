@@ -10,7 +10,7 @@
   }
 
   // ==================== KONFIGURASI ====================
-  const API_BASE_URL = 'https://individually-threaded-jokes-letting.trycloudflare.com';
+  const API_BASE_URL = 'https://invalid-reader-licenses-large.trycloudflare.com';
 
   // ==================== DOM ELEMENTS ====================
   const elements = {
