@@ -28,7 +28,7 @@
     }
 
     // ==================== KONFIGURASI ====================
-    const API_BASE_URL = 'https://invalid-reader-licenses-large.trycloudflare.com';
+    const API_BASE_URL = 'https://liabilities-trips-veterans-music.trycloudflare.com';
     
     const elements = {
         loading: document.getElementById('loading'),
