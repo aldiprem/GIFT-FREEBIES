@@ -558,568 +558,595 @@
     document.body.removeChild(textarea);
   }
 
-  // ==================== FUNGSI: RENDER GIVEAWAY DETAIL ====================
+  function updateParticipationCount(newCount) {
+      const participantsSpan = document.getElementById('detailParticipantsCount');
+      if (participantsSpan) {
+          participantsSpan.textContent = newCount;
+          // Animasi sedikit
+          participantsSpan.style.transform = 'scale(1.1)';
+          setTimeout(() => {
+              participantsSpan.style.transform = 'scale(1)';
+          }, 200);
+      }
+  }
+  
   async function renderGiveawayDetail(giveaway) {
-    if (elements.profileContent) elements.profileContent.style.display = 'none';
-    if (elements.giveawayButtons) elements.giveawayButtons.style.display = 'none';
-    if (elements.loading) elements.loading.style.display = 'none';
-    if (elements.error) elements.error.style.display = 'none';
-    
-    if (elements.settingsBtn) elements.settingsBtn.style.display = 'none';
-    
-    const topContainer = document.querySelector('.top-container');
-    if (topContainer) topContainer.style.display = 'none';
-  
-    const container = elements.giveawayContent;
-    if (!container) return;
-  
-    let statusClass = 'detail-status';
-    let statusText = giveaway.status || 'Active';
-    const now = new Date();
-    const endDate = giveaway.end_date ? new Date(giveaway.end_date) : null;
-    const isExpired = giveaway.status === 'active' && endDate && now > endDate;
-    
-    if (isExpired || giveaway.status === 'ended') {
-      statusText = 'Ended';
-      statusClass += ' ended';
-    } else if (giveaway.status === 'deleted') {
-      statusText = 'Deleted';
-      statusClass += ' expired';
-    } else {
-      statusText = 'Active';
-      statusClass += ' active';
-    }
-  
-    const isEnded = (giveaway.status === 'ended') || isExpired;
-  
-    let isCreator = false;
-    if (currentUser && giveaway.creator_user_id == currentUser.id) {
-      isCreator = true;
-      console.log('👑 User adalah pembuat giveaway ini');
-    }
-  
-    let hasParticipated = false;
-    if (currentUser && !isEnded) {
-      try {
-        const checkResponse = await fetch(`${API_BASE_URL}/api/giveaways/${giveaway.giveaway_id}/participants`, {
-          headers: { 'Accept': 'application/json' },
-          mode: 'cors'
-        });
-        
-        if (checkResponse.ok) {
-          const participantsData = await checkResponse.json();
-          hasParticipated = participantsData.participants.some(p => p.user_id == currentUser.id);
-          console.log('👤 User has participated:', hasParticipated);
-        }
-      } catch (error) {
-        console.error('Error checking participation:', error);
-      }
-    }
-  
-    const prizes = Array.isArray(giveaway.prizes) ? giveaway.prizes : [];
-    const requirements = Array.isArray(giveaway.requirements) ? giveaway.requirements : [];
-    const channels = Array.isArray(giveaway.channels) ? giveaway.channels : [];
-    const links = Array.isArray(giveaway.links) ? giveaway.links : [];
-  
-    let winners = [];
-    let participants = [];
-    
-    if (isEnded) {
-      try {
-        const winnersResponse = await fetch(`${API_BASE_URL}/api/giveaways/${giveaway.giveaway_id}/winners`, {
-          headers: { 'Accept': 'application/json' },
-          mode: 'cors'
-        });
-        
-        if (winnersResponse.ok) {
-          const winnersData = await winnersResponse.json();
-          winners = winnersData.winners || [];
-          console.log('🏆 Winners loaded:', winners);
-        }
-        
-        const participantsResponse = await fetch(`${API_BASE_URL}/api/giveaways/${giveaway.giveaway_id}/participants`, {
-          headers: { 'Accept': 'application/json' },
-          mode: 'cors'
-        });
-        
-        if (participantsResponse.ok) {
-          const participantsData = await participantsResponse.json();
-          participants = participantsData.participants || [];
-          console.log('👥 Participants loaded:', participants);
-        }
-        
-      } catch (error) {
-        console.error('❌ Error fetching winners/participants:', error);
-      }
-    }
-  
-    let reqHtml = '';
-    if (requirements.length === 0) {
-      reqHtml = '<div class="requirement-item">Tidak ada syarat khusus</div>';
-    } else {
-      requirements.forEach(req => {
-        let label = req;
-        if (req === 'subscribe') label = 'Subscribe Channel';
-        else if (req === 'premium') label = 'Akun Premium';
-        else if (req === 'nonpremium') label = 'Akun Non-Premium';
-        else if (req === 'aktif') label = 'Akun Aktif';
-        else if (req === 'share') label = 'Share Postingan';
-        
-        reqHtml += `<div class="requirement-item">${escapeHtml(label)}</div>`;
-      });
-    }
-  
-    let prizesHtml = '';
-    prizes.forEach((prize, index) => {
-      prizesHtml += `
-        <div class="prize-item">
-          <span class="prize-number">${index + 1}</span>
-          <span class="prize-text">${escapeHtml(prize)}</span>
-        </div>
-      `;
-    });
-  
-    let channelsHtml = '';
-    if (channels.length > 0) {
-      channels.forEach(ch => {
-        const channelName = typeof ch === 'string' ? ch : (ch.title || ch.username || 'Channel');
-        const username = typeof ch === 'string' ? ch.replace('@', '') : (ch.username || '').replace('@', '');
-        const isVerified = typeof ch !== 'string' && ch.is_verified;
-        const channelUrl = `https://t.me/${username}`;
-        
-        channelsHtml += `
-          <a href="${channelUrl}" target="_blank" class="panel-item channel-item" data-url="${channelUrl}">
-            <div class="item-info">
-              <div class="item-icon">📢</div>
-              <div class="item-details">
-                <div class="item-title">
-                  ${escapeHtml(channelName)}
-                  ${isVerified ? '<span style="color: #00e676; margin-left: 4px;">✓</span>' : ''}
-                </div>
-                <div class="item-subtitle channel">${username}</div>
-              </div>
-            </div>
-            <div class="item-selector"></div>
-          </a>
-        `;
-      });
-    } else {
-      channelsHtml = '<div class="empty-message">Tidak ada channel</div>';
-    }
-  
-    let linksHtml = '';
-    if (links.length > 0) {
-      links.forEach(link => {
-        const title = link.title || 'Tautan';
-        const url = link.url || '#';
-        linksHtml += `
-          <a href="${escapeHtml(url)}" target="_blank" class="panel-item link-item" data-url="${escapeHtml(url)}">
-            <div class="item-info">
-              <div class="item-icon">🔗</div>
-              <div class="item-details">
-                <div class="item-title">${escapeHtml(title)}</div>
-                <div class="item-subtitle">${escapeHtml(url)}</div>
-              </div>
-            </div>
-            <div class="item-selector"></div>
-          </a>
-        `;
-      });
-    } else {
-      linksHtml = '<div class="empty-message">Tidak ada link</div>';
-    }
-  
-    let mediaHtml = '';
-    if (giveaway.media_path) {
-      if (giveaway.media_type === 'video') {
-        mediaHtml = `
-          <div class="detail-media">
-            <video src="${giveaway.media_path}" class="detail-media-video" controls></video>
-          </div>
-        `;
-      } else {
-        mediaHtml = `
-          <div class="detail-media">
-            <img src="${giveaway.media_path}" class="detail-media-image" alt="Giveaway Media" onerror="this.style.display='none'">
-          </div>
-        `;
-      }
-    }
-  
-    const endDateFormatted = giveaway.end_date ? formatDate(giveaway.end_date) : 'Tidak ditentukan';
-    
-    let timeRemaining = '00:00:00:00';
-    let countdownActive = false;
-    
-    if (!isEnded && giveaway.end_date && giveaway.status === 'active') {
-      const endDateTime = new Date(giveaway.end_date).getTime();
-      const nowTime = new Date().getTime();
-      const diff = endDateTime - nowTime;
+      if (elements.profileContent) elements.profileContent.style.display = 'none';
+      if (elements.giveawayButtons) elements.giveawayButtons.style.display = 'none';
+      if (elements.loading) elements.loading.style.display = 'none';
+      if (elements.error) elements.error.style.display = 'none';
       
-      if (diff > 0) {
-        countdownActive = true;
-        const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-        const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-        const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-        const seconds = Math.floor((diff % (1000 * 60)) / 1000);
-        
-        timeRemaining = `${days.toString().padStart(2, '0')}:${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+      if (elements.settingsBtn) elements.settingsBtn.style.display = 'none';
+      
+      const topContainer = document.querySelector('.top-container');
+      if (topContainer) topContainer.style.display = 'none';
+    
+      const container = elements.giveawayContent;
+      if (!container) return;
+    
+      let statusClass = 'detail-status';
+      let statusText = giveaway.status || 'Active';
+      const now = new Date();
+      const endDate = giveaway.end_date ? new Date(giveaway.end_date) : null;
+      const isExpired = giveaway.status === 'active' && endDate && now > endDate;
+      
+      if (isExpired || giveaway.status === 'ended') {
+        statusText = 'Ended';
+        statusClass += ' ended';
+      } else if (giveaway.status === 'deleted') {
+        statusText = 'Deleted';
+        statusClass += ' expired';
+      } else {
+        statusText = 'Active';
+        statusClass += ' active';
       }
-    }
-  
-    function getInitials(name) {
-      if (!name) return 'U';
-      return name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
-    }
-  
-    function getUserColor(userId) {
-      const colors = [
-        '#FF6B6B', '#4ECDC4', '#FFD166', '#A06CD5', '#F7B731',
-        '#45AAF2', '#FC5C65', '#26DE81', '#A55EEA', '#FF9F1C'
-      ];
-      return colors[Math.abs(userId) % colors.length];
-    }
-  
-    let winnersHtml = '';
-    if (isEnded && winners.length > 0) {
-      const displayWinners = winners.slice(0, 2);
-      const hasMoreWinners = winners.length > 2;
-  
-      const getPrizeColorClass = (prizeIndex) => {
-        if (prizeIndex === 0) return 'prize-gold';
-        if (prizeIndex === 1) return 'prize-silver';
-        if (prizeIndex === 2) return 'prize-bronze';
-        return 'prize-default';
-      };
-  
-      winnersHtml = `
-        <div class="winners-border-container">
-          <div class="winners-list-compact">
-      `;
-  
-      displayWinners.forEach((winner, index) => {
-        const fullName = [winner.first_name, winner.last_name].filter(Boolean).join(' ') || winner.fullname || 'User';
-        const username = winner.username ? `@${winner.username}` : '(no username)';
-        const prizeIndex = winner.prize_index !== undefined ? winner.prize_index : index;
-        const prizeName = winner.prize || (prizes[prizeIndex] || `Hadiah ${prizeIndex + 1}`);
-        const bgColor = getUserColor(winner.id || winner.user_id);
-        const prizeColorClass = getPrizeColorClass(prizeIndex);
-  
-        winnersHtml += `
-          <div class="winner-compact-item">
-            <div class="winner-compact-left">
-              <div class="winner-compact-avatar" style="background: ${bgColor};">
-                ${winner.photo_url ? 
-                  `<img src="${winner.photo_url}" alt="${fullName}" class="winner-compact-avatar-img">` : 
-                  `<span class="winner-compact-initials">${getInitials(fullName)}</span>`
-                }
-              </div>
-              <div class="winner-compact-info">
-                <div class="winner-compact-name">${escapeHtml(fullName)}</div>
-                <div class="winner-compact-username">${escapeHtml(username)}</div>
-                <div class="winner-prize-name ${prizeColorClass}">${escapeHtml(prizeName)}</div>
-              </div>
-            </div>
+    
+      const isEnded = (giveaway.status === 'ended') || isExpired;
+    
+      let isCreator = false;
+      if (currentUser && giveaway.creator_user_id == currentUser.id) {
+        isCreator = true;
+        console.log('👑 User adalah pembuat giveaway ini');
+      }
+    
+      let hasParticipated = false;
+      if (currentUser && !isEnded) {
+        try {
+          const checkResponse = await fetch(`${API_BASE_URL}/api/giveaways/${giveaway.giveaway_id}/participants`, {
+            headers: { 'Accept': 'application/json' },
+            mode: 'cors'
+          });
+          
+          if (checkResponse.ok) {
+            const participantsData = await checkResponse.json();
+            hasParticipated = participantsData.participants.some(p => p.user_id == currentUser.id);
+            console.log('👤 User has participated:', hasParticipated);
+          }
+        } catch (error) {
+          console.error('Error checking participation:', error);
+        }
+      }
+    
+      const prizes = Array.isArray(giveaway.prizes) ? giveaway.prizes : [];
+      const requirements = Array.isArray(giveaway.requirements) ? giveaway.requirements : [];
+      const channels = Array.isArray(giveaway.channels) ? giveaway.channels : [];
+      const links = Array.isArray(giveaway.links) ? giveaway.links : [];
+      const totalPrizes = prizes.length;
+      const participantsCount = giveaway.participants_count || 0;
+    
+      let winners = [];
+      let participants = [];
+      
+      if (isEnded) {
+        try {
+          const winnersResponse = await fetch(`${API_BASE_URL}/api/giveaways/${giveaway.giveaway_id}/winners`, {
+            headers: { 'Accept': 'application/json' },
+            mode: 'cors'
+          });
+          
+          if (winnersResponse.ok) {
+            const winnersData = await winnersResponse.json();
+            winners = winnersData.winners || [];
+            console.log('🏆 Winners loaded:', winners);
+          }
+          
+          const participantsResponse = await fetch(`${API_BASE_URL}/api/giveaways/${giveaway.giveaway_id}/participants`, {
+            headers: { 'Accept': 'application/json' },
+            mode: 'cors'
+          });
+          
+          if (participantsResponse.ok) {
+            const participantsData = await participantsResponse.json();
+            participants = participantsData.participants || [];
+            console.log('👥 Participants loaded:', participants);
+          }
+          
+        } catch (error) {
+          console.error('❌ Error fetching winners/participants:', error);
+        }
+      }
+    
+      let reqHtml = '';
+      if (requirements.length === 0) {
+        reqHtml = '<div class="requirement-item">Tidak ada syarat khusus</div>';
+      } else {
+        requirements.forEach(req => {
+          let label = req;
+          if (req === 'subscribe') label = 'Subscribe Channel';
+          else if (req === 'premium') label = 'Akun Premium';
+          else if (req === 'nonpremium') label = 'Akun Non-Premium';
+          else if (req === 'aktif') label = 'Akun Aktif';
+          else if (req === 'share') label = 'Share Postingan';
+          
+          reqHtml += `<div class="requirement-item">${escapeHtml(label)}</div>`;
+        });
+      }
+    
+      let prizesHtml = '';
+      prizes.forEach((prize, index) => {
+        prizesHtml += `
+          <div class="prize-item">
+            <span class="prize-number">${index + 1}</span>
+            <span class="prize-text">${escapeHtml(prize)}</span>
           </div>
         `;
       });
-  
-      winnersHtml += `</div>`;
-  
-      if (hasMoreWinners) {
-        winnersHtml += `
-          <button class="winners-expand-btn" id="expandWinnersBtn">
-            <span>Tampilkan Semua (${winners.length})</span>
-            <span class="expand-icon">▼</span>
-          </button>
-        `;
+    
+      let channelsHtml = '';
+      if (channels.length > 0) {
+        channels.forEach(ch => {
+          const channelName = typeof ch === 'string' ? ch : (ch.title || ch.username || 'Channel');
+          const username = typeof ch === 'string' ? ch.replace('@', '') : (ch.username || '').replace('@', '');
+          const isVerified = typeof ch !== 'string' && ch.is_verified;
+          const channelUrl = `https://t.me/${username}`;
+          
+          channelsHtml += `
+            <a href="${channelUrl}" target="_blank" class="panel-item channel-item" data-url="${channelUrl}">
+              <div class="item-info">
+                <div class="item-icon">📢</div>
+                <div class="item-details">
+                  <div class="item-title">
+                    ${escapeHtml(channelName)}
+                    ${isVerified ? '<span style="color: #00e676; margin-left: 4px;">✓</span>' : ''}
+                  </div>
+                  <div class="item-subtitle channel">${username}</div>
+                </div>
+              </div>
+              <div class="item-selector"></div>
+            </a>
+          `;
+        });
+      } else {
+        channelsHtml = '<div class="empty-message">Tidak ada channel</div>';
       }
-  
-      winnersHtml += `</div>`;
-  
-      if (hasMoreWinners) {
-        let allWinnersHtml = '';
-        winners.forEach((winner, index) => {
+    
+      let linksHtml = '';
+      if (links.length > 0) {
+        links.forEach(link => {
+          const title = link.title || 'Tautan';
+          const url = link.url || '#';
+          linksHtml += `
+            <a href="${escapeHtml(url)}" target="_blank" class="panel-item link-item" data-url="${escapeHtml(url)}">
+              <div class="item-info">
+                <div class="item-icon">🔗</div>
+                <div class="item-details">
+                  <div class="item-title">${escapeHtml(title)}</div>
+                  <div class="item-subtitle">${escapeHtml(url)}</div>
+                </div>
+              </div>
+              <div class="item-selector"></div>
+            </a>
+          `;
+        });
+      } else {
+        linksHtml = '<div class="empty-message">Tidak ada link</div>';
+      }
+    
+      let mediaHtml = '';
+      if (giveaway.media_path) {
+        if (giveaway.media_type === 'video') {
+          mediaHtml = `
+            <div class="detail-media">
+              <video src="${giveaway.media_path}" class="detail-media-video" controls></video>
+            </div>
+          `;
+        } else {
+          mediaHtml = `
+            <div class="detail-media">
+              <img src="${giveaway.media_path}" class="detail-media-image" alt="Giveaway Media" onerror="this.style.display='none'">
+            </div>
+          `;
+        }
+      }
+    
+      const endDateFormatted = giveaway.end_date ? formatDate(giveaway.end_date) : 'Tidak ditentukan';
+      
+      let timeRemaining = '00:00:00:00';
+      let countdownActive = false;
+      
+      if (!isEnded && giveaway.end_date && giveaway.status === 'active') {
+        const endDateTime = new Date(giveaway.end_date).getTime();
+        const nowTime = new Date().getTime();
+        const diff = endDateTime - nowTime;
+        
+        if (diff > 0) {
+          countdownActive = true;
+          const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+          const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+          const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+          const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+          
+          timeRemaining = `${days.toString().padStart(2, '0')}:${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        }
+      }
+    
+      function getInitials(name) {
+        if (!name) return 'U';
+        return name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+      }
+    
+      function getUserColor(userId) {
+        const colors = [
+          '#FF6B6B', '#4ECDC4', '#FFD166', '#A06CD5', '#F7B731',
+          '#45AAF2', '#FC5C65', '#26DE81', '#A55EEA', '#FF9F1C'
+        ];
+        return colors[Math.abs(userId) % colors.length];
+      }
+    
+      let winnersHtml = '';
+      if (isEnded && winners.length > 0) {
+        const displayWinners = winners.slice(0, 2);
+        const hasMoreWinners = winners.length > 2;
+    
+        const getPrizeColorClass = (prizeIndex) => {
+          if (prizeIndex === 0) return 'prize-gold';
+          if (prizeIndex === 1) return 'prize-silver';
+          if (prizeIndex === 2) return 'prize-bronze';
+          return 'prize-default';
+        };
+    
+        winnersHtml = `
+          <div class="winners-border-container">
+            <div class="winners-list-compact">
+        `;
+    
+        displayWinners.forEach((winner, index) => {
           const fullName = [winner.first_name, winner.last_name].filter(Boolean).join(' ') || winner.fullname || 'User';
           const username = winner.username ? `@${winner.username}` : '(no username)';
           const prizeIndex = winner.prize_index !== undefined ? winner.prize_index : index;
           const prizeName = winner.prize || (prizes[prizeIndex] || `Hadiah ${prizeIndex + 1}`);
           const bgColor = getUserColor(winner.id || winner.user_id);
           const prizeColorClass = getPrizeColorClass(prizeIndex);
-  
-          allWinnersHtml += `
-            <div class="winner-modal-item">
-              <div class="winner-modal-left">
-                <div class="winner-modal-avatar" style="background: ${bgColor};">
+    
+          winnersHtml += `
+            <div class="winner-compact-item">
+              <div class="winner-compact-left">
+                <div class="winner-compact-avatar" style="background: ${bgColor};">
                   ${winner.photo_url ? 
-                    `<img src="${winner.photo_url}" alt="${fullName}" class="winner-modal-avatar-img">` : 
-                    `<span class="winner-modal-initials">${getInitials(fullName)}</span>`
+                    `<img src="${winner.photo_url}" alt="${fullName}" class="winner-compact-avatar-img">` : 
+                    `<span class="winner-compact-initials">${getInitials(fullName)}</span>`
                   }
                 </div>
-                <div class="winner-modal-info">
-                  <div class="winner-modal-name">${escapeHtml(fullName)}</div>
-                  <div class="winner-modal-username">${escapeHtml(username)}</div>
-                  <div class="winner-modal-prize-name ${prizeColorClass}">${escapeHtml(prizeName)}</div>
+                <div class="winner-compact-info">
+                  <div class="winner-compact-name">${escapeHtml(fullName)}</div>
+                  <div class="winner-compact-username">${escapeHtml(username)}</div>
+                  <div class="winner-prize-name ${prizeColorClass}">${escapeHtml(prizeName)}</div>
                 </div>
               </div>
             </div>
           `;
         });
-  
-        winnersHtml += `
-          <div class="winners-modal" id="winnersModal">
-            <div class="winners-modal-content">
-              <div class="winners-modal-header">
-                <h3>Semua Pemenang</h3>
-                <button class="winners-modal-close" id="closeWinnersModalBtn">✕</button>
+    
+        winnersHtml += `</div>`;
+    
+        if (hasMoreWinners) {
+          winnersHtml += `
+            <button class="winners-expand-btn" id="expandWinnersBtn">
+              <span>Tampilkan Semua (${winners.length})</span>
+              <span class="expand-icon">▼</span>
+            </button>
+          `;
+        }
+    
+        winnersHtml += `</div>`;
+    
+        if (hasMoreWinners) {
+          let allWinnersHtml = '';
+          winners.forEach((winner, index) => {
+            const fullName = [winner.first_name, winner.last_name].filter(Boolean).join(' ') || winner.fullname || 'User';
+            const username = winner.username ? `@${winner.username}` : '(no username)';
+            const prizeIndex = winner.prize_index !== undefined ? winner.prize_index : index;
+            const prizeName = winner.prize || (prizes[prizeIndex] || `Hadiah ${prizeIndex + 1}`);
+            const bgColor = getUserColor(winner.id || winner.user_id);
+            const prizeColorClass = getPrizeColorClass(prizeIndex);
+    
+            allWinnersHtml += `
+              <div class="winner-modal-item">
+                <div class="winner-modal-left">
+                  <div class="winner-modal-avatar" style="background: ${bgColor};">
+                    ${winner.photo_url ? 
+                      `<img src="${winner.photo_url}" alt="${fullName}" class="winner-modal-avatar-img">` : 
+                      `<span class="winner-modal-initials">${getInitials(fullName)}</span>`
+                    }
+                  </div>
+                  <div class="winner-modal-info">
+                    <div class="winner-modal-name">${escapeHtml(fullName)}</div>
+                    <div class="winner-modal-username">${escapeHtml(username)}</div>
+                    <div class="winner-modal-prize-name ${prizeColorClass}">${escapeHtml(prizeName)}</div>
+                  </div>
+                </div>
               </div>
-              <div class="winners-modal-list">
-                ${allWinnersHtml}
+            `;
+          });
+    
+          winnersHtml += `
+            <div class="winners-modal" id="winnersModal">
+              <div class="winners-modal-content">
+                <div class="winners-modal-header">
+                  <h3>Semua Pemenang</h3>
+                  <button class="winners-modal-close" id="closeWinnersModalBtn">✕</button>
+                </div>
+                <div class="winners-modal-list">
+                  ${allWinnersHtml}
+                </div>
               </div>
             </div>
-          </div>
-        `;
+          `;
+        }
       }
-    }
-  
-    let participantsModalHtml = '';
-    if (isEnded && participants.length > 0) {
-      let participantsListHtml = '';
-      participants.forEach(participant => {
-        const fullName = participant.fullname || 'User';
-        const username = participant.username ? `@${participant.username}` : '(no username)';
-        const bgColor = getUserColor(participant.user_id);
-        
-        participantsListHtml += `
-          <div class="participant-modal-item">
-            <div class="participant-modal-avatar" style="background: ${bgColor};">
-              <span class="participant-modal-initials">${getInitials(fullName)}</span>
-            </div>
-            <div class="participant-modal-info">
-              <div class="participant-modal-name">${escapeHtml(fullName)}</div>
-              <div class="participant-modal-username">${escapeHtml(username)}</div>
-            </div>
-          </div>
-        `;
-      });
-      
-      participantsModalHtml = `
-        <div class="participants-modal" id="participantsModal">
-          <div class="participants-modal-content">
-            <div class="participants-modal-header">
-              <h3>Daftar Partisipan (${participants.length})</h3>
-              <button class="participants-modal-close" id="closeParticipantsModalBtn">✕</button>
-            </div>
-            <div class="participants-modal-list">
-              ${participantsListHtml}
-            </div>
-          </div>
-        </div>
-      `;
-    }
-  
-    let actionButtonsHtml = '';
-    if (!isEnded) {
-      if (hasParticipated) {
-        actionButtonsHtml = `
-          <div class="detail-actions-fixed">
-            <button class="btn btn-participate disabled" id="detailParticipateBtn" disabled>
-              <span>✓</span>
-              <span>MENGIKUTI</span>
-            </button>
-            <button class="btn btn-share" id="detailShareBtn">
-              <span>📤</span>
-              <span>BAGIKAN</span>
-            </button>
-          </div>
-        `;
-      } else {
-        actionButtonsHtml = `
-          <div class="detail-actions-fixed">
-            <button class="btn btn-participate" id="detailParticipateBtn">
-              <span>✓</span>
-              <span>PARTISIPASI</span>
-            </button>
-            <button class="btn btn-share" id="detailShareBtn">
-              <span>📤</span>
-              <span>BAGIKAN</span>
-            </button>
-          </div>
-        `;
-      }
-    }
-  
-    const detailHtml = `
-      <div class="giveaway-detail-container">
-        <div class="detail-header">
-          <div class="logo-box" style="background: transparent; border: none; box-shadow: none; padding: 8px 0;">
-            <img src="img/logo.png" class="logo-img" alt="logo" onerror="this.style.display='none'">
-            <span class="logo-text">GIFT FREEBIES</span>
-          </div>
-          <div class="detail-header-right">
-            ${isCreator && !isEnded ? `
-              <button class="delete-giveaway-btn" id="deleteGiveawayBtn" title="Hapus Giveaway">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M3 6H5H21" stroke="#ff6b6b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                  <path d="M8 6V4C8 3.46957 8.21071 2.96086 8.58579 2.58579C8.96086 2.21071 9.46957 2 10 2H14C14.5304 2 15.0391 2.21071 15.4142 2.58579C15.7893 2.96086 16 3.46957 16 4V6M19 6V20C19 20.5304 18.7893 21.0391 18.4142 21.4142C18.0391 21.7893 17.5304 22 17 22H7C6.46957 22 5.96086 21.7893 5.58579 21.4142C5.21071 21.0391 5 20.5304 5 20V6H19Z" stroke="#ff6b6b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-              </button>
-            ` : ''}
-            ${isEnded ? `<span class="detail-ended-badge">ENDED</span>` : ''}
-            ${isEnded && participants.length > 0 ? `
-              <button class="eye-custom-btn" id="toggleParticipantsBtn" title="Lihat Partisipan">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5z" fill="white"/>
-                  <circle cx="12" cy="12" r="3" fill="white"/>
-                </svg>
-              </button>
-            ` : ''}
-            <button class="detail-back-btn" id="backToIndexBtn">←</button>
-          </div>
-        </div>
-        
-        <div class="detail-card">
-          ${mediaHtml}
+    
+      let participantsModalHtml = '';
+      if (isEnded && participants.length > 0) {
+        let participantsListHtml = '';
+        participants.forEach(participant => {
+          const fullName = participant.fullname || 'User';
+          const username = participant.username ? `@${participant.username}` : '(no username)';
+          const bgColor = getUserColor(participant.user_id);
           
-          <div class="detail-card-content">
-            <div class="${statusClass}">${statusText}</div>
-            
-            ${!isEnded ? `
-            <div class="detail-description">
-              <div class="description-header">
-                <div class="description-title">Deskripsi</div>
-                ${giveaway.giveaway_text && giveaway.giveaway_text.length > 100 ? '<button class="description-expand-btn" id="expandDescriptionBtn">Lihat Lengkap</button>' : ''}
+          participantsListHtml += `
+            <div class="participant-modal-item">
+              <div class="participant-modal-avatar" style="background: ${bgColor};">
+                <span class="participant-modal-initials">${getInitials(fullName)}</span>
               </div>
-              <div class="description-content ${giveaway.giveaway_text && giveaway.giveaway_text.length > 100 ? 'collapsed' : ''}" id="descriptionContent">
-                ${giveaway.giveaway_text || '<em>Tidak ada deskripsi</em>'}
+              <div class="participant-modal-info">
+                <div class="participant-modal-name">${escapeHtml(fullName)}</div>
+                <div class="participant-modal-username">${escapeHtml(username)}</div>
               </div>
             </div>
-            ` : ''}
-            
-            ${!isEnded ? `
-            <div class="detail-prizes">
-              <div class="prizes-header">
-                <div class="prizes-title">Hadiah</div>
-                ${prizes.length > 2 ? '<button class="prizes-expand-btn" id="expandPrizesBtn">Lihat Semua</button>' : ''}
+          `;
+        });
+        
+        participantsModalHtml = `
+          <div class="participants-modal" id="participantsModal">
+            <div class="participants-modal-content">
+              <div class="participants-modal-header">
+                <h3>Daftar Partisipan (${participants.length})</h3>
+                <button class="participants-modal-close" id="closeParticipantsModalBtn">✕</button>
               </div>
-              <div class="prizes-list ${prizes.length > 2 ? 'collapsed' : ''}" id="prizesList">
-                ${prizesHtml}
-              </div>
-            </div>
-            ` : ''}
-            
-            <div class="detail-requirements">
-              <div class="requirements-title">Syarat</div>
-              <div class="requirements-scroll">
-                <div class="requirements-list">
-                  ${reqHtml}
-                </div>
+              <div class="participants-modal-list">
+                ${participantsListHtml}
               </div>
             </div>
-            
-            ${isEnded && winners.length > 0 ? winnersHtml : ''}
-            
-            ${channels.length > 0 || links.length > 0 ? `
-            <div class="channel-stack-container">
-              ${channels.length > 0 ? `
-              <div class="channel-stack-row">
-                <div class="channel-stack-label">
-                  <span class="icon">📢</span>
-                  <span>CHANNEL</span>
-                </div>
-                <button class="eye-custom-btn" id="toggleChannelBtn">
+          </div>
+        `;
+      }
+    
+      let actionButtonsHtml = '';
+      if (!isEnded) {
+        if (hasParticipated) {
+          actionButtonsHtml = `
+            <div class="detail-actions-fixed">
+              <button class="btn btn-participate disabled" id="detailParticipateBtn" disabled>
+                <span>✓</span>
+                <span>MENGIKUTI</span>
+              </button>
+              <button class="btn btn-share" id="detailShareBtn">
+                <span>📤</span>
+                <span>BAGIKAN</span>
+              </button>
+            </div>
+          `;
+        } else {
+          actionButtonsHtml = `
+            <div class="detail-actions-fixed">
+              <button class="btn btn-participate" id="detailParticipateBtn">
+                <span>✓</span>
+                <span>PARTISIPASI</span>
+              </button>
+              <button class="btn btn-share" id="detailShareBtn">
+                <span>📤</span>
+                <span>BAGIKAN</span>
+              </button>
+            </div>
+          `;
+        }
+      }
+    
+      // ==================== DETAIL HTML DENGAN HEADER STATS BARU ====================
+      const detailHtml = `
+        <div class="giveaway-detail-container">
+          <div class="detail-header">
+            <div class="logo-box" style="background: transparent; border: none; box-shadow: none; padding: 8px 0;">
+              <img src="img/logo.png" class="logo-img" alt="logo" onerror="this.style.display='none'">
+              <span class="logo-text">GIFT FREEBIES</span>
+            </div>
+            <div class="detail-header-right">
+              ${isCreator && !isEnded ? `
+                <button class="delete-giveaway-btn" id="deleteGiveawayBtn" title="Hapus Giveaway">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M3 6H5H21" stroke="#ff6b6b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M8 6V4C8 3.46957 8.21071 2.96086 8.58579 2.58579C8.96086 2.21071 9.46957 2 10 2H14C14.5304 2 15.0391 2.21071 15.4142 2.58579C15.7893 2.96086 16 3.46957 16 4V6M19 6V20C19 20.5304 18.7893 21.0391 18.4142 21.4142C18.0391 21.7893 17.5304 22 17 22H7C6.46957 22 5.96086 21.7893 5.58579 21.4142C5.21071 21.0391 5 20.5304 5 20V6H19Z" stroke="#ff6b6b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </button>
+              ` : ''}
+              ${isEnded ? `<span class="detail-ended-badge">ENDED</span>` : ''}
+              ${isEnded && participants.length > 0 ? `
+                <button class="eye-custom-btn" id="toggleParticipantsBtn" title="Lihat Partisipan">
                   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5z" fill="white"/>
                     <circle cx="12" cy="12" r="3" fill="white"/>
                   </svg>
                 </button>
+              ` : ''}
+              <button class="detail-back-btn" id="backToIndexBtn">←</button>
+            </div>
+          </div>
+          
+          <div class="detail-card">
+            ${mediaHtml}
+            
+            <div class="detail-card-content">
+              <!-- HEADER STATS: Badge status di kiri, partisipasi & hadiah di kanan -->
+              <div class="detail-header-stats">
+                <div class="${statusClass}">${statusText}</div>
+                <div class="detail-right-stats">
+                  <div class="detail-stat-item">
+                    <span class="detail-stat-icon">👥</span>
+                    <span class="detail-stat-value" id="detailParticipantsCount">${participantsCount}</span>
+                  </div>
+                  <div class="detail-stat-item">
+                    <span class="detail-stat-icon">🎁</span>
+                    <span class="detail-stat-value" id="detailPrizesCount">${totalPrizes}</span>
+                  </div>
+                </div>
+              </div>
+              
+              ${!isEnded ? `
+              <div class="detail-description">
+                <div class="description-header">
+                  <div class="description-title">Deskripsi</div>
+                  ${giveaway.giveaway_text && giveaway.giveaway_text.length > 100 ? '<button class="description-expand-btn" id="expandDescriptionBtn">Lihat Lengkap</button>' : ''}
+                </div>
+                <div class="description-content ${giveaway.giveaway_text && giveaway.giveaway_text.length > 100 ? 'collapsed' : ''}" id="descriptionContent">
+                  ${giveaway.giveaway_text || '<em>Tidak ada deskripsi</em>'}
+                </div>
+              </div>
+              ` : ''}
+              
+              ${!isEnded ? `
+              <div class="detail-prizes">
+                <div class="prizes-header">
+                  <div class="prizes-title">Hadiah</div>
+                  ${prizes.length > 2 ? '<button class="prizes-expand-btn" id="expandPrizesBtn">Lihat Semua</button>' : ''}
+                </div>
+                <div class="prizes-list ${prizes.length > 2 ? 'collapsed' : ''}" id="prizesList">
+                  ${prizesHtml}
+                </div>
+              </div>
+              ` : ''}
+              
+              <div class="detail-requirements">
+                <div class="requirements-title">Syarat</div>
+                <div class="requirements-scroll">
+                  <div class="requirements-list">
+                    ${reqHtml}
+                  </div>
+                </div>
+              </div>
+              
+              ${isEnded && winners.length > 0 ? winnersHtml : ''}
+              
+              ${channels.length > 0 || links.length > 0 ? `
+              <div class="channel-stack-container">
+                ${channels.length > 0 ? `
+                <div class="channel-stack-row">
+                  <div class="channel-stack-label">
+                    <span class="icon">📢</span>
+                    <span>CHANNEL</span>
+                  </div>
+                  <button class="eye-custom-btn" id="toggleChannelBtn">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5z" fill="white"/>
+                      <circle cx="12" cy="12" r="3" fill="white"/>
+                    </svg>
+                  </button>
+                </div>
+                ` : ''}
+                
+                ${links.length > 0 ? `
+                <div class="channel-stack-row">
+                  <div class="channel-stack-label link">
+                    <span class="icon">🔗</span>
+                    <span>LINK</span>
+                  </div>
+                  <button class="eye-custom-btn" id="toggleLinkBtn">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5z" fill="white"/>
+                      <circle cx="12" cy="12" r="3" fill="white"/>
+                    </svg>
+                  </button>
+                </div>
+                ` : ''}
+              </div>
+              ` : ''}
+              
+              ${channels.length > 0 ? `
+              <div class="channel-panel-container hidden" id="channelPanelContainer">
+                <div class="detail-panel">
+                  <div class="panel-header">
+                    <div class="panel-title channel">Daftar Channel</div>
+                    <button class="panel-close" id="closeChannelPanelBtn">✕</button>
+                  </div>
+                  <div class="panel-content" id="channelsList">
+                    ${channelsHtml}
+                  </div>
+                </div>
               </div>
               ` : ''}
               
               ${links.length > 0 ? `
-              <div class="channel-stack-row">
-                <div class="channel-stack-label link">
-                  <span class="icon">🔗</span>
-                  <span>LINK</span>
+              <div class="link-panel-container hidden" id="linkPanelContainer">
+                <div class="detail-panel">
+                  <div class="panel-header">
+                    <div class="panel-title link">Daftar Link</div>
+                    <button class="panel-close" id="closeLinkPanelBtn">✕</button>
+                  </div>
+                  <div class="panel-content" id="linksList">
+                    ${linksHtml}
+                  </div>
                 </div>
-                <button class="eye-custom-btn" id="toggleLinkBtn">
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5z" fill="white"/>
-                    <circle cx="12" cy="12" r="3" fill="white"/>
-                  </svg>
-                </button>
               </div>
               ` : ''}
+              
+              ${!isEnded ? `
+                <div class="detail-timer">
+                  <div class="timer-label">BERAKHIR DALAM</div>
+                  <div class="timer-countdown" id="detailCountdown">${timeRemaining}</div>
+                  <div class="timer-end-date">
+                    <span>${endDateFormatted}</span>
+                  </div>
+                </div>
+              ` : ''}
             </div>
-            ` : ''}
-            
-            ${channels.length > 0 ? `
-            <div class="channel-panel-container hidden" id="channelPanelContainer">
-              <div class="detail-panel">
-                <div class="panel-header">
-                  <div class="panel-title channel">Daftar Channel</div>
-                  <button class="panel-close" id="closeChannelPanelBtn">✕</button>
-                </div>
-                <div class="panel-content" id="channelsList">
-                  ${channelsHtml}
-                </div>
-              </div>
-            </div>
-            ` : ''}
-            
-            ${links.length > 0 ? `
-            <div class="link-panel-container hidden" id="linkPanelContainer">
-              <div class="detail-panel">
-                <div class="panel-header">
-                  <div class="panel-title link">Daftar Link</div>
-                  <button class="panel-close" id="closeLinkPanelBtn">✕</button>
-                </div>
-                <div class="panel-content" id="linksList">
-                  ${linksHtml}
-                </div>
-              </div>
-            </div>
-            ` : ''}
-            
-            ${!isEnded ? `
-              <div class="detail-timer">
-                <div class="timer-label">BERAKHIR DALAM</div>
-                <div class="timer-countdown" id="detailCountdown">${timeRemaining}</div>
-                <div class="timer-end-date">
-                  <span>${endDateFormatted}</span>
-                </div>
-              </div>
-            ` : ''}
           </div>
+          
+          ${actionButtonsHtml}
+          
+          ${participantsModalHtml}
         </div>
-        
-        ${actionButtonsHtml}
-        
-        ${participantsModalHtml}
-      </div>
-    `;
-  
-    container.innerHTML = detailHtml;
-    container.style.display = 'block';
-  
-    setupDetailEventListeners(giveaway, prizes, countdownActive, isEnded);
+      `;
+    
+      container.innerHTML = detailHtml;
+      container.style.display = 'block';
+    
+      setupDetailEventListeners(giveaway, prizes, countdownActive, isEnded);
 
-    if (isCreator && !isEnded) {
-      const deleteBtn = document.getElementById('deleteGiveawayBtn');
-      if (deleteBtn) {
-        deleteBtn.replaceWith(deleteBtn.cloneNode(true));
-        const newDeleteBtn = document.getElementById('deleteGiveawayBtn');
-        
-        if (newDeleteBtn) {
-          newDeleteBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            showDeleteConfirmation(giveaway);
-          });
+      if (isCreator && !isEnded) {
+        const deleteBtn = document.getElementById('deleteGiveawayBtn');
+        if (deleteBtn) {
+          deleteBtn.replaceWith(deleteBtn.cloneNode(true));
+          const newDeleteBtn = document.getElementById('deleteGiveawayBtn');
+          
+          if (newDeleteBtn) {
+            newDeleteBtn.addEventListener('click', (e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              showDeleteConfirmation(giveaway);
+            });
+          }
         }
       }
     }
-  }
   
   // ==================== FUNGSI: SETUP EVENT LISTENERS UNTUK DETAIL ====================
   function setupDetailEventListeners(giveaway, prizes, countdownActive, isEnded) {
@@ -1595,7 +1622,7 @@
   
     window.location.href = url.toString();
   }
-  
+
   // ==================== FUNGSI: COUNTDOWN UNTUK DETAIL ====================
   function startDetailCountdown(endDate) {
     const countdownEl = document.getElementById('detailCountdown');
@@ -2590,6 +2617,9 @@
         setTimeout(() => {
           window.location.reload();
         }, 1000);
+
+        const currentCount = parseInt(document.getElementById('detailParticipantsCount')?.textContent) || 0;
+            updateParticipationCount(currentCount + 1);
   
       } else {
         showToast(result.message || 'Gagal berpartisipasi', 'error', 2000);
