@@ -201,7 +201,24 @@ class Database:
             
             conn.commit()
             log_info("All tables created/verified including giveaway_messages")
+
+            # ==================== TABEL FORCE SUBSCRIBE ====================
+            cursor.execute("""
+            CREATE TABLE IF NOT EXISTS force_subscribe (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                chat_id INTEGER NOT NULL,
+                chat_username TEXT,
+                chat_title TEXT,
+                target_type TEXT NOT NULL,
+                created_at TEXT,
+                updated_at TEXT,
+                UNIQUE(chat_id, target_type)
+            )
+            """)
             
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_force_sub_chat_id ON force_subscribe(chat_id)")
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_force_sub_type ON force_subscribe(target_type)")
+
         except Exception as e:
             log_error(f"Error initializing database: {e}")
 
@@ -877,6 +894,143 @@ class Database:
             return result
         finally:
             cursor.close()
+
+    # ==================== FORCE SUBSCRIBE METHODS ====================
+    
+    def add_force_subscribe(self, chat_id, chat_username, chat_title, target_type):
+        """
+        Menambahkan force subscribe
+        target_type: 'creator' atau 'participant'
+        """
+        cursor = self.get_cursor()
+        try:
+            now = get_jakarta_time()
+            
+            cursor.execute("""
+            INSERT OR REPLACE INTO force_subscribe 
+            (chat_id, chat_username, chat_title, target_type, created_at, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?)
+            """, (chat_id, chat_username, chat_title, target_type, now, now))
+            
+            self.conn.commit()
+            log_info(f"✅ Force subscribe added: chat_id={chat_id}, type={target_type}")
+            return True
+        except Exception as e:
+            log_error(f"Error adding force subscribe: {e}")
+            return False
+        finally:
+            cursor.close()
+    
+    def remove_force_subscribe(self, chat_id, target_type=None):
+        """
+        Menghapus force subscribe
+        Jika target_type None, hapus semua untuk chat_id tersebut
+        """
+        cursor = self.get_cursor()
+        try:
+            if target_type:
+                cursor.execute("""
+                DELETE FROM force_subscribe 
+                WHERE chat_id = ? AND target_type = ?
+                """, (chat_id, target_type))
+            else:
+                cursor.execute("""
+                DELETE FROM force_subscribe 
+                WHERE chat_id = ?
+                """, (chat_id,))
+            
+            self.conn.commit()
+            log_info(f"✅ Force subscribe removed: chat_id={chat_id}, type={target_type}")
+            return True
+        except Exception as e:
+            log_error(f"Error removing force subscribe: {e}")
+            return False
+        finally:
+            cursor.close()
+    
+    def remove_all_force_subscribe(self):
+        """Menghapus semua force subscribe"""
+        cursor = self.get_cursor()
+        try:
+            cursor.execute("DELETE FROM force_subscribe")
+            self.conn.commit()
+            log_info("✅ All force subscribe removed")
+            return True
+        except Exception as e:
+            log_error(f"Error removing all force subscribe: {e}")
+            return False
+        finally:
+            cursor.close()
+    
+    def get_force_subscribe_list(self):
+        """Mendapatkan semua force subscribe"""
+        cursor = self.get_cursor()
+        try:
+            cursor.execute("""
+            SELECT * FROM force_subscribe 
+            ORDER BY target_type, created_at DESC
+            """)
+            return [dict(row) for row in cursor.fetchall()]
+        except Exception as e:
+            log_error(f"Error getting force subscribe list: {e}")
+            return []
+        finally:
+            cursor.close()
+    
+    def get_force_subscribe_by_type(self, target_type):
+        """Mendapatkan force subscribe berdasarkan tipe"""
+        cursor = self.get_cursor()
+        try:
+            cursor.execute("""
+            SELECT * FROM force_subscribe 
+            WHERE target_type = ?
+            ORDER BY created_at DESC
+            """, (target_type,))
+            return [dict(row) for row in cursor.fetchall()]
+        except Exception as e:
+            log_error(f"Error getting force subscribe by type: {e}")
+            return []
+        finally:
+            cursor.close()
+    
+    def get_force_subscribe_by_chat(self, chat_id):
+        """Mendapatkan force subscribe berdasarkan chat_id"""
+        cursor = self.get_cursor()
+        try:
+            cursor.execute("""
+            SELECT * FROM force_subscribe 
+            WHERE chat_id = ?
+            """, (chat_id,))
+            return [dict(row) for row in cursor.fetchall()]
+        except Exception as e:
+            log_error(f"Error getting force subscribe by chat: {e}")
+            return []
+        finally:
+            cursor.close()
+    
+    def is_force_subscribe_active(self, chat_id, target_type):
+        """Cek apakah force subscribe aktif untuk chat_id dan tipe tertentu"""
+        cursor = self.get_cursor()
+        try:
+            cursor.execute("""
+            SELECT COUNT(*) as count FROM force_subscribe 
+            WHERE chat_id = ? AND target_type = ?
+            """, (chat_id, target_type))
+            result = cursor.fetchone()
+            return result['count'] > 0 if result else False
+        except Exception as e:
+            log_error(f"Error checking force subscribe: {e}")
+            return False
+        finally:
+            cursor.close()
+    
+    def get_force_subscribe_by_target(self, user_is_creator=True):
+        """
+        Mendapatkan daftar force subscribe berdasarkan target
+        user_is_creator: True untuk creator, False untuk participant
+        """
+        target_type = 'creator' if user_is_creator else 'participant'
+        return self.get_force_subscribe_by_type(target_type)
 
     def close(self):
         """Menutup koneksi database"""
