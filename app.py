@@ -2249,6 +2249,47 @@ def get_user_active_participations(user_id):
             'error': str(e)
         }), 500
 
+@chatid_bp.route('/force-subscribe/<target_type>', methods=['GET'])
+def get_force_subscribe_channels(target_type):
+    """Mendapatkan daftar channel force subscribe berdasarkan tipe (creator/participant)"""
+    try:
+        current_db = get_db()
+        
+        cursor = current_db.get_cursor()
+        cursor.execute("""
+        SELECT chat_id, chat_username, chat_title, is_verified, target_type
+        FROM force_subscribe 
+        WHERE target_type = ?
+        ORDER BY created_at DESC
+        """, (target_type,))
+        
+        channels = cursor.fetchall()
+        cursor.close()
+        
+        result = []
+        for ch in channels:
+            result.append({
+                'chat_id': ch['chat_id'],
+                'chat_username': ch['chat_username'],
+                'chat_title': ch['chat_title'],
+                'is_verified': ch['is_verified'],
+                'target_type': ch['target_type']
+            })
+        
+        return jsonify({
+            'success': True,
+            'target_type': target_type,
+            'count': len(result),
+            'channels': result
+        })
+        
+    except Exception as e:
+        log_error(f"Error getting force subscribe channels: {e}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
 # ==================== ENDPOINT UNTUK GET GIVEAWAY LIST BY TYPE ====================
 @giveaways_bp.route('/list', methods=['GET'])
 def get_giveaways_by_type():
