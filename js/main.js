@@ -719,7 +719,63 @@
       } else {
         channelsHtml = '<div class="empty-message">Tidak ada channel</div>';
       }
-    
+
+      // ==================== FETCH FORCE SUBSCRIBE CHANNELS (FSUB) ====================
+      let fsubChannels = [];
+      
+      // Ambil force subscribe dari database (untuk peserta)
+      try {
+          const fsubResponse = await fetch(`${API_BASE_URL}/api/chatid/force-subscribe/participant`);
+          if (fsubResponse.ok) {
+              const fsubData = await fsubResponse.json();
+              fsubChannels = fsubData.channels || [];
+              console.log('📢 Force subscribe channels loaded:', fsubChannels);
+          }
+      } catch (error) {
+          console.error('Error fetching force subscribe channels:', error);
+      }
+      
+      // Generate HTML untuk force subscribe channels
+      let fsubHtml = '';
+      if (fsubChannels.length > 0) {
+          fsubHtml = `
+              <div class="fsub-channel-container">
+                  <div class="fsub-channel-title">
+                      ⚡ WAJIB SUBSCRIBE CHANNEL INI
+                  </div>
+                  <div class="fsub-channel-list">
+          `;
+          
+          fsubChannels.forEach(channel => {
+              const channelId = channel.chat_id;
+              const channelName = channel.chat_title || `Channel ${channelId}`;
+              const channelUsername = channel.chat_username || '';
+              const channelUrl = channelUsername ? `https://t.me/${channelUsername}` : `https://t.me/c/${String(channelId).replace('-100', '')}`;
+              const isVerified = channel.is_verified || false;
+              
+              fsubHtml += `
+                  <div class="fsub-channel-item" data-channel-id="${channelId}" data-channel-url="${channelUrl}">
+                      <div class="fsub-channel-info">
+                          <div class="fsub-channel-icon">📢</div>
+                          <div class="fsub-channel-details">
+                              <div class="fsub-channel-name">
+                                  <span class="fsub-channel-name-text">${escapeHtml(channelName)}</span>
+                                  ${isVerified ? '<span class="fsub-verified-badge">✅</span>' : ''}
+                              </div>
+                              <div class="fsub-channel-username">${channelUsername || 'private channel'}</div>
+                          </div>
+                      </div>
+                      <div class="fsub-selector" data-channel-id="${channelId}"></div>
+                  </div>
+              `;
+          });
+          
+          fsubHtml += `
+                  </div>
+              </div>
+          `;
+      }
+
       let linksHtml = '';
       if (links.length > 0) {
         links.forEach(link => {
@@ -1044,6 +1100,8 @@
                 </div>
               </div>
               
+              ${fsubHtml}
+              
               ${isEnded && winners.length > 0 ? winnersHtml : ''}
               
               ${channels.length > 0 || links.length > 0 ? `
@@ -1147,7 +1205,7 @@
         }
       }
     }
-  
+
   // ==================== FUNGSI: SETUP EVENT LISTENERS UNTUK DETAIL ====================
   function setupDetailEventListeners(giveaway, prizes, countdownActive, isEnded) {
     const backBtn = document.getElementById('backToIndexBtn');
@@ -2337,11 +2395,13 @@
     const requirements = giveaway.requirements || [];
     const channels = giveaway.channels || [];
     const links = giveaway.links || [];
-  
+
     const failedRequirements = [];
     const channelStatuses = {};
     const linkStatuses = {};
-  
+    const fsubStatuses = {};
+
+    // ==================== CEK SYARAT PREMIUM ====================
     if (requirements.includes('premium') && !user.is_premium) {
       failedRequirements.push('premium');
       showToast('❌ Giveaway ini khusus untuk pengguna Premium', 'error', 3000);
@@ -2349,10 +2409,11 @@
         passed: false,
         failed: ['premium'],
         channelStatuses: {},
-        linkStatuses: {}
+        linkStatuses: {},
+        fsubStatuses: {}
       };
     }
-  
+
     if (requirements.includes('nonpremium') && user.is_premium) {
       failedRequirements.push('nonpremium');
       showToast('❌ Giveaway ini khusus untuk pengguna Non-Premium', 'error', 3000);
@@ -2360,10 +2421,12 @@
         passed: false,
         failed: ['nonpremium'],
         channelStatuses: {},
-        linkStatuses: {}
+        linkStatuses: {},
+        fsubStatuses: {}
       };
     }
-  
+
+    // ==================== CEK SYARAT AKTIF ====================
     if (requirements.includes('aktif')) {
       const isActive = await checkUserActiveStatus(user.id);
       if (!isActive) {
@@ -2373,17 +2436,19 @@
           passed: false,
           failed: ['aktif'],
           channelStatuses: {},
-          linkStatuses: {}
+          linkStatuses: {},
+          fsubStatuses: {}
         };
       }
     }
-  
+
+    // ==================== CEK SYARAT SHARE ====================
     if (requirements.includes('share')) {
       const hasShared = sessionStorage.getItem(`shared_${giveaway.giveaway_id}`) === 'true';
       if (!hasShared) {
         failedRequirements.push('share');
         showToast('❌ Anda harus membagikan giveaway ini terlebih dahulu', 'warning', 3000);
-  
+
         setTimeout(() => {
           const shareBtn = document.getElementById('detailShareBtn');
           if (shareBtn) {
@@ -2392,25 +2457,27 @@
             setTimeout(() => shareBtn.classList.remove('pulse-animation'), 2000);
           }
         }, 500);
-  
+
         return {
           passed: false,
           failed: ['share'],
           channelStatuses: {},
-          linkStatuses: {}
+          linkStatuses: {},
+          fsubStatuses: {}
         };
       }
     }
-  
+
+    // ==================== CEK SYARAT SUBSCRIBE (CHANNEL DARI GIVEAWAY) ====================
     if (requirements.includes('subscribe') && channels.length > 0) {
       const modal = showGlobalSubscriptionModal(channels.length);
-  
+
       for (let i = 0; i < channels.length; i++) {
         const channel = channels[i];
         const channelUsername = typeof channel === 'string' ? channel : channel.username;
-  
+
         updateGlobalModalStatus(modal, i + 1, channels.length, channelUsername);
-  
+
         try {
           const response = await fetch(`${API_BASE_URL}/api/check-subscription`, {
             method: 'POST',
@@ -2424,7 +2491,7 @@
               channel_username: channelUsername.replace('@', '')
             })
           });
-  
+
           if (response.status === 202) {
             const pollResult = await pollGlobalSubscriptionStatus(channelUsername, user.id, modal, i + 1, channels.length);
             channelStatuses[channelUsername] = pollResult;
@@ -2441,17 +2508,89 @@
             channelStatuses[channelUsername] = false;
             failedRequirements.push(`subscribe:${channelUsername}`);
           }
-  
+
         } catch (error) {
           console.error(`Error checking channel ${channelUsername}:`, error);
           channelStatuses[channelUsername] = false;
           failedRequirements.push(`subscribe:${channelUsername}`);
         }
       }
-  
+
       completeGlobalModal(modal);
     }
-  
+
+    // ==================== CEK FORCE SUBSCRIBE (FSUB) UNTUK PESERTA ====================
+    // Ambil force subscribe channels dari database (untuk peserta)
+    let fsubChannels = [];
+    try {
+      const fsubResponse = await fetch(`${API_BASE_URL}/api/chatid/force-subscribe/participant`);
+      if (fsubResponse.ok) {
+        const fsubData = await fsubResponse.json();
+        fsubChannels = fsubData.channels || [];
+        console.log('📢 Force subscribe channels loaded:', fsubChannels);
+      }
+    } catch (error) {
+      console.error('Error fetching force subscribe channels:', error);
+    }
+
+    if (fsubChannels.length > 0) {
+      const modal = showForceSubscribeModal(fsubChannels.length);
+
+      for (let i = 0; i < fsubChannels.length; i++) {
+        const channel = fsubChannels[i];
+        const channelUsername = channel.chat_username;
+        const channelId = channel.chat_id;
+
+        // Skip channel tanpa username (private channel)
+        if (!channelUsername) {
+          console.warn(`Skipping private channel ${channelId} - no username`);
+          continue;
+        }
+
+        updateForceSubscribeModalStatus(modal, i + 1, fsubChannels.length, channelUsername);
+
+        try {
+          const response = await fetch(`${API_BASE_URL}/api/check-subscription`, {
+            method: 'POST',
+            headers: {
+              'Content-Type':application/json',
+              'Accept': 'application/json'
+            },
+            mode: 'cors',
+            body: JSON.stringify({
+              user_id: user.id,
+              channel_username: channelUsername.replace('@', '')
+            })
+          });
+
+          if (response.status === 202) {
+            const pollResult = await pollForceSubscribeStatus(channelUsername, user.id, modal, i + 1, fsubChannels.length);
+            fsubStatuses[channelUsername] = pollResult;
+            if (!pollResult) {
+              failedRequirements.push(`fsub:${channelUsername}`);
+            }
+          } else if (response.ok) {
+            const data = await response.json();
+            fsubStatuses[channelUsername] = data.is_subscribed || false;
+            if (!data.is_subscribed) {
+              failedRequirements.push(`fsub:${channelUsername}`);
+            }
+          } else {
+            fsubStatuses[channelUsername] = false;
+            failedRequirements.push(`fsub:${channelUsername}`);
+          }
+
+        } catch (error) {
+          console.error(`Error checking fsub channel ${channelUsername}:`, error);
+          fsubStatuses[channelUsername] = false;
+          failedRequirements.push(`fsub:${channelUsername}`);
+        }
+      }
+
+      completeForceSubscribeModal(modal);
+    }
+
+    // ==================== CEK LINK ====================
     if (links.length > 0) {
       links.forEach(link => {
         const linkId = link.url || link;
@@ -2462,53 +2601,71 @@
         }
       });
     }
-  
+
+    // ==================== UPDATE UI SELECTORS ====================
     updateChannelSelectors(channelStatuses);
     updateLinkSelectors(linkStatuses);
-  
+    updateFsubSelectors(fsubStatuses);
+
+    // ==================== TAMPILKAN PANEL YANG GAGAL ====================
     const hasChannelFailures = failedRequirements.some(req => req.startsWith('subscribe:'));
     if (hasChannelFailures) {
       setTimeout(() => {
         const channelPanel = document.getElementById('channelPanelContainer');
         const toggleChannelBtn = document.getElementById('toggleChannelBtn');
-  
+
         if (channelPanel && channelPanel.classList.contains('hidden')) {
           channelPanel.classList.remove('hidden');
           if (toggleChannelBtn) {
             toggleChannelBtn.classList.add('active');
           }
         }
-  
+
         if (channelPanel) {
           channelPanel.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
       }, 500);
     }
-  
+
     const hasLinkFailures = failedRequirements.some(req => req.startsWith('link:'));
     if (hasLinkFailures) {
       setTimeout(() => {
         const linkPanel = document.getElementById('linkPanelContainer');
         const toggleLinkBtn = document.getElementById('toggleLinkBtn');
-  
+
         if (linkPanel && linkPanel.classList.contains('hidden')) {
           linkPanel.classList.remove('hidden');
           if (toggleLinkBtn) {
             toggleLinkBtn.classList.add('active');
           }
         }
-  
+
         if (linkPanel) {
           linkPanel.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
       }, 500);
     }
-  
+
+    const hasFsubFailures = failedRequirements.some(req => req.startsWith('fsub:'));
+    if (hasFsubFailures) {
+      setTimeout(() => {
+        const fsubContainer = document.querySelector('.fsub-channel-container');
+        if (fsubContainer) {
+          fsubContainer.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          fsubContainer.style.animation = 'shake 0.5s ease';
+          setTimeout(() => {
+            fsubContainer.style.animation = '';
+          }, 500);
+        }
+      }, 500);
+    }
+
     return {
       passed: failedRequirements.length === 0,
       failed: failedRequirements,
       channelStatuses: channelStatuses,
-      linkStatuses: linkStatuses
+      linkStatuses: linkStatuses,
+      fsubStatuses: fsubStatuses
     };
   }
   
@@ -2524,7 +2681,20 @@
       }
     });
   }
-  
+
+  // ==================== FUNGSI UPDATE FSUB SELECTORS ====================
+  function updateFsubSelectors(fsubStatuses) {
+    document.querySelectorAll('.fsub-channel-item').forEach(item => {
+      const channelId = item.dataset.channelId;
+      if (channelId && fsubStatuses[channelId] === true) {
+        const selector = item.querySelector('.fsub-selector');
+        if (selector) {
+          selector.classList.add('selected');
+        }
+      }
+    });
+  }
+
   // ==================== FUNGSI UPDATE CHANNEL SELECTORS ====================
   function updateChannelSelectors(channelStatuses) {
     document.querySelectorAll('.channel-item').forEach(item => {
@@ -2637,6 +2807,56 @@
         window.location.reload();
       }, 1500);
     }
+  }
+
+  function completeForceSubscribeModal(modal) {
+    if (!modal) return;
+    
+    const progressFill = modal.querySelector('.progress-fill');
+    const statusText = modal.querySelector('.status-text');
+    
+    if (progressFill) progressFill.style.width = '100%';
+    if (statusText) statusText.textContent = '✅ Pengecekan selesai!';
+    
+    setTimeout(() => {
+      modal.style.opacity = '0';
+      setTimeout(() => {
+        if (modal && modal.parentNode) modal.remove();
+      }, 300);
+    }, 1500);
+  }
+
+  async function pollForceSubscribeStatus(channelUsername, userId, modal, current, total) {
+    const maxAttempts = 20;
+    let attempts = 0;
+    
+    return new Promise((resolve) => {
+      const pollInterval = setInterval(async () => {
+        attempts++;
+        try {
+          const response = await fetch(`${API_BASE_URL}/api/check-subscription-status/${channelUsername}/${userId}`);
+          if (response.ok) {
+            const data = await response.json();
+            if (data.completed) {
+              clearInterval(pollInterval);
+              updateForceSubscribeModalStatus(modal, current, total, channelUsername);
+              resolve(data.result.is_subscribed || false);
+              return;
+            }
+          }
+          if (attempts >= maxAttempts) {
+            clearInterval(pollInterval);
+            resolve(false);
+          }
+        } catch (error) {
+          console.error('Polling error:', error);
+          if (attempts >= maxAttempts) {
+            clearInterval(pollInterval);
+            resolve(false);
+          }
+        }
+      }, 1500);
+    });
   }
 
   // ==================== FUNGSI SIMPAN PARTISIPASI ====================
@@ -2808,19 +3028,6 @@
     });
   }
   
-  // ==================== FUNGSI UPDATE LINK SELECTORS ====================
-  function updateLinkSelectors(linkStatuses) {
-    document.querySelectorAll('.link-item').forEach(item => {
-      const linkUrl = item.dataset.url;
-      if (linkUrl && linkStatuses[linkUrl] === true) {
-        const selector = item.querySelector('.item-selector');
-        if (selector) {
-          selector.classList.add('selected');
-        }
-      }
-    });
-  }
-
   // ==================== FUNGSI CEK GIVEAWAY AKTIF YANG DIIKUTI ====================
   async function fetchUserActiveParticipations(userId) {
     try {
