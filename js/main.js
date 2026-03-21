@@ -722,6 +722,7 @@
 
       // ==================== FETCH FORCE SUBSCRIBE CHANNELS (FSUB) ====================
       let fsubChannels = [];
+      let fsubStatuses = {};
       
       // Ambil force subscribe dari database (untuk peserta)
       try {
@@ -735,13 +736,37 @@
           console.error('Error fetching force subscribe channels:', error);
       }
       
+      // Cek status subscription untuk setiap FSUB channel (hanya jika user login dan giveaway belum ended)
+      if (currentUser && !isEnded && fsubChannels.length > 0) {
+          for (const channel of fsubChannels) {
+              const channelId = channel.chat_id;
+              const cacheKey = `fsub_${channelId}`;
+              const cached = sessionStorage.getItem(cacheKey);
+              
+              if (cached !== null) {
+                  fsubStatuses[channelId] = cached === 'true';
+              } else {
+                  // Cek subscription ke channel
+                  const channelUsername = channel.chat_username;
+                  if (channelUsername) {
+                      const isSubscribed = await checkFsubSubscription(currentUser.id, channelUsername);
+                      fsubStatuses[channelId] = isSubscribed;
+                      sessionStorage.setItem(cacheKey, isSubscribed);
+                  } else {
+                      fsubStatuses[channelId] = false;
+                  }
+              }
+          }
+      }
+      
       // Generate HTML untuk force subscribe channels
       let fsubHtml = '';
       if (fsubChannels.length > 0) {
           fsubHtml = `
               <div class="fsub-channel-container">
                   <div class="fsub-channel-title">
-                      ⚡ WAJIB SUBSCRIBE CHANNEL INI
+                      <span class="fsub-title-icon">⚡</span>
+                      WAJIB SUBSCRIBE CHANNEL INI
                   </div>
                   <div class="fsub-channel-list">
           `;
@@ -752,9 +777,15 @@
               const channelUsername = channel.chat_username || '';
               const channelUrl = channelUsername ? `https://t.me/${channelUsername}` : `https://t.me/c/${String(channelId).replace('-100', '')}`;
               const isVerified = channel.is_verified || false;
+              const membersCount = channel.participants_count || 0;
+              const formattedMembers = membersCount > 0 ? membersCount.toLocaleString('id-ID') : 'Tidak diketahui';
+              const isSubscribed = fsubStatuses[channelId] || false;
+              
+              const subscribeBtnClass = isSubscribed ? 'fsub-subscribe-btn subscribed' : 'fsub-subscribe-btn';
+              const subscribeBtnText = isSubscribed ? '✓ TERSUBSCRIBE' : '+ SUBSCRIBE';
               
               fsubHtml += `
-                  <div class="fsub-channel-item" data-channel-id="${channelId}" data-channel-url="${channelUrl}">
+                  <div class="fsub-channel-item" data-channel-id="${channelId}" data-channel-url="${channelUrl}" data-channel-username="${channelUsername}">
                       <div class="fsub-channel-info">
                           <div class="fsub-channel-icon">📢</div>
                           <div class="fsub-channel-details">
@@ -762,10 +793,15 @@
                                   <span class="fsub-channel-name-text">${escapeHtml(channelName)}</span>
                                   ${isVerified ? '<span class="fsub-verified-badge">✅</span>' : ''}
                               </div>
-                              <div class="fsub-channel-username">${channelUsername || 'private channel'}</div>
+                              <div class="fsub-channel-username">${channelUsername ? '@' + channelUsername : 'private channel'}</div>
+                              <div class="fsub-channel-stats">
+                                  <span>👥 ${formattedMembers} anggota</span>
+                              </div>
                           </div>
                       </div>
-                      <div class="fsub-selector" data-channel-id="${channelId}"></div>
+                      <button class="${subscribeBtnClass}" data-channel-id="${channelId}" data-channel-url="${channelUrl}" data-channel-username="${channelUsername}">
+                          <span>${subscribeBtnText}</span>
+                      </button>
                   </div>
               `;
           });
@@ -1188,6 +1224,54 @@
       container.style.display = 'block';
     
       setupDetailEventListeners(giveaway, prizes, countdownActive, isEnded);
+      
+      // Setup event listeners untuk FSUB subscribe buttons
+      if (fsubChannels.length > 0) {
+          const subscribeBtns = document.querySelectorAll('.fsub-subscribe-btn');
+          subscribeBtns.forEach(btn => {
+              if (!btn.classList.contains('subscribed')) {
+                  btn.addEventListener('click', async (e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      
+                      const channelId = btn.dataset.channelId;
+                      const channelUrl = btn.dataset.channelUrl;
+                      const channelUsername = btn.dataset.channelUsername;
+                      
+                      // Buka channel
+                      window.open(channelUrl, '_blank');
+                      showToast(`📢 Silakan subscribe ke channel terlebih dahulu`, 'info', 3000);
+                      
+                      // Tampilkan loading modal
+                      showSubscriptionLoadingModal(channelUsername || 'channel');
+                      
+                      // Cek subscription setelah 5 detik
+                      setTimeout(async () => {
+                          let isSubscribed = false;
+                          if (channelUsername) {
+                              isSubscribed = await checkFsubSubscription(currentUser.id, channelUsername);
+                          }
+                          
+                          const modal = document.querySelector('.subscription-loading-modal');
+                          if (modal) {
+                              modal.classList.remove('active');
+                              setTimeout(() => modal.remove(), 300);
+                          }
+                          
+                          if (isSubscribed) {
+                              btn.classList.add('subscribed');
+                              btn.innerHTML = '<span>✓ TERSUBSCRIBE</span>';
+                              sessionStorage.setItem(`fsub_${channelId}`, 'true');
+                              fsubStatuses[channelId] = true;
+                              showToast('✅ Terima kasih telah subscribe!', 'success', 3000);
+                          } else {
+                              showToast(`❌ Belum terdeteksi subscribe. Pastikan Anda sudah subscribe ke channel tersebut.`, 'error', 5000);
+                          }
+                      }, 5000);
+                  });
+              }
+          });
+      }
 
       if (isCreator && !isEnded) {
         const deleteBtn = document.getElementById('deleteGiveawayBtn');
@@ -1204,7 +1288,51 @@
           }
         }
       }
-    }
+      
+      // Override participate button untuk cek FSUB subscription
+      if (!isEnded && !hasParticipated) {
+          const participateBtn = document.getElementById('detailParticipateBtn');
+          if (participateBtn) {
+              const newParticipateBtn = participateBtn.cloneNode(true);
+              participateBtn.parentNode.replaceChild(newParticipateBtn, participateBtn);
+              
+              newParticipateBtn.addEventListener('click', async () => {
+                  // Cek semua FSUB channel subscription
+                  let allSubscribed = true;
+                  let unsubscribedChannel = null;
+                  
+                  for (const channel of fsubChannels) {
+                      const channelId = channel.chat_id;
+                      const isSubscribed = fsubStatuses[channelId] || false;
+                      
+                      if (!isSubscribed) {
+                          allSubscribed = false;
+                          unsubscribedChannel = channel;
+                          break;
+                      }
+                  }
+                  
+                  if (!allSubscribed && unsubscribedChannel) {
+                      const channelName = unsubscribedChannel.chat_title || 'channel';
+                      showToast(`❌ Anda harus subscribe ke ${channelName} terlebih dahulu!`, 'warning', 3000);
+                      
+                      const fsubContainer = document.querySelector('.fsub-channel-container');
+                      if (fsubContainer) {
+                          fsubContainer.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                          fsubContainer.style.animation = 'pulse 0.5s ease';
+                          setTimeout(() => {
+                              if (fsubContainer) fsubContainer.style.animation = '';
+                          }, 500);
+                      }
+                      return;
+                  }
+                  
+                  // Lanjutkan ke fungsi participate yang sudah ada
+                  await handleParticipate(giveaway);
+              });
+          }
+      }
+  }
 
   // ==================== FUNGSI: SETUP EVENT LISTENERS UNTUK DETAIL ====================
   function setupDetailEventListeners(giveaway, prizes, countdownActive, isEnded) {
@@ -2046,56 +2174,39 @@
     return true;
   }
 
+  // ==================== FUNGSI SHOW LOADING MODAL ====================
   function showSubscriptionLoadingModal(channelUsername) {
-    const existingModal = document.querySelector('.subscription-loading-modal');
-    if (existingModal) {
-      existingModal.remove();
-    }
-    
-    if (subscriptionTypingInterval) {
-      clearInterval(subscriptionTypingInterval);
-      subscriptionTypingInterval = null;
-    }
-    
-    subscriptionTypingIndex = 0;
-    
-    subscriptionTypingLines = [
-      { text: `🔍 Memeriksa keanggotaan di @${channelUsername}...`, delay: 300 },
-      { text: `👤 Mengecek status subscribe...`, delay: 400 },
-      { text: `⏳ Mohon tunggu sebentar...`, delay: 500 }
-    ];
-    
-    subscriptionModal = document.createElement('div');
-    subscriptionModal.className = 'subscription-loading-modal';
-    subscriptionModal.innerHTML = `
-      <div class="sync-loading-content">
-        <div class="sync-loading-header">
-          <div class="sync-loading-title">🔍 Memeriksa Subscription</div>
-          <div class="sync-loading-spinner"></div>
-        </div>
-        <div class="sync-loading-body">
-          <div class="sync-typing-container">
-            <div class="sync-typing-content" id="subscriptionTypingContent"></div>
+      const existingModal = document.querySelector('.subscription-loading-modal');
+      if (existingModal) existingModal.remove();
+      
+      const modal = document.createElement('div');
+      modal.className = 'subscription-loading-modal';
+      modal.innerHTML = `
+          <div class="sync-loading-content">
+              <div class="sync-loading-header">
+                  <div class="sync-loading-title">🔍 Memeriksa Subscription</div>
+                  <div class="sync-loading-spinner"></div>
+              </div>
+              <div class="sync-loading-body">
+                  <div class="sync-typing-container">
+                      <div class="sync-typing-content">
+                          <div class="sync-typing-line">Memeriksa keanggotaan di @${escapeHtml(channelUsername)}...</div>
+                      </div>
+                  </div>
+                  <div class="sync-progress-bar">
+                      <div class="sync-progress-fill" style="width: 60%;"></div>
+                  </div>
+                  <div class="sync-status">⏳ Memeriksa...</div>
+              </div>
           </div>
-          <div class="sync-progress-bar">
-            <div class="sync-progress-fill" id="subscriptionProgressFill"></div>
-          </div>
-          <div class="sync-status" id="subscriptionStatus">Memulai...</div>
-        </div>
-      </div>
-    `;
-    
-    document.body.appendChild(subscriptionModal);
-    
-    setTimeout(() => {
-      subscriptionModal.classList.add('active');
-    }, 10);
-    
-    startSubscriptionTypingEffect();
-    
-    return subscriptionModal;
+      `;
+      
+      document.body.appendChild(modal);
+      setTimeout(() => modal.classList.add('active'), 10);
+      
+      return modal;
   }
-  
+
   function startSubscriptionTypingEffect() {
     const typingContent = document.getElementById('subscriptionTypingContent');
     if (!typingContent) return;
@@ -3181,6 +3292,118 @@
         }
       });
     });
+  }
+
+  // ==================== FUNGSI CEK FSUB SUBSCRIPTION ====================
+  async function checkFsubSubscription(userId, channelUsername) {
+      try {
+          const cleanUsername = channelUsername.replace('@', '');
+          
+          const requestData = {
+              user_id: userId,
+              channel_username: cleanUsername
+          };
+          
+          const response = await fetch(`${API_BASE_URL}/api/check-subscription`, {
+              method: 'POST',
+              headers: {
+                  'Content-Type': 'application/json',
+                  'Accept': 'application/json'
+              },
+              mode: 'cors',
+              body: JSON.stringify(requestData)
+          });
+          
+          if (response.status === 202) {
+              const result = await pollFsubStatus(cleanUsername, userId);
+              return result;
+          } else if (response.ok) {
+              const data = await response.json();
+              return data.is_subscribed || false;
+          }
+          
+          return false;
+          
+      } catch (error) {
+          console.error('Error checking fsub subscription:', error);
+          return false;
+      }
+  }
+
+  async function pollFsubStatus(channelUsername, userId) {
+      const maxAttempts = 20;
+      let attempts = 0;
+      
+      return new Promise((resolve) => {
+          const pollInterval = setInterval(async () => {
+              attempts++;
+              
+              try {
+                  const response = await fetch(`${API_BASE_URL}/api/check-subscription-status/${channelUsername}/${userId}`);
+                  
+                  if (response.ok) {
+                      const data = await response.json();
+                      
+                      if (data.completed) {
+                          clearInterval(pollInterval);
+                          resolve(data.result.is_subscribed || false);
+                          return;
+                      }
+                  }
+                  
+                  if (attempts >= maxAttempts) {
+                      clearInterval(pollInterval);
+                      resolve(false);
+                  }
+                  
+              } catch (error) {
+                  console.error('Polling error:', error);
+                  if (attempts >= maxAttempts) {
+                      clearInterval(pollInterval);
+                      resolve(false);
+                  }
+              }
+          }, 2000);
+      });
+  }
+
+  // ==================== RENDER FSUB CHANNEL (HANYA JIKA ADA DATA) ====================
+  function renderFsubChannel(channel, isSubscribed, userId, giveawayId) {
+      // channel sudah pasti ada data dari database
+      const channelUsername = channel.username || '';
+      const channelTitle = channel.title || 'Channel';
+      const inviteLink = channel.invite_link || `https://t.me/${channelUsername.replace('@', '')}`;
+      const isVerified = channel.is_verified || false;
+      const membersCount = channel.participants_count || 0;
+      const formattedMembers = membersCount > 0 ? membersCount.toLocaleString('id-ID') : 'Tidak diketahui';
+      
+      const subscribeBtnClass = isSubscribed ? 'fsub-subscribe-btn subscribed' : 'fsub-subscribe-btn';
+      const subscribeBtnText = isSubscribed ? '✓ TERSUBSCRIBE' : '+ SUBSCRIBE';
+      
+      return `
+          <div class="fsub-channel-wrapper" id="fsubChannelWrapper">
+              <div class="fsub-channel-item">
+                  <div class="fsub-channel-info">
+                      <div class="fsub-channel-icon">📢</div>
+                      <div class="fsub-channel-details">
+                          <div class="fsub-channel-name">
+                              <span class="channel-title">${escapeHtml(channelTitle)}</span>
+                              ${isVerified ? '<span class="verified-badge">✅</span>' : ''}
+                          </div>
+                          <div class="fsub-channel-username">${escapeHtml(channelUsername.replace('@', ''))}</div>
+                          <div class="fsub-channel-stats">
+                              <span>👥 ${formattedMembers} anggota</span>
+                              ${inviteLink ? '<span>🔗 Tersedia</span>' : ''}
+                          </div>
+                      </div>
+                  </div>
+                  <button class="${subscribeBtnClass}" data-channel="${channelUsername}" data-url="${inviteLink}" data-giveaway="${giveawayId}" id="fsubSubscribeBtn">
+                      <span>${subscribeBtnText}</span>
+                  </button>
+                  <div class="fsub-status-badge">WAJIB SUBSCRIBE</div>
+              </div>
+          </div>
+      `;
   }
 
   // ==================== INIT UTAMA ====================
