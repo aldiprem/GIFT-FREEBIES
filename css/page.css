@@ -2772,3 +2772,122 @@ body::before {
 .pulse-animation {
   animation: pulse 1.5s infinite;
 }
+
+/* ===== TAMBAHKAN DI PAGE.CSS ===== */
+
+/* Container untuk header giveaway (status badge + partisipasi) */
+.detail-header-stats {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin: 16px 20px 12px 20px;
+    padding: 0;
+}
+
+/* Status badge kiri */
+.detail-status {
+    display: inline-block;
+    padding: 6px 16px;
+    background: rgba(0, 200, 83, 0.15);
+    border: 1.5px solid rgba(0, 200, 83, 0.4);
+    border-radius: var(--radius-pill);
+    color: #00e676;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin: 0;
+}
+
+.detail-status.ended {
+    background: rgba(255, 107, 107, 0.15);
+    border-color: rgba(255, 107, 107, 0.4);
+    color: #ff8a8a;
+}
+
+.detail-status.expired {
+    background: rgba(158, 158, 158, 0.15);
+    border-color: rgba(158, 158, 158, 0.4);
+    color: #bdbdbd;
+}
+
+/* Container kanan untuk partisipasi dan hadiah */
+.detail-right-stats {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+/* Stat item (partisipasi & hadiah) */
+.detail-stat-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(0, 136, 255, 0.1);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid rgba(0, 136, 255, 0.2);
+    border-radius: 30px;
+    padding: 6px 14px;
+    transition: all 0.2s ease;
+}
+
+.detail-stat-item:hover {
+    background: rgba(0, 136, 255, 0.2);
+    transform: translateY(-2px);
+}
+
+.detail-stat-icon {
+    font-size: 16px;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+}
+
+.detail-stat-value {
+    color: white;
+    font-size: 14px;
+    font-weight: 700;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+/* Responsive untuk mobile */
+@media (max-width: 480px) {
+    .detail-header-stats {
+        flex-direction: column;
+        gap: 12px;
+        align-items: flex-start;
+        margin: 12px 16px 8px 16px;
+    }
+    
+    .detail-right-stats {
+        width: 100%;
+        justify-content: space-between;
+    }
+    
+    .detail-stat-item {
+        flex: 1;
+        justify-content: center;
+        padding: 6px 10px;
+    }
+    
+    .detail-stat-icon {
+        font-size: 14px;
+    }
+    
+    .detail-stat-value {
+        font-size: 13px;
+    }
+}
+
+@media (max-width: 380px) {
+    .detail-stat-item {
+        padding: 4px 8px;
+    }
+    
+    .detail-stat-icon {
+        font-size: 12px;
+    }
+    
+    .detail-stat-value {
+        font-size: 12px;
+    }
+}
